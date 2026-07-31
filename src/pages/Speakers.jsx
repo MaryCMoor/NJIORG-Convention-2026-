@@ -1,34 +1,26 @@
 import { Award, Crown, Mic, Sparkles, Star } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { conventionSpeakers, getSpeakerScheduleTags } from '../data/speakerSchedule'
+import { useApp } from '../context/AppContext'
 import './AppArea.css'
 
-const speakers = [
-  {
-    name: 'Madison Rose Caldwell',
-    title: 'Grand Worthy Advisor',
-    detail: 'Leadership, service, and the future of Rainbow.',
-    icon: Crown,
-  },
-  {
-    name: 'Mrs. Eleanor Whitmore',
-    title: 'Supreme Inspector',
-    detail: 'Guidance and inspiration for Grand Assembly.',
-    icon: Star,
-  },
-  {
-    name: 'Victoria Chen',
-    title: 'Grand Worthy Associate Advisor',
-    detail: 'Sisterhood, mentorship, and convention memories.',
-    icon: Award,
-  },
-  {
-    name: 'Mrs. Patricia Montgomery',
-    title: 'Supreme Deputy',
-    detail: 'Rainbow values and lifelong leadership.',
-    icon: Sparkles,
-  },
-]
+const speakerIcons = {
+  crown: Crown,
+  star: Star,
+  award: Award,
+  sparkles: Sparkles,
+}
+
+const formatScheduleTag = (event) => {
+  const date = new Date(event.startTime)
+  const day = date.toLocaleDateString('en-US', { weekday: 'short' })
+  const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  return `${day} ${time} · ${event.name}`
+}
 
 const Speakers = () => {
+  const { state } = useApp()
+
   return (
     <div className="app-area-page">
       <section className="app-area-hero">
@@ -39,15 +31,27 @@ const Speakers = () => {
       </section>
 
       <section className="speaker-app-list" aria-label="Convention speakers">
-        {speakers.map(speaker => {
-          const Icon = speaker.icon
+        {conventionSpeakers.map(speaker => {
+          const Icon = speakerIcons[speaker.icon] || Mic
+          const scheduleTags = getSpeakerScheduleTags(state.events, speaker.id)
+
           return (
-            <article className="speaker-app-card" key={speaker.name}>
+            <article className="speaker-app-card" key={speaker.id}>
               <span className="speaker-avatar"><Icon size={26} /></span>
-              <div>
+              <div className="speaker-card-content">
                 <h2>{speaker.name}</h2>
                 <p className="speaker-role">{speaker.title}</p>
                 <p>{speaker.detail}</p>
+
+                {scheduleTags.length > 0 && (
+                  <div className="speaker-schedule-tags" aria-label={`Schedule tags for ${speaker.name}`}>
+                    {scheduleTags.map(event => (
+                      <Link key={event.id} className="speaker-schedule-tag" to={`/schedule/${event.id}`}>
+                        {formatScheduleTag(event)}
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
             </article>
           )

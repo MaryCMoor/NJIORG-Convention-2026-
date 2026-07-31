@@ -61,6 +61,7 @@ const AppRoutes = () => {
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
             <Route path="schedule" element={<Schedule />} />
+            <Route path="schedule/:eventId" element={<Schedule />} />
             <Route path="registration" element={<Registration />} />
             <Route path="my-convention" element={<MyConvention />} />
             <Route path="announcements" element={<Announcements />} />
