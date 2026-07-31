@@ -76,6 +76,7 @@ const Layout = () => {
   }, [location.pathname, navItems])
 
   const activeIndex = getActiveIndex()
+  const isHomeRoute = location.pathname === '/' || location.pathname === '/NJIORG-Convention-2026-/'
 
   const handleNavPress = (index, item) => {
     if (index === activeIndex) return
@@ -95,16 +96,18 @@ const Layout = () => {
   }
 
   return (
-    <div className={`app-layout ${keyboardOpen ? 'keyboard-open' : ''}`} data-react-root="true">
+    <div className={`app-layout ${keyboardOpen ? 'keyboard-open' : ''} ${isHomeRoute ? 'home-route' : ''}`} data-react-root="true">
       {/* Status bar spacer for PWA */}
       <div className="status-bar-spacer" aria-hidden="true" />
       
       {/* Header */}
-      <Header 
-        onMenuPress={() => setSidebarOpen(!sidebarOpen)}
-        onRolePress={handleRoleChange}
-        showRoleSelector={!!selectedRole}
-      />
+      {!isHomeRoute && (
+        <Header 
+          onMenuPress={() => setSidebarOpen(!sidebarOpen)}
+          onRolePress={handleRoleChange}
+          showRoleSelector={!!selectedRole}
+        />
+      )}
       
       {/* Main content with safe areas */}
       <main className="main-content" role="main" style={{ paddingBottom: navItems.length > 0 ? 'var(--nav-height)' : 'var(--space-xl)' }}>

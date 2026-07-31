@@ -47,6 +47,24 @@
   padding-bottom: calc(var(--space-xl) + env(safe-area-inset-bottom, 0));
 }
 
+
+/* Home screen: icons only + bottom navigation bar */
+.app-layout.home-route .status-bar-spacer,
+.app-layout.home-route .sidebar,
+.app-layout.home-route .sidebar-overlay {
+  display: none !important;
+}
+
+.app-layout.home-route .main-content {
+  padding-left: 0 !important;
+}
+
+.app-layout.home-route .page-content {
+  max-width: 560px;
+  padding: 0;
+  padding-bottom: calc(var(--nav-height) + var(--space-md));
+}
+
 /* Page header */
 .page-header {
   margin-bottom: var(--space-md);
@@ -633,6 +651,10 @@
 @media (min-width: 769px) {
   .main-content {
     padding-left: var(--sidebar-width);
+  }
+
+  .app-layout.home-route .bottom-nav {
+    display: flex;
   }
   
   .sidebar {

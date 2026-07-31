@@ -83,52 +83,18 @@ const roleTiles = {
   ],
 }
 
-const roleCopy = {
-  attendee: {
-    eyebrow: 'Rainbow Girl View',
-    title: 'Your Convention App',
-    body: 'Tap a square to open each part of the 2026 Rainbow Grand Assembly Convention.',
-  },
-  grand_officer: {
-    eyebrow: 'Grand Officer View',
-    title: 'Officer Convention Hub',
-    body: 'Quick access to the schedule, ceremonies, committees, speakers, and updates.',
-  },
-  advisor: {
-    eyebrow: 'Advisor View',
-    title: 'Advisor Convention Hub',
-    body: 'Open the tools you need for safety, housing, meals, schedules, and communication.',
-  },
-  administrator: {
-    eyebrow: 'Administrator View',
-    title: 'Convention Control Center',
-    body: 'Manage content, view reports, update convention areas, and support attendees.',
-  },
-}
-
 const Home = () => {
-  const { selectedRole, clearRole } = useApp()
+  const { selectedRole } = useApp()
   const tiles = roleTiles[selectedRole] || roleTiles.attendee
-  const copy = roleCopy[selectedRole] || roleCopy.attendee
 
   return (
-    <div className="mobile-home-page no-top-banner">
-      <section className="app-tile-section" aria-labelledby="areas-title">
-        <div className="app-section-heading compact-home-heading">
-          <div>
-            <p className="section-kicker">{copy.eyebrow}</p>
-            <h1 id="areas-title">Convention Areas</h1>
-            <p className="home-quick-copy">{copy.body}</p>
-          </div>
-          <button type="button" className="role-change-pill" onClick={clearRole}>Change Role</button>
-        </div>
-
-        <div className="app-tile-grid">
-          {tiles.map(tile => (
-            <AppTile key={`${tile.title}-${tile.to}`} tile={tile} />
-          ))}
-        </div>
-      </section>
+    <div className="mobile-home-page icon-only-home">
+      <h1 className="sr-only">Convention Areas</h1>
+      <div className="app-tile-grid" aria-label="Convention areas">
+        {tiles.map(tile => (
+          <AppTile key={`${tile.title}-${tile.to}`} tile={tile} />
+        ))}
+      </div>
     </div>
   )
 }
