@@ -687,6 +687,31 @@
   gap: 0.75rem;
 }
 
+.assembly-gallery-featured {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0 0 0.85rem;
+  padding: 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface-elevated);
+}
+
+.assembly-gallery-featured img {
+  width: 100%;
+  max-height: 58vh;
+  object-fit: contain;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.assembly-gallery-featured figcaption {
+  color: var(--color-text-light);
+  font-size: 0.86rem;
+  font-weight: 800;
+  text-align: center;
+}
+
 .assembly-gallery-photo {
   display: grid;
   gap: 0.4rem;
@@ -695,13 +720,16 @@
   border-radius: var(--radius-lg);
   background: var(--color-surface-elevated);
   color: var(--color-text);
-  text-decoration: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
-.assembly-gallery-photo:hover {
+.assembly-gallery-photo:hover,
+.assembly-gallery-photo.active {
   border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary);
   color: var(--color-text);
-  text-decoration: none;
 }
 
 .assembly-gallery-photo img {

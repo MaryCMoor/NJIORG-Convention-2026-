@@ -9,7 +9,7 @@ function doGet(e) {
     return getAssemblies();
   }
   if (action === 'getAssemblyGallery') {
-    return getAssemblyGallery(e && e.parameter && e.parameter.folderUrl);
+    return getAssemblyGallery(e && e.parameter && e.parameter.folderUrl, e && e.parameter && e.parameter.maxImages);
   }
 
   return jsonResponse({
@@ -355,29 +355,39 @@ function extractDriveFolderId(folderUrl) {
   return match ? match[1] : '';
 }
 
-function getAssemblyGallery(folderUrl) {
-  const folderId = extractDriveFolderId(folderUrl);
-  if (!folderId) return jsonResponse({ ok: false, success: false, error: 'Missing or invalid Google Drive folder link' });
+function getAssemblyGallery(folderUrl, maxImages) {
+  try {
+    const folderId = extractDriveFolderId(folderUrl);
+    if (!folderId) return jsonResponse({ ok: false, success: false, error: 'Missing or invalid Google Drive folder link' });
 
-  const folder = DriveApp.getFolderById(folderId);
-  const files = folder.getFiles();
-  const images = [];
+    const limit = Math.max(1, Math.min(Number(maxImages) || 40, 80));
+    const folder = DriveApp.getFolderById(folderId);
+    const files = folder.getFiles();
+    const images = [];
 
-  while (files.hasNext()) {
-    const file = files.next();
-    const mimeType = file.getMimeType();
-    if (String(mimeType || '').indexOf('image/') !== 0) continue;
-    const id = file.getId();
-    images.push({
-      id: id,
-      name: file.getName(),
-      mimeType: mimeType,
-      thumbnailUrl: 'https://drive.google.com/thumbnail?id=' + id + '&sz=w1000',
-      viewUrl: 'https://drive.google.com/file/d/' + id + '/view'
+    while (files.hasNext() && images.length < limit) {
+      const file = files.next();
+      const mimeType = file.getMimeType();
+      if (String(mimeType || '').indexOf('image/') !== 0) continue;
+      const id = file.getId();
+      images.push({
+        id: id,
+        name: file.getName(),
+        mimeType: mimeType,
+        thumbnailUrl: 'https://drive.google.com/thumbnail?id=' + id + '&sz=w1000',
+        viewUrl: 'https://drive.google.com/file/d/' + id + '/view'
+      });
+    }
+
+    return jsonResponse({ ok: true, success: true, action: 'getAssemblyGallery', images: images, limit: limit, hasMore: files.hasNext() });
+  } catch (error) {
+    return jsonResponse({
+      ok: false,
+      success: false,
+      action: 'getAssemblyGallery',
+      error: 'Could not read the Google Drive folder. Re-deploy the Apps Script as a new version and approve Drive access, then make sure the folder/images are shared so the script owner can view them. Details: ' + String(error)
     });
   }
-
-  return jsonResponse({ ok: true, success: true, action: 'getAssemblyGallery', images: images });
 }
 
 function getNotificationsSheet() {

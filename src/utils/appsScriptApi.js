@@ -188,12 +188,17 @@ export const loadAssembliesFromGoogleSheet = async () => {
 
 export const loadAssemblyGalleryImages = async (folderUrl) => {
   if (!folderUrl) return []
-  const response = await fetch(`${APPS_SCRIPT_URL}?action=getAssemblyGallery&folderUrl=${encodeURIComponent(folderUrl)}&cacheBust=${Date.now()}`)
+  const response = await fetch(`${APPS_SCRIPT_URL}?action=getAssemblyGallery&folderUrl=${encodeURIComponent(folderUrl)}&maxImages=40&cacheBust=${Date.now()}`, {
+    redirect: 'follow',
+  })
   const text = await response.text()
   let data = null
   try {
     data = JSON.parse(text)
   } catch {
+    if (text.includes('DriveApp.getFolderById') || text.includes('permission')) {
+      throw new Error('The Apps Script needs to be redeployed as a new version and approved for Google Drive access before the in-app gallery can load photos.')
+    }
     throw new Error('Assembly gallery endpoint did not return JSON')
   }
   if (!response.ok || data.ok === false) {

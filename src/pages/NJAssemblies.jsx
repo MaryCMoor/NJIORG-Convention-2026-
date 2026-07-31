@@ -9,18 +9,21 @@ const NJAssemblies = () => {
   const assemblies = sheetData.assemblies || []
   const [galleryAssembly, setGalleryAssembly] = useState(null)
   const [galleryImages, setGalleryImages] = useState([])
+  const [selectedGalleryImage, setSelectedGalleryImage] = useState(null)
   const [galleryStatus, setGalleryStatus] = useState('idle')
   const [galleryError, setGalleryError] = useState('')
 
   const openGallery = async (assembly) => {
     setGalleryAssembly(assembly)
     setGalleryImages([])
+    setSelectedGalleryImage(null)
     setGalleryError('')
     setGalleryStatus('loading')
 
     try {
       const images = await loadAssemblyGalleryImages(assembly.galleryFolderUrl)
       setGalleryImages(images)
+      setSelectedGalleryImage(images[0] || null)
       setGalleryStatus('loaded')
     } catch (error) {
       console.error(error)
@@ -32,6 +35,7 @@ const NJAssemblies = () => {
   const closeGallery = () => {
     setGalleryAssembly(null)
     setGalleryImages([])
+    setSelectedGalleryImage(null)
     setGalleryError('')
     setGalleryStatus('idle')
   }
@@ -105,14 +109,27 @@ const NJAssemblies = () => {
             )}
 
             {galleryImages.length > 0 && (
-              <div className="assembly-gallery-grid">
-                {galleryImages.map(image => (
-                  <a key={image.id} href={image.viewUrl} target="_blank" rel="noreferrer" className="assembly-gallery-photo">
-                    <img src={image.thumbnailUrl} alt={image.name || 'Assembly gallery photo'} loading="lazy" />
-                    {image.name && <span>{image.name}</span>}
-                  </a>
-                ))}
-              </div>
+              <>
+                {selectedGalleryImage && (
+                  <figure className="assembly-gallery-featured">
+                    <img src={selectedGalleryImage.thumbnailUrl} alt={selectedGalleryImage.name || 'Selected assembly gallery photo'} />
+                    {selectedGalleryImage.name && <figcaption>{selectedGalleryImage.name}</figcaption>}
+                  </figure>
+                )}
+                <div className="assembly-gallery-grid">
+                  {galleryImages.map(image => (
+                    <button
+                      key={image.id}
+                      type="button"
+                      className={`assembly-gallery-photo ${selectedGalleryImage?.id === image.id ? 'active' : ''}`}
+                      onClick={() => setSelectedGalleryImage(image)}
+                    >
+                      <img src={image.thumbnailUrl} alt={image.name || 'Assembly gallery photo'} loading="lazy" />
+                      {image.name && <span>{image.name}</span>}
+                    </button>
+                  ))}
+                </div>
+              </>
             )}
           </article>
         </div>
