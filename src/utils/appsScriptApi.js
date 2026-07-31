@@ -186,6 +186,22 @@ export const loadAssembliesFromGoogleSheet = async () => {
   return data.assemblies || []
 }
 
+export const loadAssemblyGalleryImages = async (folderUrl) => {
+  if (!folderUrl) return []
+  const response = await fetch(`${APPS_SCRIPT_URL}?action=getAssemblyGallery&folderUrl=${encodeURIComponent(folderUrl)}&cacheBust=${Date.now()}`)
+  const text = await response.text()
+  let data = null
+  try {
+    data = JSON.parse(text)
+  } catch {
+    throw new Error('Assembly gallery endpoint did not return JSON')
+  }
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.error || `Assembly gallery fetch failed (${response.status})`)
+  }
+  return data.images || []
+}
+
 const sendAssemblyToGoogleSheet = async (assembly, action = 'createAssembly') => {
   const payload = {
     action,

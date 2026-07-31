@@ -8,6 +8,9 @@ function doGet(e) {
   if (action === 'getAssemblies') {
     return getAssemblies();
   }
+  if (action === 'getAssemblyGallery') {
+    return getAssemblyGallery(e && e.parameter && e.parameter.folderUrl);
+  }
 
   return jsonResponse({
     ok: true,
@@ -344,6 +347,37 @@ function updateAssembly(body) {
   if (rowNumber === -1) return createAssembly(Object.assign({}, body, { assemblyId: assemblyId }));
   writeObjectRow(sheet, rowNumber, headers, buildAssemblyData(body, assemblyId));
   return jsonResponse({ ok: true, success: true, action: 'updateAssembly', assemblyId: assemblyId, updatedAt: new Date().toISOString() });
+}
+
+function extractDriveFolderId(folderUrl) {
+  const text = String(folderUrl || '');
+  const match = text.match(/\/folders\/([a-zA-Z0-9_-]+)/) || text.match(/[?&]id=([a-zA-Z0-9_-]+)/) || text.match(/^([a-zA-Z0-9_-]{20,})$/);
+  return match ? match[1] : '';
+}
+
+function getAssemblyGallery(folderUrl) {
+  const folderId = extractDriveFolderId(folderUrl);
+  if (!folderId) return jsonResponse({ ok: false, success: false, error: 'Missing or invalid Google Drive folder link' });
+
+  const folder = DriveApp.getFolderById(folderId);
+  const files = folder.getFiles();
+  const images = [];
+
+  while (files.hasNext()) {
+    const file = files.next();
+    const mimeType = file.getMimeType();
+    if (String(mimeType || '').indexOf('image/') !== 0) continue;
+    const id = file.getId();
+    images.push({
+      id: id,
+      name: file.getName(),
+      mimeType: mimeType,
+      thumbnailUrl: 'https://drive.google.com/thumbnail?id=' + id + '&sz=w1000',
+      viewUrl: 'https://drive.google.com/file/d/' + id + '/view'
+    });
+  }
+
+  return jsonResponse({ ok: true, success: true, action: 'getAssemblyGallery', images: images });
 }
 
 function getNotificationsSheet() {
