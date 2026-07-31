@@ -295,7 +295,7 @@ function getAssembliesSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName('Assemblies');
   if (!sheet) sheet = ss.insertSheet('Assemblies');
-  ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryFolderUrl', 'galleryMediaUrls', 'galleryImageUrls', 'notes']);
+  ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryMediaUrls', 'galleryImageUrls', 'notes']);
   return sheet;
 }
 
@@ -305,7 +305,6 @@ function buildAssemblyData(body, assemblyId) {
     assemblyName: body.assemblyName || body.name || '',
     motherAdvisor: body.motherAdvisor || '',
     termTheme: body.termTheme || '',
-    galleryFolderUrl: body.galleryFolderUrl || body.galleryUrl || '',
     galleryMediaUrls: body.galleryMediaUrls || body.galleryImageUrls || '',
     galleryImageUrls: body.galleryImageUrls || body.galleryMediaUrls || '',
     notes: body.notes || ''
@@ -314,7 +313,7 @@ function buildAssemblyData(body, assemblyId) {
 
 function getAssemblies() {
   const sheet = getAssembliesSheet();
-  const headers = ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryFolderUrl', 'galleryMediaUrls', 'galleryImageUrls', 'notes']);
+  const headers = ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryMediaUrls', 'galleryImageUrls', 'notes']);
   const lastRow = sheet.getLastRow();
   const assemblies = [];
   if (lastRow >= 2) {
@@ -332,7 +331,7 @@ function getAssemblies() {
 
 function createAssembly(body) {
   const sheet = getAssembliesSheet();
-  const headers = ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryFolderUrl', 'galleryMediaUrls', 'galleryImageUrls', 'notes']);
+  const headers = ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryMediaUrls', 'galleryImageUrls', 'notes']);
   const assemblyId = body.assemblyId || 'assembly_' + Date.now();
   writeObjectRow(sheet, sheet.getLastRow() + 1, headers, buildAssemblyData(body, assemblyId));
   return jsonResponse({ ok: true, success: true, action: 'createAssembly', assemblyId: assemblyId });
@@ -340,7 +339,7 @@ function createAssembly(body) {
 
 function updateAssembly(body) {
   const sheet = getAssembliesSheet();
-  const headers = ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryFolderUrl', 'galleryMediaUrls', 'galleryImageUrls', 'notes']);
+  const headers = ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryMediaUrls', 'galleryImageUrls', 'notes']);
   const assemblyId = body.assemblyId || body.id;
   if (!assemblyId) return jsonResponse({ ok: false, success: false, error: 'Missing assemblyId' });
   const rowNumber = findRowById(sheet, headers, 'assemblyId', assemblyId);

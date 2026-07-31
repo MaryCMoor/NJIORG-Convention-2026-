@@ -1,36 +1,118 @@
-import { useState } from 'react'
-import { Images, Landmark, UserRound, X } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { ChevronLeft, ChevronRight, Images, Landmark, UserRound, X } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import './AppArea.css'
 
-const parseGalleryImageUrls = (value) => String(value || '')
+const extractDriveFileId = (url) => {
+  const text = String(url || '')
+  const patterns = [
+    /\/file\/d\/([a-zA-Z0-9_-]+)/,
+    /[?&]id=([a-zA-Z0-9_-]+)/,
+    /\/open\?id=([a-zA-Z0-9_-]+)/,
+    /\/thumbnail\?id=([a-zA-Z0-9_-]+)/,
+  ]
+  const match = patterns.map(pattern => text.match(pattern)).find(Boolean)
+  return match?.[1] || ''
+}
+
+const isDirectVideoUrl = (url) => /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(url)
+
+const getYouTubeEmbedUrl = (url) => {
+  const text = String(url || '')
+  const match = text.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]+)/)
+  return match ? `https://www.youtube.com/embed/${match[1]}` : ''
+}
+
+const normalizeMediaUrl = (rawUrl, index) => {
+  const url = String(rawUrl || '').trim()
+  const driveFileId = extractDriveFileId(url)
+  const youtubeEmbedUrl = getYouTubeEmbedUrl(url)
+  const isVideo = isDirectVideoUrl(url) || Boolean(youtubeEmbedUrl)
+
+  if (driveFileId) {
+    return {
+      id: `${index}-${driveFileId}`,
+      url,
+      displayUrl: `https://drive.google.com/thumbnail?id=${driveFileId}&sz=w1600`,
+      type: 'image',
+    }
+  }
+
+  if (youtubeEmbedUrl) {
+    return {
+      id: `${index}-${url}`,
+      url,
+      displayUrl: youtubeEmbedUrl,
+      type: 'embed',
+    }
+  }
+
+  return {
+    id: `${index}-${url}`,
+    url,
+    displayUrl: url,
+    type: isVideo ? 'video' : 'image',
+  }
+}
+
+const parseGalleryMediaUrls = (value) => String(value || '')
   .split(/[\n,]+/)
   .map(url => url.trim())
   .filter(Boolean)
-  .map((url, index) => ({
-    id: `${index}-${url}`,
-    name: `Photo ${index + 1}`,
-    imageUrl: url,
-  }))
+  .map(normalizeMediaUrl)
 
 const NJAssemblies = () => {
   const { sheetData } = useApp()
   const assemblies = sheetData.assemblies || []
   const [galleryAssembly, setGalleryAssembly] = useState(null)
-  const [galleryImages, setGalleryImages] = useState([])
-  const [selectedGalleryImage, setSelectedGalleryImage] = useState(null)
+  const [galleryItems, setGalleryItems] = useState([])
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [touchStartX, setTouchStartX] = useState(null)
+
+  const hasMultipleItems = galleryItems.length > 1
+  const visibleItems = useMemo(() => {
+    if (galleryItems.length <= 3) return galleryItems
+    return [0, 1, 2].map(offset => galleryItems[(activeIndex + offset) % galleryItems.length])
+  }, [activeIndex, galleryItems])
+
+  useEffect(() => {
+    if (!galleryAssembly || galleryItems.length <= 3) return undefined
+    const timer = window.setInterval(() => {
+      setActiveIndex(index => (index + 1) % galleryItems.length)
+    }, 3000)
+    return () => window.clearInterval(timer)
+  }, [galleryAssembly, galleryItems.length])
 
   const openGallery = (assembly) => {
-    const images = parseGalleryImageUrls(assembly.galleryImageUrls)
+    const items = parseGalleryMediaUrls(assembly.galleryMediaUrls || assembly.galleryImageUrls)
     setGalleryAssembly(assembly)
-    setGalleryImages(images)
-    setSelectedGalleryImage(images[0] || null)
+    setGalleryItems(items)
+    setActiveIndex(0)
   }
 
   const closeGallery = () => {
     setGalleryAssembly(null)
-    setGalleryImages([])
-    setSelectedGalleryImage(null)
+    setGalleryItems([])
+    setActiveIndex(0)
+    setTouchStartX(null)
+  }
+
+  const showPrevious = () => {
+    setActiveIndex(index => (index - 1 + galleryItems.length) % galleryItems.length)
+  }
+
+  const showNext = () => {
+    setActiveIndex(index => (index + 1) % galleryItems.length)
+  }
+
+  const handleTouchEnd = (event) => {
+    if (touchStartX === null || galleryItems.length < 2) return
+    const deltaX = event.changedTouches[0].clientX - touchStartX
+    setTouchStartX(null)
+
+    if (Math.abs(deltaX) < 40) return
+    if (deltaX > 0) showPrevious()
+    else showNext()
   }
 
   return (
@@ -50,8 +132,7 @@ const NJAssemblies = () => {
       ) : (
         <section className="assemblies-grid" aria-label="New Jersey Assemblies">
           {assemblies.map(assembly => {
-            const hasImageUrls = parseGalleryImageUrls(assembly.galleryImageUrls).length > 0
-            const hasFolderLink = Boolean(assembly.galleryFolderUrl)
+            const hasMediaUrls = parseGalleryMediaUrls(assembly.galleryMediaUrls || assembly.galleryImageUrls).length > 0
 
             return (
               <article key={assembly.assemblyId || assembly.id || assembly.assemblyName} className="assembly-card">
@@ -65,9 +146,9 @@ const NJAssemblies = () => {
                     <p className="assembly-theme">Theme: {assembly.termTheme}</p>
                   )}
                   {assembly.notes && <p>{assembly.notes}</p>}
-                  {(hasImageUrls || hasFolderLink) && (
+                  {hasMediaUrls && (
                     <button type="button" className="assembly-gallery-link" onClick={() => openGallery(assembly)}>
-                      <Images size={16} /> View photo gallery
+                      <Images size={16} /> View photo/video gallery
                     </button>
                   )}
                 </div>
@@ -78,43 +159,54 @@ const NJAssemblies = () => {
       )}
 
       {galleryAssembly && (
-        <div className="event-detail-overlay" role="dialog" aria-modal="true" aria-labelledby="assembly-gallery-title" onClick={closeGallery}>
-          <article className="event-detail-card assembly-gallery-modal" onClick={(event) => event.stopPropagation()}>
-            <button type="button" className="event-detail-close" onClick={closeGallery} aria-label="Close gallery">
-              <X size={22} />
+        <div className="event-detail-overlay assembly-slider-overlay" role="dialog" aria-modal="true" aria-labelledby="assembly-gallery-title">
+          <article className="assembly-slider-modal">
+            <button type="button" className="assembly-slider-close" onClick={closeGallery} aria-label="Close gallery">
+              <X size={24} />
             </button>
-            <p className="area-kicker">Assembly Gallery</p>
-            <h2 id="assembly-gallery-title">{galleryAssembly.assemblyName || galleryAssembly.name}</h2>
 
-            {galleryImages.length === 0 ? (
+            <div className="assembly-slider-header">
+              <p className="area-kicker">Assembly Gallery</p>
+              <h2 id="assembly-gallery-title">{galleryAssembly.assemblyName || galleryAssembly.name}</h2>
+              {galleryItems.length > 0 && <span>Showing {visibleItems.length} of {galleryItems.length}</span>}
+            </div>
+
+            {galleryItems.length === 0 ? (
               <div className="assembly-gallery-state">
-                <p>No image URLs have been added for this assembly yet.</p>
-                {galleryAssembly.galleryFolderUrl && (
-                  <a href={galleryAssembly.galleryFolderUrl} target="_blank" rel="noreferrer">Open Google Drive folder</a>
-                )}
+                <p>No photo or video URLs have been added for this assembly yet.</p>
               </div>
             ) : (
-              <>
-                {selectedGalleryImage && (
-                  <figure className="assembly-gallery-featured">
-                    <img src={selectedGalleryImage.imageUrl} alt={selectedGalleryImage.name || 'Selected assembly gallery photo'} />
-                    {selectedGalleryImage.name && <figcaption>{selectedGalleryImage.name}</figcaption>}
-                  </figure>
+              <div
+                className="assembly-slider-stage"
+                onTouchStart={(event) => setTouchStartX(event.touches[0].clientX)}
+                onTouchEnd={handleTouchEnd}
+              >
+                {hasMultipleItems && (
+                  <button type="button" className="assembly-slider-nav previous" onClick={showPrevious} aria-label="Previous image">
+                    <ChevronLeft size={28} />
+                  </button>
                 )}
-                <div className="assembly-gallery-grid">
-                  {galleryImages.map(image => (
-                    <button
-                      key={image.id}
-                      type="button"
-                      className={`assembly-gallery-photo ${selectedGalleryImage?.id === image.id ? 'active' : ''}`}
-                      onClick={() => setSelectedGalleryImage(image)}
-                    >
-                      <img src={image.imageUrl} alt={image.name || 'Assembly gallery photo'} loading="lazy" />
-                      {image.name && <span>{image.name}</span>}
-                    </button>
+
+                <div className="assembly-slider-media three-up-gallery">
+                  {visibleItems.map((item, index) => (
+                    <div key={item.id} className={`assembly-slide-card ${index === 1 ? 'center' : ''}`}>
+                      {item.type === 'video' ? (
+                        <video src={item.displayUrl} controls playsInline muted={index !== 1} />
+                      ) : item.type === 'embed' ? (
+                        <iframe src={item.displayUrl} title="Assembly gallery video" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
+                      ) : (
+                        <img src={item.displayUrl} alt="Assembly gallery" />
+                      )}
+                    </div>
                   ))}
                 </div>
-              </>
+
+                {hasMultipleItems && (
+                  <button type="button" className="assembly-slider-nav next" onClick={showNext} aria-label="Next image">
+                    <ChevronRight size={28} />
+                  </button>
+                )}
+              </div>
             )}
           </article>
         </div>

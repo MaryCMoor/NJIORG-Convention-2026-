@@ -195,8 +195,8 @@ const sendAssemblyToGoogleSheet = async (assembly, action = 'createAssembly') =>
     assemblyName: assembly.assemblyName || assembly.name || '',
     motherAdvisor: assembly.motherAdvisor || '',
     termTheme: assembly.termTheme || '',
-    galleryFolderUrl: assembly.galleryFolderUrl || assembly.galleryUrl || '',
-    galleryImageUrls: assembly.galleryImageUrls || '',
+    galleryMediaUrls: assembly.galleryMediaUrls || assembly.galleryImageUrls || '',
+    galleryImageUrls: assembly.galleryImageUrls || assembly.galleryMediaUrls || '',
     notes: assembly.notes || '',
   }
 

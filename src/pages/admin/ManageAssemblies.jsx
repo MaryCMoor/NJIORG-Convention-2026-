@@ -13,8 +13,7 @@ const blankForm = () => ({
   assemblyName: '',
   motherAdvisor: '',
   termTheme: '',
-  galleryFolderUrl: '',
-  galleryImageUrls: '',
+  galleryMediaUrls: '',
   notes: '',
 });
 
@@ -24,8 +23,7 @@ const normalizeAssemblyForAdmin = (assembly, index = 0) => ({
   assemblyName: assembly.assemblyName || assembly.name || '',
   motherAdvisor: assembly.motherAdvisor || '',
   termTheme: assembly.termTheme || '',
-  galleryFolderUrl: assembly.galleryFolderUrl || assembly.galleryUrl || '',
-  galleryImageUrls: assembly.galleryImageUrls || '',
+  galleryMediaUrls: assembly.galleryMediaUrls || assembly.galleryImageUrls || '',
   notes: assembly.notes || '',
 });
 
@@ -110,8 +108,7 @@ const ManageAssemblies = () => {
       assemblyName: assembly.assemblyName || '',
       motherAdvisor: assembly.motherAdvisor || '',
       termTheme: assembly.termTheme || '',
-      galleryFolderUrl: assembly.galleryFolderUrl || '',
-      galleryImageUrls: assembly.galleryImageUrls || '',
+      galleryMediaUrls: assembly.galleryMediaUrls || assembly.galleryImageUrls || '',
       notes: assembly.notes || '',
     });
     setSheetSaveStatus('idle');
@@ -159,7 +156,7 @@ const ManageAssemblies = () => {
   };
 
   const exportAssemblies = () => {
-    const headers = ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryFolderUrl', 'galleryImageUrls', 'notes'];
+    const headers = ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryMediaUrls', 'notes'];
     const csv = [
       headers.join(','),
       ...filteredAssemblies.map(assembly => headers.map(header => `"${String(assembly[header] || '').replace(/"/g, '""')}"`).join(',')),
@@ -182,7 +179,7 @@ const ManageAssemblies = () => {
       <header className="page-header">
         <div className="header-left">
           <h1 className="page-title">NJ Assemblies</h1>
-          <p className="page-subtitle">Manage assembly names, Mother Advisors, term themes, folder links, and image URL galleries.</p>
+          <p className="page-subtitle">Manage assembly names, Mother Advisors, term themes, and photo URLs.</p>
         </div>
         <div className="header-actions">
           <button className="btn btn-secondary" onClick={refreshAssemblies} disabled={loading}>
@@ -221,7 +218,7 @@ const ManageAssemblies = () => {
                 <th><button className="sortable-header" onClick={() => handleSort('assemblyName')}>Assembly <span className="sort-icon">{renderSortIcon('assemblyName')}</span></button></th>
                 <th><button className="sortable-header" onClick={() => handleSort('motherAdvisor')}>Mother Advisor <span className="sort-icon">{renderSortIcon('motherAdvisor')}</span></button></th>
                 <th><button className="sortable-header" onClick={() => handleSort('termTheme')}>Term Theme <span className="sort-icon">{renderSortIcon('termTheme')}</span></button></th>
-                <th>Gallery</th>
+                <th>Photos</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -237,7 +234,7 @@ const ManageAssemblies = () => {
                     <td className="title-cell"><div className="event-title">{assembly.assemblyName || '—'}</div>{assembly.notes && <div className="event-desc">{assembly.notes.slice(0, 90)}{assembly.notes.length > 90 ? '…' : ''}</div>}</td>
                     <td>{assembly.motherAdvisor || '—'}</td>
                     <td>{assembly.termTheme || '—'}</td>
-                    <td>{assembly.galleryImageUrls ? 'Image URLs' : assembly.galleryFolderUrl ? <a href={assembly.galleryFolderUrl} target="_blank" rel="noreferrer">Open folder</a> : '—'}</td>
+                    <td>{assembly.galleryMediaUrls ? 'Yes' : '—'}</td>
                     <td><div className="action-buttons"><button className="icon-btn view" onClick={() => setViewAssembly(assembly)} aria-label={`View ${assembly.assemblyName}`}><Eye size={16}/></button></div></td>
                   </tr>
                 ))
@@ -260,8 +257,7 @@ const ManageAssemblies = () => {
                 <div className="form-field"><label htmlFor="assemblyName">Assembly Name *</label><input type="text" id="assemblyName" value={formData.assemblyName} onChange={event => setFormData({...formData, assemblyName: event.target.value})} required /></div>
                 <div className="form-field"><label htmlFor="motherAdvisor">Mother Advisor</label><input type="text" id="motherAdvisor" value={formData.motherAdvisor} onChange={event => setFormData({...formData, motherAdvisor: event.target.value})} /></div>
                 <div className="form-field full-width"><label htmlFor="termTheme">Term Theme</label><input type="text" id="termTheme" value={formData.termTheme} onChange={event => setFormData({...formData, termTheme: event.target.value})} /></div>
-                <div className="form-field full-width"><label htmlFor="galleryFolderUrl">Google Folder Gallery Link</label><input type="url" id="galleryFolderUrl" value={formData.galleryFolderUrl} onChange={event => setFormData({...formData, galleryFolderUrl: event.target.value})} placeholder="https://drive.google.com/drive/folders/..." /></div>
-                <div className="form-field full-width"><label htmlFor="galleryImageUrls">Gallery Image URLs</label><textarea id="galleryImageUrls" value={formData.galleryImageUrls} onChange={event => setFormData({...formData, galleryImageUrls: event.target.value})} placeholder="Paste one public image URL per line" rows={5} /></div>
+                <div className="form-field full-width"><label htmlFor="galleryMediaUrls">Gallery Photo/Video URLs</label><textarea id="galleryMediaUrls" value={formData.galleryMediaUrls} onChange={event => setFormData({...formData, galleryMediaUrls: event.target.value})} placeholder="Paste one public image or video URL per line. Google Drive file links are OK." rows={6} /></div>
                 <div className="form-field full-width"><label htmlFor="notes">Notes</label><textarea id="notes" value={formData.notes} onChange={event => setFormData({...formData, notes: event.target.value})} rows={4} /></div>
               </div>
               {sheetSaveMessage && <div className={`sheet-save-message ${sheetSaveStatus}`}>{sheetSaveMessage}</div>}
@@ -275,7 +271,7 @@ const ManageAssemblies = () => {
         <div className="modal-overlay" onClick={() => setViewAssembly(null)}>
           <div className="modal modal-lg" onClick={event => event.stopPropagation()}>
             <div className="modal-header"><h2 className="modal-title">Assembly Details</h2><button className="modal-close" onClick={() => setViewAssembly(null)}><X size={20}/></button></div>
-            <div className="modal-body"><div className="view-grid"><div className="view-section"><h4>Assembly</h4><p>{viewAssembly.assemblyName || '—'}</p></div><div className="view-section"><h4>Mother Advisor</h4><p>{viewAssembly.motherAdvisor || '—'}</p></div><div className="view-section full-width"><h4>Term Theme</h4><p>{viewAssembly.termTheme || '—'}</p></div><div className="view-section full-width"><h4>Gallery Link</h4><p>{viewAssembly.galleryFolderUrl || '—'}</p></div><div className="view-section full-width"><h4>Gallery Image URLs</h4><p>{viewAssembly.galleryImageUrls || '—'}</p></div><div className="view-section full-width"><h4>Notes</h4><p>{viewAssembly.notes || '—'}</p></div></div></div>
+            <div className="modal-body"><div className="view-grid"><div className="view-section"><h4>Assembly</h4><p>{viewAssembly.assemblyName || '—'}</p></div><div className="view-section"><h4>Mother Advisor</h4><p>{viewAssembly.motherAdvisor || '—'}</p></div><div className="view-section full-width"><h4>Term Theme</h4><p>{viewAssembly.termTheme || '—'}</p></div><div className="view-section full-width"><h4>Gallery Photo/Video URLs</h4><p>{viewAssembly.galleryMediaUrls || '—'}</p></div><div className="view-section full-width"><h4>Notes</h4><p>{viewAssembly.notes || '—'}</p></div></div></div>
             <div className="modal-actions"><button className="btn btn-secondary" onClick={() => setViewAssembly(null)}>Close</button><button className="btn btn-primary" onClick={() => { setViewAssembly(null); openEditModal(viewAssembly); }}><Edit size={16}/> Edit</button></div>
           </div>
         </div>
