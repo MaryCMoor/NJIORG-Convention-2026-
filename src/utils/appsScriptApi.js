@@ -1,4 +1,4 @@
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwjIdyY8BPVOvhwGUfGKdcWIoaLOm-m__PDPq5mkOlXSlbTAdj292k-DzCRYjvoPYU/exec'
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbye_zowHdCbkVyIC2GUxvcXby6_qvVCU6qPR5CjMcqewlfaVXLVbornKXqmldV7NEv0/exec'
 const ADMIN_TOKEN = '2026RainboW_Convention-SerVice!'
 
 export const DEFAULT_APP_CONFIG = {
