@@ -222,6 +222,62 @@ export const saveAssemblyToGoogleSheet = async (assembly) => sendAssemblyToGoogl
 
 export const updateAssemblyInGoogleSheet = async (assembly) => sendAssemblyToGoogleSheet(assembly, 'updateAssembly')
 
+export const loadSocialPostsFromGoogleSheet = async () => {
+  const response = await fetch(`${APPS_SCRIPT_URL}?action=getSocialPosts&cacheBust=${Date.now()}`)
+  const text = await response.text()
+  let data = null
+  try {
+    data = JSON.parse(text)
+  } catch {
+    throw new Error('Social posts endpoint did not return JSON')
+  }
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.error || `Social posts fetch failed (${response.status})`)
+  }
+  return data.posts || []
+}
+
+const sendSocialPostToGoogleSheet = async (post, action = 'createSocialPost') => {
+  const payload = {
+    action,
+    token: ADMIN_TOKEN,
+    postId: post.postId || post.id,
+    platform: post.platform || '',
+    author: post.author || '',
+    handle: post.handle || '',
+    postUrl: post.postUrl || '',
+    caption: post.caption || post.text || '',
+    mediaUrl: post.mediaUrl || '',
+    videoUrl: post.videoUrl || '',
+    hashtag: post.hashtag || '',
+    postedAt: post.postedAt || post.date || '',
+    likes: post.likes || 0,
+    comments: post.comments || 0,
+    status: post.status || 'active',
+  }
+
+  const response = await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload),
+  })
+  const text = await response.text()
+  let data = null
+  try {
+    data = JSON.parse(text)
+  } catch {
+    data = { ok: response.ok, raw: text }
+  }
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.error || `Google Sheet save failed (${response.status})`)
+  }
+  return data
+}
+
+export const saveSocialPostToGoogleSheet = async (post) => sendSocialPostToGoogleSheet(post, 'createSocialPost')
+
+export const updateSocialPostInGoogleSheet = async (post) => sendSocialPostToGoogleSheet(post, 'updateSocialPost')
+
 const sendNotificationToGoogleSheet = async (notification, action = 'createNotification') => {
   const payload = {
     action,

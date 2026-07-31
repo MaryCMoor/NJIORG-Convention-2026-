@@ -8,6 +8,7 @@ import {
   Images,
   Landmark,
   Info,
+  Hash,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import './Home.css'
@@ -48,6 +49,7 @@ const baseTiles = [
     icon: Images,
     tone: 'blue',
   },
+  { title: 'Social Wall', subtitle: 'Posts, hashtags, likes', to: '/social-wall', icon: Hash, tone: 'purple' },
   { title: 'Announcements', subtitle: 'Important updates', to: '/announcements', icon: Megaphone, tone: 'red' },
   { title: 'Event Info', subtitle: 'Venue, contacts, links', to: '/event-info', icon: Info, tone: 'gold' },
 ]

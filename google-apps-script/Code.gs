@@ -8,6 +8,9 @@ function doGet(e) {
   if (action === 'getAssemblies') {
     return getAssemblies();
   }
+  if (action === 'getSocialPosts') {
+    return getSocialPosts();
+  }
 
   return jsonResponse({
     ok: true,
@@ -37,6 +40,8 @@ function doPost(e) {
     if (action === 'updateSpeaker') return updateSpeaker(body);
     if (action === 'createAssembly' || action === 'addAssembly' || action === 'saveAssembly') return createAssembly(body);
     if (action === 'updateAssembly') return updateAssembly(body);
+    if (action === 'createSocialPost' || action === 'addSocialPost' || action === 'saveSocialPost') return createSocialPost(body);
+    if (action === 'updateSocialPost') return updateSocialPost(body);
     if (action === 'createNotification' || action === 'addNotification' || action === 'saveNotification') return createNotification(body);
     if (action === 'updateNotification') return updateNotification(body);
     if (action === 'saveAppConfig') return saveAppConfig(body);
@@ -346,6 +351,69 @@ function updateAssembly(body) {
   if (rowNumber === -1) return createAssembly(Object.assign({}, body, { assemblyId: assemblyId }));
   writeObjectRow(sheet, rowNumber, headers, buildAssemblyData(body, assemblyId));
   return jsonResponse({ ok: true, success: true, action: 'updateAssembly', assemblyId: assemblyId, updatedAt: new Date().toISOString() });
+}
+
+function getSocialPostsSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName('SocialPosts');
+  if (!sheet) sheet = ss.insertSheet('SocialPosts');
+  ensureHeaders(sheet, ['postId', 'platform', 'author', 'handle', 'postUrl', 'caption', 'mediaUrl', 'videoUrl', 'hashtag', 'postedAt', 'likes', 'comments', 'status']);
+  return sheet;
+}
+
+function buildSocialPostData(body, postId) {
+  return {
+    postId: postId,
+    platform: body.platform || '',
+    author: body.author || '',
+    handle: body.handle || '',
+    postUrl: body.postUrl || '',
+    caption: body.caption || body.text || '',
+    mediaUrl: body.mediaUrl || '',
+    videoUrl: body.videoUrl || '',
+    hashtag: body.hashtag || '',
+    postedAt: body.postedAt || body.date || '',
+    likes: body.likes || 0,
+    comments: body.comments || 0,
+    status: body.status || 'active'
+  };
+}
+
+function getSocialPosts() {
+  const sheet = getSocialPostsSheet();
+  const headers = ensureHeaders(sheet, ['postId', 'platform', 'author', 'handle', 'postUrl', 'caption', 'mediaUrl', 'videoUrl', 'hashtag', 'postedAt', 'likes', 'comments', 'status']);
+  const lastRow = sheet.getLastRow();
+  const posts = [];
+  if (lastRow >= 2) {
+    const values = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
+    values.forEach(function(row) {
+      const record = {};
+      headers.forEach(function(header, index) {
+        record[header] = row[index] || '';
+      });
+      if (Object.keys(record).some(function(key) { return record[key]; })) posts.push(record);
+    });
+  }
+  return jsonResponse({ ok: true, success: true, action: 'getSocialPosts', posts: posts });
+}
+
+function createSocialPost(body) {
+  const sheet = getSocialPostsSheet();
+  const headers = ensureHeaders(sheet, ['postId', 'platform', 'author', 'handle', 'postUrl', 'caption', 'mediaUrl', 'videoUrl', 'hashtag', 'postedAt', 'likes', 'comments', 'status']);
+  const postId = body.postId || 'social_' + Date.now();
+  writeObjectRow(sheet, sheet.getLastRow() + 1, headers, buildSocialPostData(body, postId));
+  return jsonResponse({ ok: true, success: true, action: 'createSocialPost', postId: postId });
+}
+
+function updateSocialPost(body) {
+  const sheet = getSocialPostsSheet();
+  const headers = ensureHeaders(sheet, ['postId', 'platform', 'author', 'handle', 'postUrl', 'caption', 'mediaUrl', 'videoUrl', 'hashtag', 'postedAt', 'likes', 'comments', 'status']);
+  const postId = body.postId || body.id;
+  if (!postId) return jsonResponse({ ok: false, success: false, error: 'Missing postId' });
+  const rowNumber = findRowById(sheet, headers, 'postId', postId);
+  if (rowNumber === -1) return createSocialPost(Object.assign({}, body, { postId: postId }));
+  writeObjectRow(sheet, rowNumber, headers, buildSocialPostData(body, postId));
+  return jsonResponse({ ok: true, success: true, action: 'updateSocialPost', postId: postId, updatedAt: new Date().toISOString() });
 }
 
 function getNotificationsSheet() {

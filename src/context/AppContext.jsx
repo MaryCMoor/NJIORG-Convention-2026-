@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import mockConvention from '../data/mockData'
 import { loadPublishedSheetData } from '../utils/googleSheetData'
-import { DEFAULT_APP_CONFIG, loadAppConfigFromGoogleSheet, loadAssembliesFromGoogleSheet } from '../utils/appsScriptApi'
+import { DEFAULT_APP_CONFIG, loadAppConfigFromGoogleSheet, loadAssembliesFromGoogleSheet, loadSocialPostsFromGoogleSheet } from '../utils/appsScriptApi'
 
 const AppContext = createContext(null)
 
@@ -64,7 +64,7 @@ export const AppProvider = ({ children }) => {
     }
   })
   const [notifications, setNotifications] = useState([])
-  const [sheetData, setSheetData] = useState({ events: [], members: [], speakers: [], notifications: [], gallery: [], assemblies: [] })
+  const [sheetData, setSheetData] = useState({ events: [], members: [], speakers: [], notifications: [], gallery: [], assemblies: [], socialPosts: [] })
   const [sheetStatus, setSheetStatus] = useState('idle')
   const [appConfig, setAppConfig] = useState(DEFAULT_APP_CONFIG)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -102,13 +102,19 @@ export const AppProvider = ({ children }) => {
       try {
         const data = await loadPublishedSheetData()
         let assemblies = []
+        let socialPosts = []
         try {
           assemblies = await loadAssembliesFromGoogleSheet()
         } catch (assemblyError) {
           console.warn('Failed to load Assemblies from Apps Script:', assemblyError)
         }
+        try {
+          socialPosts = await loadSocialPostsFromGoogleSheet()
+        } catch (socialError) {
+          console.warn('Failed to load SocialPosts from Apps Script:', socialError)
+        }
         if (cancelled) return
-        setSheetData({ ...data, assemblies })
+        setSheetData({ ...data, assemblies, socialPosts })
         setSheetStatus('loaded')
         setNotifications(prev => {
           const existingIds = new Set(prev.map(item => item.id))

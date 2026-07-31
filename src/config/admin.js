@@ -40,6 +40,7 @@ export const ADMIN_CONFIG = {
     { id: 'announcements', label: 'Announcements', icon: 'Megaphone' },
     { id: 'members', label: 'Meet NJ Rainbow', icon: 'Users' },
     { id: 'assemblies', label: 'NJ Assemblies', icon: 'Landmark' },
+    { id: 'social', label: 'Social Feed', icon: 'Hash' },
     { id: 'speakers', label: 'Speakers', icon: 'Mic' },
     { id: 'awards', label: 'Awards', icon: 'Award' },
     { id: 'gallery', label: 'Gallery', icon: 'Images' },
