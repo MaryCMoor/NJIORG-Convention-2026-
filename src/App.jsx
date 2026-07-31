@@ -20,6 +20,7 @@ import Housing from './pages/Housing'
 import Directory from './pages/Directory'
 import NJRainbow from './pages/NJRainbow'
 import Speakers from './pages/Speakers'
+import NJAssemblies from './pages/NJAssemblies'
 import Gallery from './pages/Gallery'
 import Awards from './pages/Awards'
 import Documents from './pages/Documents'
@@ -31,6 +32,7 @@ import ManageSchedule from './pages/admin/ManageSchedule'
 import ManageAnnouncements from './pages/admin/ManageAnnouncements'
 import ManageMembers from './pages/admin/ManageMembers'
 import ManageSpeakers from './pages/admin/ManageSpeakers'
+import ManageAssemblies from './pages/admin/ManageAssemblies'
 import ManageMeals from './pages/admin/ManageMeals'
 import ManageAwards from './pages/admin/ManageAwards'
 import ManageDocuments from './pages/admin/ManageDocuments'
@@ -78,6 +80,7 @@ const AppRoutes = () => {
             <Route path="nj-rainbow" element={<NJRainbow />} />
             <Route path="nj-rainbow/:personId" element={<NJRainbow />} />
             <Route path="speakers" element={<Speakers />} />
+            <Route path="assemblies" element={<NJAssemblies />} />
             <Route path="gallery" element={<Gallery />} />
             <Route path="awards" element={<Awards />} />
             <Route path="documents" element={<Documents />} />
@@ -95,6 +98,7 @@ const AppRoutes = () => {
             <Route path="announcements" element={<ManageAnnouncements />} />
             <Route path="members" element={<ManageMembers />} />
             <Route path="speakers" element={<ManageSpeakers />} />
+            <Route path="assemblies" element={<ManageAssemblies />} />
             <Route path="meals" element={<ManageMeals />} />
             <Route path="awards" element={<ManageAwards />} />
             <Route path="documents" element={<ManageDocuments />} />

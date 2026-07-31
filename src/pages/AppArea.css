@@ -558,3 +558,86 @@
 .speaker-detail-events {
   margin-top: 0.65rem;
 }
+
+
+.assemblies-grid {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.assembly-card {
+  display: flex;
+  gap: 0.9rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  background: var(--color-surface);
+  box-shadow: 0 12px 28px rgba(28, 20, 10, 0.08);
+}
+
+.assembly-card-icon {
+  width: 54px;
+  height: 54px;
+  flex: 0 0 54px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  color: var(--color-primary);
+}
+
+.assembly-card-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.assembly-card h2 {
+  margin: 0 0 0.45rem;
+  color: var(--color-charcoal);
+  font-size: 1.2rem;
+}
+
+.assembly-card p {
+  margin: 0;
+  color: var(--color-text-light);
+  line-height: 1.45;
+}
+
+.assembly-card p + p,
+.assembly-gallery-link {
+  margin-top: 0.45rem;
+}
+
+.assembly-meta,
+.assembly-theme {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-primary) !important;
+  font-weight: 900;
+}
+
+.assembly-gallery-link {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: var(--color-white);
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.assembly-gallery-link:hover {
+  color: var(--color-white);
+  text-decoration: none;
+}
+
+@media (min-width: 760px) {
+  .assemblies-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

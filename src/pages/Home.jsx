@@ -28,6 +28,13 @@ const baseTiles = [
     tone: 'gold',
   },
   {
+    title: 'NJ Assemblies',
+    subtitle: 'Assemblies, advisors, themes, photos',
+    to: '/assemblies',
+    icon: Landmark,
+    tone: 'blue',
+  },
+  {
     title: 'Speaker List',
     subtitle: 'Guests, officers, presenters',
     to: '/speakers',

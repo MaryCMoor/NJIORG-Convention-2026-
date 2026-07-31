@@ -5,6 +5,9 @@ function doGet(e) {
   if (action === 'getAppConfig') {
     return getAppConfig();
   }
+  if (action === 'getAssemblies') {
+    return getAssemblies();
+  }
 
   return jsonResponse({
     ok: true,
@@ -32,6 +35,8 @@ function doPost(e) {
     if (action === 'updateMember') return updateMember(body);
     if (action === 'createSpeaker' || action === 'addSpeaker' || action === 'saveSpeaker') return createSpeaker(body);
     if (action === 'updateSpeaker') return updateSpeaker(body);
+    if (action === 'createAssembly' || action === 'addAssembly' || action === 'saveAssembly') return createAssembly(body);
+    if (action === 'updateAssembly') return updateAssembly(body);
     if (action === 'createNotification' || action === 'addNotification' || action === 'saveNotification') return createNotification(body);
     if (action === 'updateNotification') return updateNotification(body);
     if (action === 'saveAppConfig') return saveAppConfig(body);
@@ -283,6 +288,62 @@ function syncSpeakerFromMember(body, memberId) {
   } else {
     deleteSpeakerForMember(memberId, body.name || '');
   }
+}
+
+function getAssembliesSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName('Assemblies');
+  if (!sheet) sheet = ss.insertSheet('Assemblies');
+  ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryFolderUrl', 'notes']);
+  return sheet;
+}
+
+function buildAssemblyData(body, assemblyId) {
+  return {
+    assemblyId: assemblyId,
+    assemblyName: body.assemblyName || body.name || '',
+    motherAdvisor: body.motherAdvisor || '',
+    termTheme: body.termTheme || '',
+    galleryFolderUrl: body.galleryFolderUrl || body.galleryUrl || '',
+    notes: body.notes || ''
+  };
+}
+
+function getAssemblies() {
+  const sheet = getAssembliesSheet();
+  const headers = ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryFolderUrl', 'notes']);
+  const lastRow = sheet.getLastRow();
+  const assemblies = [];
+  if (lastRow >= 2) {
+    const values = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
+    values.forEach(function(row) {
+      const record = {};
+      headers.forEach(function(header, index) {
+        record[header] = row[index] || '';
+      });
+      if (Object.keys(record).some(function(key) { return record[key]; })) assemblies.push(record);
+    });
+  }
+  return jsonResponse({ ok: true, success: true, action: 'getAssemblies', assemblies: assemblies });
+}
+
+function createAssembly(body) {
+  const sheet = getAssembliesSheet();
+  const headers = ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryFolderUrl', 'notes']);
+  const assemblyId = body.assemblyId || 'assembly_' + Date.now();
+  writeObjectRow(sheet, sheet.getLastRow() + 1, headers, buildAssemblyData(body, assemblyId));
+  return jsonResponse({ ok: true, success: true, action: 'createAssembly', assemblyId: assemblyId });
+}
+
+function updateAssembly(body) {
+  const sheet = getAssembliesSheet();
+  const headers = ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryFolderUrl', 'notes']);
+  const assemblyId = body.assemblyId || body.id;
+  if (!assemblyId) return jsonResponse({ ok: false, success: false, error: 'Missing assemblyId' });
+  const rowNumber = findRowById(sheet, headers, 'assemblyId', assemblyId);
+  if (rowNumber === -1) return createAssembly(Object.assign({}, body, { assemblyId: assemblyId }));
+  writeObjectRow(sheet, rowNumber, headers, buildAssemblyData(body, assemblyId));
+  return jsonResponse({ ok: true, success: true, action: 'updateAssembly', assemblyId: assemblyId, updatedAt: new Date().toISOString() });
 }
 
 function getNotificationsSheet() {

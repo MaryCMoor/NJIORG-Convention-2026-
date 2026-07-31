@@ -171,6 +171,55 @@ export const saveSpeakerToGoogleSheet = async (speaker) => sendSpeakerToGoogleSh
 
 export const updateSpeakerInGoogleSheet = async (speaker) => sendSpeakerToGoogleSheet(speaker, 'updateSpeaker')
 
+export const loadAssembliesFromGoogleSheet = async () => {
+  const response = await fetch(`${APPS_SCRIPT_URL}?action=getAssemblies&cacheBust=${Date.now()}`)
+  const text = await response.text()
+  let data = null
+  try {
+    data = JSON.parse(text)
+  } catch {
+    throw new Error('Assemblies endpoint did not return JSON')
+  }
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.error || `Assemblies fetch failed (${response.status})`)
+  }
+  return data.assemblies || []
+}
+
+const sendAssemblyToGoogleSheet = async (assembly, action = 'createAssembly') => {
+  const payload = {
+    action,
+    token: ADMIN_TOKEN,
+    assemblyId: assembly.assemblyId || assembly.id,
+    assemblyName: assembly.assemblyName || assembly.name || '',
+    motherAdvisor: assembly.motherAdvisor || '',
+    termTheme: assembly.termTheme || '',
+    galleryFolderUrl: assembly.galleryFolderUrl || assembly.galleryUrl || '',
+    notes: assembly.notes || '',
+  }
+
+  const response = await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload),
+  })
+  const text = await response.text()
+  let data = null
+  try {
+    data = JSON.parse(text)
+  } catch {
+    data = { ok: response.ok, raw: text }
+  }
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.error || `Google Sheet save failed (${response.status})`)
+  }
+  return data
+}
+
+export const saveAssemblyToGoogleSheet = async (assembly) => sendAssemblyToGoogleSheet(assembly, 'createAssembly')
+
+export const updateAssemblyInGoogleSheet = async (assembly) => sendAssemblyToGoogleSheet(assembly, 'updateAssembly')
+
 const sendNotificationToGoogleSheet = async (notification, action = 'createNotification') => {
   const payload = {
     action,

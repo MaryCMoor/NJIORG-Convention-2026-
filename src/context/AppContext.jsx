@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import mockConvention from '../data/mockData'
 import { loadPublishedSheetData } from '../utils/googleSheetData'
-import { DEFAULT_APP_CONFIG, loadAppConfigFromGoogleSheet } from '../utils/appsScriptApi'
+import { DEFAULT_APP_CONFIG, loadAppConfigFromGoogleSheet, loadAssembliesFromGoogleSheet } from '../utils/appsScriptApi'
 
 const AppContext = createContext(null)
 
@@ -64,7 +64,7 @@ export const AppProvider = ({ children }) => {
     }
   })
   const [notifications, setNotifications] = useState([])
-  const [sheetData, setSheetData] = useState({ events: [], members: [], speakers: [], notifications: [], gallery: [] })
+  const [sheetData, setSheetData] = useState({ events: [], members: [], speakers: [], notifications: [], gallery: [], assemblies: [] })
   const [sheetStatus, setSheetStatus] = useState('idle')
   const [appConfig, setAppConfig] = useState(DEFAULT_APP_CONFIG)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -101,8 +101,14 @@ export const AppProvider = ({ children }) => {
       setSheetStatus('loading')
       try {
         const data = await loadPublishedSheetData()
+        let assemblies = []
+        try {
+          assemblies = await loadAssembliesFromGoogleSheet()
+        } catch (assemblyError) {
+          console.warn('Failed to load Assemblies from Apps Script:', assemblyError)
+        }
         if (cancelled) return
-        setSheetData(data)
+        setSheetData({ ...data, assemblies })
         setSheetStatus('loaded')
         setNotifications(prev => {
           const existingIds = new Set(prev.map(item => item.id))
