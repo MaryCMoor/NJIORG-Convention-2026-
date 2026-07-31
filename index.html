@@ -12,29 +12,7 @@
     <link rel="manifest" href="./manifest.json" />
     <link rel="apple-touch-icon" href="./icons/icon.svg" />
     <title>2026 Rainbow Grand Assembly Convention</title>
-    <script>
-      // Single Page Apps for GitHub Pages
-      // https://github.com/rafgraph/spa-github-pages
-      (function() {
-        var segmentCount = 1;
-        var l = window.location;
-        
-        // Don't redirect if already in the correct format (has ?/)
-        if (l.search.includes('?/') || l.search.includes('&/')) {
-          return;
-        }
-        
-        var newPath = l.pathname.split('/').slice(1, 1 + segmentCount).join('/') + '/?/' +
-          l.pathname.slice(1).split('/').slice(segmentCount).join('/').replace(/&/g, '~and~');
-        
-        var newSearch = (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '');
-        
-        l.replace(
-          l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-          '/' + newPath + newSearch + l.hash
-        );
-      })();
-    </script>
+
     <style>
       /* Critical CSS for instant paint */
       *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
