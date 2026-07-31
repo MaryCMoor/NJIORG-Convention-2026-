@@ -1106,3 +1106,53 @@
   margin-top: 0.15rem;
   color: var(--color-text-light);
 }
+
+
+.event-group {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.sub-event-list {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0 0 0 clamp(1.1rem, 5vw, 2.3rem);
+  list-style: none;
+  border-left: 3px solid var(--color-border);
+}
+
+.schedule-timeline .sub-event-card {
+  position: relative;
+  border-left-width: 4px;
+  background: var(--color-surface-elevated);
+}
+
+.schedule-timeline .sub-event-card::before {
+  content: '';
+  position: absolute;
+  left: calc(clamp(1.1rem, 5vw, 2.3rem) * -1);
+  top: 50%;
+  width: clamp(0.7rem, 4vw, 1.7rem);
+  height: 3px;
+  background: var(--color-border);
+}
+
+.sub-event-label {
+  width: fit-content;
+  display: inline-flex;
+  margin: 0 0 var(--space-xs);
+  padding: 0.18rem 0.5rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sub-event-label.detail {
+  margin-bottom: 0.5rem;
+}

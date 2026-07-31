@@ -8,9 +8,6 @@ function doGet(e) {
   if (action === 'getAssemblies') {
     return getAssemblies();
   }
-  if (action === 'getAssemblyGallery') {
-    return getAssemblyGallery(e && e.parameter && e.parameter.folderUrl, e && e.parameter && e.parameter.maxImages);
-  }
 
   return jsonResponse({
     ok: true,
@@ -125,6 +122,7 @@ function buildEventData(body, eventId, dateCreated) {
     description: body.description || '',
     type: body.type || '',
     speaker: body.speaker || '',
+    parentEventId: body.parentEventId || body.parentId || '',
     requiredRole: body.requiredRole || body.required || '',
     dressCode: body.dressCode || '',
     mensDressCode: body.mensDressCode || body.mensDress || '',
@@ -134,7 +132,7 @@ function buildEventData(body, eventId, dateCreated) {
 
 function createEvent(body) {
   const sheet = getEventsSheet();
-  const headers = ensureHeaders(sheet, ['eventId', 'title', 'day', 'time', 'timeEnd', 'location', 'description', 'type', 'speaker', 'requiredRole', 'dressCode', 'mensDressCode', 'dateCreated']);
+  const headers = ensureHeaders(sheet, ['eventId', 'title', 'day', 'time', 'timeEnd', 'location', 'description', 'type', 'speaker', 'parentEventId', 'requiredRole', 'dressCode', 'mensDressCode', 'dateCreated']);
   const eventId = body.eventId || 'event_' + Date.now();
   const dateCreated = new Date().toISOString();
   writeObjectRow(sheet, sheet.getLastRow() + 1, headers, buildEventData(body, eventId, dateCreated));
@@ -143,7 +141,7 @@ function createEvent(body) {
 
 function updateEvent(body) {
   const sheet = getEventsSheet();
-  const headers = ensureHeaders(sheet, ['eventId', 'title', 'day', 'time', 'timeEnd', 'location', 'description', 'type', 'speaker', 'requiredRole', 'dressCode', 'mensDressCode', 'dateCreated']);
+  const headers = ensureHeaders(sheet, ['eventId', 'title', 'day', 'time', 'timeEnd', 'location', 'description', 'type', 'speaker', 'parentEventId', 'requiredRole', 'dressCode', 'mensDressCode', 'dateCreated']);
   const eventId = body.eventId || body.id;
   if (!eventId) return jsonResponse({ ok: false, success: false, error: 'Missing eventId' });
   const rowNumber = findRowById(sheet, headers, 'eventId', eventId);
@@ -297,7 +295,7 @@ function getAssembliesSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName('Assemblies');
   if (!sheet) sheet = ss.insertSheet('Assemblies');
-  ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryFolderUrl', 'notes']);
+  ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryFolderUrl', 'galleryImageUrls', 'notes']);
   return sheet;
 }
 
@@ -308,13 +306,14 @@ function buildAssemblyData(body, assemblyId) {
     motherAdvisor: body.motherAdvisor || '',
     termTheme: body.termTheme || '',
     galleryFolderUrl: body.galleryFolderUrl || body.galleryUrl || '',
+    galleryImageUrls: body.galleryImageUrls || '',
     notes: body.notes || ''
   };
 }
 
 function getAssemblies() {
   const sheet = getAssembliesSheet();
-  const headers = ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryFolderUrl', 'notes']);
+  const headers = ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryFolderUrl', 'galleryImageUrls', 'notes']);
   const lastRow = sheet.getLastRow();
   const assemblies = [];
   if (lastRow >= 2) {
@@ -332,7 +331,7 @@ function getAssemblies() {
 
 function createAssembly(body) {
   const sheet = getAssembliesSheet();
-  const headers = ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryFolderUrl', 'notes']);
+  const headers = ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryFolderUrl', 'galleryImageUrls', 'notes']);
   const assemblyId = body.assemblyId || 'assembly_' + Date.now();
   writeObjectRow(sheet, sheet.getLastRow() + 1, headers, buildAssemblyData(body, assemblyId));
   return jsonResponse({ ok: true, success: true, action: 'createAssembly', assemblyId: assemblyId });
@@ -340,54 +339,13 @@ function createAssembly(body) {
 
 function updateAssembly(body) {
   const sheet = getAssembliesSheet();
-  const headers = ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryFolderUrl', 'notes']);
+  const headers = ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryFolderUrl', 'galleryImageUrls', 'notes']);
   const assemblyId = body.assemblyId || body.id;
   if (!assemblyId) return jsonResponse({ ok: false, success: false, error: 'Missing assemblyId' });
   const rowNumber = findRowById(sheet, headers, 'assemblyId', assemblyId);
   if (rowNumber === -1) return createAssembly(Object.assign({}, body, { assemblyId: assemblyId }));
   writeObjectRow(sheet, rowNumber, headers, buildAssemblyData(body, assemblyId));
   return jsonResponse({ ok: true, success: true, action: 'updateAssembly', assemblyId: assemblyId, updatedAt: new Date().toISOString() });
-}
-
-function extractDriveFolderId(folderUrl) {
-  const text = String(folderUrl || '');
-  const match = text.match(/\/folders\/([a-zA-Z0-9_-]+)/) || text.match(/[?&]id=([a-zA-Z0-9_-]+)/) || text.match(/^([a-zA-Z0-9_-]{20,})$/);
-  return match ? match[1] : '';
-}
-
-function getAssemblyGallery(folderUrl, maxImages) {
-  try {
-    const folderId = extractDriveFolderId(folderUrl);
-    if (!folderId) return jsonResponse({ ok: false, success: false, error: 'Missing or invalid Google Drive folder link' });
-
-    const limit = Math.max(1, Math.min(Number(maxImages) || 40, 80));
-    const folder = DriveApp.getFolderById(folderId);
-    const files = folder.getFiles();
-    const images = [];
-
-    while (files.hasNext() && images.length < limit) {
-      const file = files.next();
-      const mimeType = file.getMimeType();
-      if (String(mimeType || '').indexOf('image/') !== 0) continue;
-      const id = file.getId();
-      images.push({
-        id: id,
-        name: file.getName(),
-        mimeType: mimeType,
-        thumbnailUrl: 'https://drive.google.com/thumbnail?id=' + id + '&sz=w1000',
-        viewUrl: 'https://drive.google.com/file/d/' + id + '/view'
-      });
-    }
-
-    return jsonResponse({ ok: true, success: true, action: 'getAssemblyGallery', images: images, limit: limit, hasMore: files.hasNext() });
-  } catch (error) {
-    return jsonResponse({
-      ok: false,
-      success: false,
-      action: 'getAssemblyGallery',
-      error: 'Could not read the Google Drive folder. Re-deploy the Apps Script as a new version and approve Drive access, then make sure the folder/images are shared so the script owner can view them. Details: ' + String(error)
-    });
-  }
 }
 
 function getNotificationsSheet() {

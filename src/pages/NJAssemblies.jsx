@@ -1,8 +1,17 @@
 import { useState } from 'react'
-import { Images, Landmark, Loader2, UserRound, X } from 'lucide-react'
+import { Images, Landmark, UserRound, X } from 'lucide-react'
 import { useApp } from '../context/AppContext'
-import { loadAssemblyGalleryImages } from '../utils/appsScriptApi'
 import './AppArea.css'
+
+const parseGalleryImageUrls = (value) => String(value || '')
+  .split(/[\n,]+/)
+  .map(url => url.trim())
+  .filter(Boolean)
+  .map((url, index) => ({
+    id: `${index}-${url}`,
+    name: `Photo ${index + 1}`,
+    imageUrl: url,
+  }))
 
 const NJAssemblies = () => {
   const { sheetData } = useApp()
@@ -10,34 +19,18 @@ const NJAssemblies = () => {
   const [galleryAssembly, setGalleryAssembly] = useState(null)
   const [galleryImages, setGalleryImages] = useState([])
   const [selectedGalleryImage, setSelectedGalleryImage] = useState(null)
-  const [galleryStatus, setGalleryStatus] = useState('idle')
-  const [galleryError, setGalleryError] = useState('')
 
-  const openGallery = async (assembly) => {
+  const openGallery = (assembly) => {
+    const images = parseGalleryImageUrls(assembly.galleryImageUrls)
     setGalleryAssembly(assembly)
-    setGalleryImages([])
-    setSelectedGalleryImage(null)
-    setGalleryError('')
-    setGalleryStatus('loading')
-
-    try {
-      const images = await loadAssemblyGalleryImages(assembly.galleryFolderUrl)
-      setGalleryImages(images)
-      setSelectedGalleryImage(images[0] || null)
-      setGalleryStatus('loaded')
-    } catch (error) {
-      console.error(error)
-      setGalleryError(error.message || 'Could not load the gallery images.')
-      setGalleryStatus('error')
-    }
+    setGalleryImages(images)
+    setSelectedGalleryImage(images[0] || null)
   }
 
   const closeGallery = () => {
     setGalleryAssembly(null)
     setGalleryImages([])
     setSelectedGalleryImage(null)
-    setGalleryError('')
-    setGalleryStatus('idle')
   }
 
   return (
@@ -56,26 +49,31 @@ const NJAssemblies = () => {
         </section>
       ) : (
         <section className="assemblies-grid" aria-label="New Jersey Assemblies">
-          {assemblies.map(assembly => (
-            <article key={assembly.assemblyId || assembly.id || assembly.assemblyName} className="assembly-card">
-              <div className="assembly-card-icon"><Landmark size={26} /></div>
-              <div className="assembly-card-content">
-                <h2>{assembly.assemblyName || assembly.name}</h2>
-                {assembly.motherAdvisor && (
-                  <p className="assembly-meta"><UserRound size={16} /> Mother Advisor: {assembly.motherAdvisor}</p>
-                )}
-                {assembly.termTheme && (
-                  <p className="assembly-theme">Theme: {assembly.termTheme}</p>
-                )}
-                {assembly.notes && <p>{assembly.notes}</p>}
-                {assembly.galleryFolderUrl && (
-                  <button type="button" className="assembly-gallery-link" onClick={() => openGallery(assembly)}>
-                    <Images size={16} /> View photo gallery
-                  </button>
-                )}
-              </div>
-            </article>
-          ))}
+          {assemblies.map(assembly => {
+            const hasImageUrls = parseGalleryImageUrls(assembly.galleryImageUrls).length > 0
+            const hasFolderLink = Boolean(assembly.galleryFolderUrl)
+
+            return (
+              <article key={assembly.assemblyId || assembly.id || assembly.assemblyName} className="assembly-card">
+                <div className="assembly-card-icon"><Landmark size={26} /></div>
+                <div className="assembly-card-content">
+                  <h2>{assembly.assemblyName || assembly.name}</h2>
+                  {assembly.motherAdvisor && (
+                    <p className="assembly-meta"><UserRound size={16} /> Mother Advisor: {assembly.motherAdvisor}</p>
+                  )}
+                  {assembly.termTheme && (
+                    <p className="assembly-theme">Theme: {assembly.termTheme}</p>
+                  )}
+                  {assembly.notes && <p>{assembly.notes}</p>}
+                  {(hasImageUrls || hasFolderLink) && (
+                    <button type="button" className="assembly-gallery-link" onClick={() => openGallery(assembly)}>
+                      <Images size={16} /> View photo gallery
+                    </button>
+                  )}
+                </div>
+              </article>
+            )
+          })}
         </section>
       )}
 
@@ -88,31 +86,18 @@ const NJAssemblies = () => {
             <p className="area-kicker">Assembly Gallery</p>
             <h2 id="assembly-gallery-title">{galleryAssembly.assemblyName || galleryAssembly.name}</h2>
 
-            {galleryStatus === 'loading' && (
+            {galleryImages.length === 0 ? (
               <div className="assembly-gallery-state">
-                <Loader2 size={28} className="spin-icon" />
-                <p>Loading photos from Google Drive...</p>
+                <p>No image URLs have been added for this assembly yet.</p>
+                {galleryAssembly.galleryFolderUrl && (
+                  <a href={galleryAssembly.galleryFolderUrl} target="_blank" rel="noreferrer">Open Google Drive folder</a>
+                )}
               </div>
-            )}
-
-            {galleryStatus === 'error' && (
-              <div className="assembly-gallery-state error">
-                <p>{galleryError}</p>
-                <a href={galleryAssembly.galleryFolderUrl} target="_blank" rel="noreferrer">Open folder in Google Drive</a>
-              </div>
-            )}
-
-            {galleryStatus === 'loaded' && galleryImages.length === 0 && (
-              <div className="assembly-gallery-state">
-                <p>No image files were found in this Google Drive folder.</p>
-              </div>
-            )}
-
-            {galleryImages.length > 0 && (
+            ) : (
               <>
                 {selectedGalleryImage && (
                   <figure className="assembly-gallery-featured">
-                    <img src={selectedGalleryImage.thumbnailUrl} alt={selectedGalleryImage.name || 'Selected assembly gallery photo'} />
+                    <img src={selectedGalleryImage.imageUrl} alt={selectedGalleryImage.name || 'Selected assembly gallery photo'} />
                     {selectedGalleryImage.name && <figcaption>{selectedGalleryImage.name}</figcaption>}
                   </figure>
                 )}
@@ -124,7 +109,7 @@ const NJAssemblies = () => {
                       className={`assembly-gallery-photo ${selectedGalleryImage?.id === image.id ? 'active' : ''}`}
                       onClick={() => setSelectedGalleryImage(image)}
                     >
-                      <img src={image.thumbnailUrl} alt={image.name || 'Assembly gallery photo'} loading="lazy" />
+                      <img src={image.imageUrl} alt={image.name || 'Assembly gallery photo'} loading="lazy" />
                       {image.name && <span>{image.name}</span>}
                     </button>
                   ))}

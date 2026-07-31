@@ -62,6 +62,8 @@ const isRequiredForSelectedRole = (event, selectedRole) => {
   return requiredRoles.includes('All Roles') || requiredRoles.includes(selectedRoleLabel)
 }
 
+const getEventKey = (event) => event?.eventId || event?.id
+
 const Schedule = () => {
   const { eventId } = useParams()
   const navigate = useNavigate()
@@ -73,6 +75,30 @@ const Schedule = () => {
   const [selectedDay, setSelectedDay] = useState(() => selectedEvent?.startTime.slice(0, 10) || conventionDays[0].date)
   const events = useMemo(() => getEventsForDay(selectedDay), [getEventsForDay, selectedDay])
   const activeDay = conventionDays.find(d => d.date === selectedDay)
+
+  const eventsById = useMemo(() => {
+    const map = new Map()
+    events.forEach(event => {
+      map.set(event.id, event)
+      if (event.eventId) map.set(event.eventId, event)
+    })
+    return map
+  }, [events])
+
+  const childEventsByParent = useMemo(() => {
+    const map = new Map()
+    events.forEach(event => {
+      if (!event.parentEventId) return
+      const children = map.get(event.parentEventId) || []
+      children.push(event)
+      map.set(event.parentEventId, children)
+    })
+    return map
+  }, [events])
+
+  const topLevelEvents = useMemo(() => {
+    return events.filter(event => !event.parentEventId || !eventsById.has(event.parentEventId))
+  }, [events, eventsById])
 
   useEffect(() => {
     if (selectedEvent) {
@@ -118,21 +144,45 @@ const Schedule = () => {
           </div>
         ) : (
           <ol className="schedule-timeline">
-            {events.map(event => {
+            {topLevelEvents.map(event => {
               const requiredForUser = isRequiredForSelectedRole(event, selectedRole)
+              const childEvents = childEventsByParent.get(getEventKey(event)) || []
 
               return (
-              <li key={event.id} className={`event-card ${requiredForUser ? 'required-event-card' : ''}`}>
-                <button
-                  type="button"
-                  className="event-card-open"
-                  onClick={() => navigate(`/schedule/${event.id}`)}
-                  aria-label={`Open details for ${event.name}`}
-                >
-                  <EventCardContent event={event} speakers={speakers} selectedRole={selectedRole} />
-                </button>
-              </li>
-            )})}
+                <li key={event.id} className="event-group">
+                  <div className={`event-card ${requiredForUser ? 'required-event-card' : ''}`}>
+                    <button
+                      type="button"
+                      className="event-card-open"
+                      onClick={() => navigate(`/schedule/${event.id}`)}
+                      aria-label={`Open details for ${event.name}`}
+                    >
+                      <EventCardContent event={event} speakers={speakers} selectedRole={selectedRole} />
+                    </button>
+                  </div>
+
+                  {childEvents.length > 0 && (
+                    <ol className="sub-event-list" aria-label={`Sub-events for ${event.name}`}>
+                      {childEvents.map(childEvent => {
+                        const childRequiredForUser = isRequiredForSelectedRole(childEvent, selectedRole)
+                        return (
+                          <li key={childEvent.id} className={`event-card sub-event-card ${childRequiredForUser ? 'required-event-card' : ''}`}>
+                            <button
+                              type="button"
+                              className="event-card-open"
+                              onClick={() => navigate(`/schedule/${childEvent.id}`)}
+                              aria-label={`Open details for ${childEvent.name}`}
+                            >
+                              <EventCardContent event={childEvent} speakers={speakers} selectedRole={selectedRole} isSubEvent />
+                            </button>
+                          </li>
+                        )
+                      })}
+                    </ol>
+                  )}
+                </li>
+              )
+            })}
           </ol>
         )}
       </div>
@@ -142,18 +192,26 @@ const Schedule = () => {
   )
 }
 
-const EventCardContent = ({ event, speakers, selectedRole }) => {
+const EventCardContent = ({ event, speakers, selectedRole, isSubEvent = false }) => {
   const eventSpeakers = getEventSpeakerTags(event, speakers)
   const requiredForUser = isRequiredForSelectedRole(event, selectedRole)
+  const hasOwnTime = Boolean(event.time)
 
   return (
     <>
       <div className="event-time">
         <Clock size={14} aria-hidden="true" />
-        <span>{formatTime(event.startTime)}</span>
-        <span className="event-time-end">– {formatTime(event.endTime)}</span>
+        {isSubEvent && !hasOwnTime ? (
+          <span>Sub-event</span>
+        ) : (
+          <>
+            <span>{formatTime(event.startTime)}</span>
+            <span className="event-time-end">– {formatTime(event.endTime)}</span>
+          </>
+        )}
       </div>
       <div className="event-body">
+        {isSubEvent && <span className="sub-event-label">Part of larger event</span>}
         <h3 className="event-name">{event.name}</h3>
         {requiredForUser && <span className="required-user-badge">Required for you</span>}
         <p className="event-description">{event.description}</p>
@@ -199,6 +257,7 @@ const EventRequirements = ({ event }) => {
 const EventDetail = ({ event, speakers, selectedRole, onClose }) => {
   const eventSpeakers = getEventSpeakerTags(event, speakers)
   const requiredForUser = isRequiredForSelectedRole(event, selectedRole)
+  const hasOwnTime = Boolean(event.time)
 
   return (
     <div className="event-detail-overlay" role="dialog" aria-modal="true" aria-labelledby="event-detail-title" onClick={onClose}>
@@ -209,8 +268,11 @@ const EventDetail = ({ event, speakers, selectedRole, onClose }) => {
 
         <p className="area-kicker">{formatDay(event.startTime)}</p>
         <h2 id="event-detail-title">{event.name}</h2>
+        {event.parentEventId && <span className="sub-event-label detail">Sub-event</span>}
         {requiredForUser && <span className="required-user-badge detail">Required for you</span>}
-        <p className="event-detail-time">{formatTime(event.startTime)} – {formatTime(event.endTime)}</p>
+        <p className="event-detail-time">
+          {event.parentEventId && !hasOwnTime ? 'Part of parent event time' : `${formatTime(event.startTime)} – ${formatTime(event.endTime)}`}
+        </p>
         <p className="event-detail-description">{event.description}</p>
 
         <div className="event-detail-grid">

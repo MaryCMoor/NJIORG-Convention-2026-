@@ -17,6 +17,7 @@ const blankForm = () => ({
   description: '',
   type: 'General',
   speaker: '',
+  parentEventId: '',
   requiredRoles: ['All Roles'],
   dressCodes: [],
   mensDressCode: '',
@@ -168,6 +169,7 @@ const ManageSchedule = () => {
       description: event.description || '',
       type: event.type || 'General',
       speaker: event.speaker || '',
+      parentEventId: event.parentEventId || '',
       requiredRoles: splitList(event.requiredRole, ['All Roles']),
       dressCodes: splitList(event.dressCode),
       mensDressCode: event.mensDressCode || '',
@@ -219,7 +221,7 @@ const ManageSchedule = () => {
   };
 
   const exportSchedule = () => {
-    const headers = ['eventId', 'title', 'day', 'time', 'timeEnd', 'location', 'description', 'type', 'speaker', 'requiredRole', 'dressCode', 'mensDressCode', 'dateCreated'];
+    const headers = ['eventId', 'title', 'day', 'time', 'timeEnd', 'location', 'description', 'type', 'speaker', 'parentEventId', 'requiredRole', 'dressCode', 'mensDressCode', 'dateCreated'];
     const csv = [
       headers.join(','),
       ...filteredEvents.map(event => headers.map(header => `"${String(event[header] || '').replace(/"/g, '""')}"`).join(',')),
@@ -303,6 +305,7 @@ const ManageSchedule = () => {
                 <th><button className="sortable-header" onClick={() => handleSort('type')}>Type <span className="sort-icon">{renderSortIcon('type')}</span></button></th>
                 <th><button className="sortable-header" onClick={() => handleSort('location')}>Location <span className="sort-icon">{renderSortIcon('location')}</span></button></th>
                 <th><button className="sortable-header" onClick={() => handleSort('speaker')}>Speaker <span className="sort-icon">{renderSortIcon('speaker')}</span></button></th>
+                <th><button className="sortable-header" onClick={() => handleSort('parentEventId')}>Parent Event <span className="sort-icon">{renderSortIcon('parentEventId')}</span></button></th>
                 <th><button className="sortable-header" onClick={() => handleSort('requiredRole')}>Required <span className="sort-icon">{renderSortIcon('requiredRole')}</span></button></th>
                 <th><button className="sortable-header" onClick={() => handleSort('dressCode')}>Dress Code <span className="sort-icon">{renderSortIcon('dressCode')}</span></button></th>
                 <th><button className="sortable-header" onClick={() => handleSort('mensDressCode')}>Men's Dress <span className="sort-icon">{renderSortIcon('mensDressCode')}</span></button></th>
@@ -311,9 +314,9 @@ const ManageSchedule = () => {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={11} className="empty-state"><Calendar size={32}/><p>Loading Google Sheet events...</p></td></tr>
+                <tr><td colSpan={12} className="empty-state"><Calendar size={32}/><p>Loading Google Sheet events...</p></td></tr>
               ) : paginatedEvents.length === 0 ? (
-                <tr><td colSpan={11} className="empty-state"><Info size={32}/><p>No events found in the Google Sheet.</p><button className="btn btn-primary" onClick={openAddModal}><Plus size={16}/>Add First Event</button></td></tr>
+                <tr><td colSpan={12} className="empty-state"><Info size={32}/><p>No events found in the Google Sheet.</p><button className="btn btn-primary" onClick={openAddModal}><Plus size={16}/>Add First Event</button></td></tr>
               ) : (
                 paginatedEvents.map(event => (
                   <tr key={event.id}>
@@ -324,6 +327,7 @@ const ManageSchedule = () => {
                     <td><span className={`category-badge ${event.type || 'muted'}`}>{event.type || '—'}</span></td>
                     <td>{event.location || '—'}</td>
                     <td>{event.speaker || '—'}</td>
+                    <td>{events.find(item => item.eventId === event.parentEventId || item.id === event.parentEventId)?.title || (event.parentEventId ? event.parentEventId : '—')}</td>
                     <td>{event.requiredRole || 'All Roles'}</td>
                     <td>{event.dressCode || '—'}</td>
                     <td>{event.mensDressCode || '—'}</td>
@@ -354,10 +358,11 @@ const ManageSchedule = () => {
               <div className="form-grid">
                 <div className="form-field"><label htmlFor="title">Title *</label><input type="text" id="title" value={formData.title} onChange={event => setFormData({...formData, title: event.target.value})} required/></div>
                 <div className="form-field"><label htmlFor="day">Day *</label><select id="day" value={formData.day} onChange={event => setFormData({...formData, day: event.target.value})} required>{dayOptions.map(day => <option key={day} value={day}>{day}</option>)}</select></div>
-                <div className="form-field"><label htmlFor="time">Start Time *</label><input type="text" id="time" placeholder="11:30 AM" value={formData.time} onChange={event => setFormData({...formData, time: event.target.value})} required/></div>
+                <div className="form-field"><label htmlFor="time">Start Time {formData.parentEventId ? '(optional for sub-event)' : '*'}</label><input type="text" id="time" placeholder={formData.parentEventId ? 'Uses parent event time' : '11:30 AM'} value={formData.time} onChange={event => setFormData({...formData, time: event.target.value})} required={!formData.parentEventId}/></div>
                 <div className="form-field"><label htmlFor="timeEnd">End Time</label><input type="text" id="timeEnd" placeholder="1:45 PM" value={formData.timeEnd} onChange={event => setFormData({...formData, timeEnd: event.target.value})}/></div>
                 <div className="form-field"><label htmlFor="location">Location</label><input type="text" id="location" value={formData.location} onChange={event => setFormData({...formData, location: event.target.value})}/></div>
                 <div className="form-field"><label htmlFor="type">Type</label><select id="type" value={formData.type} onChange={event => setFormData({...formData, type: event.target.value})}>{typeOptions.map(type => <option key={type} value={type}>{type}</option>)}</select></div>
+                <div className="form-field full-width"><label htmlFor="parentEventId">Parent Event / Make This a Sub-Event</label><select id="parentEventId" value={formData.parentEventId} onChange={event => setFormData({...formData, parentEventId: event.target.value})}><option value="">No parent event</option>{events.filter(item => (item.eventId || item.id) !== (formData.eventId || editingEvent?.eventId || editingEvent?.id)).map(item => <option key={item.eventId || item.id} value={item.eventId || item.id}>{item.day} · {item.time || 'No time'} · {item.title}</option>)}</select><p className="field-help">Choose a parent event when this is part of a larger event. It will appear indented under that parent on the public schedule.</p></div>
                 <div className="form-field full-width">
                   <label>Required To Attend</label>
                   <div className="checkbox-chip-group">
@@ -394,7 +399,7 @@ const ManageSchedule = () => {
             <div className="modal-header"><h2 className="modal-title">Event Details</h2><button className="modal-close" onClick={() => setViewEvent(null)}><X size={20}/></button></div>
             <div className="modal-body">
               <div className="view-grid">
-                <div className="view-section"><h4>Google Sheet Row</h4><dl><dt>eventId</dt><dd>{viewEvent.eventId}</dd><dt>title</dt><dd>{viewEvent.title}</dd><dt>day</dt><dd>{viewEvent.day}</dd><dt>time</dt><dd>{viewEvent.time}</dd><dt>timeEnd</dt><dd>{viewEvent.timeEnd || '—'}</dd><dt>location</dt><dd>{viewEvent.location || '—'}</dd><dt>type</dt><dd>{viewEvent.type || '—'}</dd><dt>speaker</dt><dd>{viewEvent.speaker || '—'}</dd><dt>requiredRole</dt><dd>{viewEvent.requiredRole || 'All Roles'}</dd><dt>dressCode</dt><dd>{viewEvent.dressCode || '—'}</dd><dt>mensDressCode</dt><dd>{viewEvent.mensDressCode || '—'}</dd></dl></div>
+                <div className="view-section"><h4>Google Sheet Row</h4><dl><dt>eventId</dt><dd>{viewEvent.eventId}</dd><dt>title</dt><dd>{viewEvent.title}</dd><dt>day</dt><dd>{viewEvent.day}</dd><dt>time</dt><dd>{viewEvent.time}</dd><dt>timeEnd</dt><dd>{viewEvent.timeEnd || '—'}</dd><dt>location</dt><dd>{viewEvent.location || '—'}</dd><dt>type</dt><dd>{viewEvent.type || '—'}</dd><dt>speaker</dt><dd>{viewEvent.speaker || '—'}</dd><dt>parentEventId</dt><dd>{viewEvent.parentEventId || '—'}</dd><dt>requiredRole</dt><dd>{viewEvent.requiredRole || 'All Roles'}</dd><dt>dressCode</dt><dd>{viewEvent.dressCode || '—'}</dd><dt>mensDressCode</dt><dd>{viewEvent.mensDressCode || '—'}</dd></dl></div>
                 <div className="view-section full-width"><h4>description</h4><p>{viewEvent.description || '—'}</p></div>
               </div>
             </div>

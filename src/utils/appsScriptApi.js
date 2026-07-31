@@ -66,6 +66,7 @@ const sendEventToGoogleSheet = async (event, action = 'createEvent') => {
     description: event.description || '',
     type: event.category || event.type || '',
     speaker: event.presenter || event.speaker || '',
+    parentEventId: event.parentEventId || event.parentId || '',
     requiredRole: Array.isArray(event.requiredRoles) ? event.requiredRoles.join(', ') : (event.requiredRole || event.required || ''),
     dressCode: Array.isArray(event.dressCodes) ? event.dressCodes.join(', ') : (event.dressCode || ''),
     mensDressCode: event.mensDressCode || '',
@@ -186,27 +187,6 @@ export const loadAssembliesFromGoogleSheet = async () => {
   return data.assemblies || []
 }
 
-export const loadAssemblyGalleryImages = async (folderUrl) => {
-  if (!folderUrl) return []
-  const response = await fetch(`${APPS_SCRIPT_URL}?action=getAssemblyGallery&folderUrl=${encodeURIComponent(folderUrl)}&maxImages=40&cacheBust=${Date.now()}`, {
-    redirect: 'follow',
-  })
-  const text = await response.text()
-  let data = null
-  try {
-    data = JSON.parse(text)
-  } catch {
-    if (text.includes('DriveApp.getFolderById') || text.includes('permission')) {
-      throw new Error('The Apps Script needs to be redeployed as a new version and approved for Google Drive access before the in-app gallery can load photos.')
-    }
-    throw new Error('Assembly gallery endpoint did not return JSON')
-  }
-  if (!response.ok || data.ok === false) {
-    throw new Error(data.error || `Assembly gallery fetch failed (${response.status})`)
-  }
-  return data.images || []
-}
-
 const sendAssemblyToGoogleSheet = async (assembly, action = 'createAssembly') => {
   const payload = {
     action,
@@ -216,6 +196,7 @@ const sendAssemblyToGoogleSheet = async (assembly, action = 'createAssembly') =>
     motherAdvisor: assembly.motherAdvisor || '',
     termTheme: assembly.termTheme || '',
     galleryFolderUrl: assembly.galleryFolderUrl || assembly.galleryUrl || '',
+    galleryImageUrls: assembly.galleryImageUrls || '',
     notes: assembly.notes || '',
   }
 

@@ -14,6 +14,7 @@ const blankForm = () => ({
   motherAdvisor: '',
   termTheme: '',
   galleryFolderUrl: '',
+  galleryImageUrls: '',
   notes: '',
 });
 
@@ -24,6 +25,7 @@ const normalizeAssemblyForAdmin = (assembly, index = 0) => ({
   motherAdvisor: assembly.motherAdvisor || '',
   termTheme: assembly.termTheme || '',
   galleryFolderUrl: assembly.galleryFolderUrl || assembly.galleryUrl || '',
+  galleryImageUrls: assembly.galleryImageUrls || '',
   notes: assembly.notes || '',
 });
 
@@ -109,6 +111,7 @@ const ManageAssemblies = () => {
       motherAdvisor: assembly.motherAdvisor || '',
       termTheme: assembly.termTheme || '',
       galleryFolderUrl: assembly.galleryFolderUrl || '',
+      galleryImageUrls: assembly.galleryImageUrls || '',
       notes: assembly.notes || '',
     });
     setSheetSaveStatus('idle');
@@ -156,7 +159,7 @@ const ManageAssemblies = () => {
   };
 
   const exportAssemblies = () => {
-    const headers = ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryFolderUrl', 'notes'];
+    const headers = ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryFolderUrl', 'galleryImageUrls', 'notes'];
     const csv = [
       headers.join(','),
       ...filteredAssemblies.map(assembly => headers.map(header => `"${String(assembly[header] || '').replace(/"/g, '""')}"`).join(',')),
@@ -179,7 +182,7 @@ const ManageAssemblies = () => {
       <header className="page-header">
         <div className="header-left">
           <h1 className="page-title">NJ Assemblies</h1>
-          <p className="page-subtitle">Manage assembly names, Mother Advisors, term themes, and Google folder galleries.</p>
+          <p className="page-subtitle">Manage assembly names, Mother Advisors, term themes, folder links, and image URL galleries.</p>
         </div>
         <div className="header-actions">
           <button className="btn btn-secondary" onClick={refreshAssemblies} disabled={loading}>
@@ -234,7 +237,7 @@ const ManageAssemblies = () => {
                     <td className="title-cell"><div className="event-title">{assembly.assemblyName || '—'}</div>{assembly.notes && <div className="event-desc">{assembly.notes.slice(0, 90)}{assembly.notes.length > 90 ? '…' : ''}</div>}</td>
                     <td>{assembly.motherAdvisor || '—'}</td>
                     <td>{assembly.termTheme || '—'}</td>
-                    <td>{assembly.galleryFolderUrl ? <a href={assembly.galleryFolderUrl} target="_blank" rel="noreferrer">Open folder</a> : '—'}</td>
+                    <td>{assembly.galleryImageUrls ? 'Image URLs' : assembly.galleryFolderUrl ? <a href={assembly.galleryFolderUrl} target="_blank" rel="noreferrer">Open folder</a> : '—'}</td>
                     <td><div className="action-buttons"><button className="icon-btn view" onClick={() => setViewAssembly(assembly)} aria-label={`View ${assembly.assemblyName}`}><Eye size={16}/></button></div></td>
                   </tr>
                 ))
@@ -258,6 +261,7 @@ const ManageAssemblies = () => {
                 <div className="form-field"><label htmlFor="motherAdvisor">Mother Advisor</label><input type="text" id="motherAdvisor" value={formData.motherAdvisor} onChange={event => setFormData({...formData, motherAdvisor: event.target.value})} /></div>
                 <div className="form-field full-width"><label htmlFor="termTheme">Term Theme</label><input type="text" id="termTheme" value={formData.termTheme} onChange={event => setFormData({...formData, termTheme: event.target.value})} /></div>
                 <div className="form-field full-width"><label htmlFor="galleryFolderUrl">Google Folder Gallery Link</label><input type="url" id="galleryFolderUrl" value={formData.galleryFolderUrl} onChange={event => setFormData({...formData, galleryFolderUrl: event.target.value})} placeholder="https://drive.google.com/drive/folders/..." /></div>
+                <div className="form-field full-width"><label htmlFor="galleryImageUrls">Gallery Image URLs</label><textarea id="galleryImageUrls" value={formData.galleryImageUrls} onChange={event => setFormData({...formData, galleryImageUrls: event.target.value})} placeholder="Paste one public image URL per line" rows={5} /></div>
                 <div className="form-field full-width"><label htmlFor="notes">Notes</label><textarea id="notes" value={formData.notes} onChange={event => setFormData({...formData, notes: event.target.value})} rows={4} /></div>
               </div>
               {sheetSaveMessage && <div className={`sheet-save-message ${sheetSaveStatus}`}>{sheetSaveMessage}</div>}
@@ -271,7 +275,7 @@ const ManageAssemblies = () => {
         <div className="modal-overlay" onClick={() => setViewAssembly(null)}>
           <div className="modal modal-lg" onClick={event => event.stopPropagation()}>
             <div className="modal-header"><h2 className="modal-title">Assembly Details</h2><button className="modal-close" onClick={() => setViewAssembly(null)}><X size={20}/></button></div>
-            <div className="modal-body"><div className="view-grid"><div className="view-section"><h4>Assembly</h4><p>{viewAssembly.assemblyName || '—'}</p></div><div className="view-section"><h4>Mother Advisor</h4><p>{viewAssembly.motherAdvisor || '—'}</p></div><div className="view-section full-width"><h4>Term Theme</h4><p>{viewAssembly.termTheme || '—'}</p></div><div className="view-section full-width"><h4>Gallery Link</h4><p>{viewAssembly.galleryFolderUrl || '—'}</p></div><div className="view-section full-width"><h4>Notes</h4><p>{viewAssembly.notes || '—'}</p></div></div></div>
+            <div className="modal-body"><div className="view-grid"><div className="view-section"><h4>Assembly</h4><p>{viewAssembly.assemblyName || '—'}</p></div><div className="view-section"><h4>Mother Advisor</h4><p>{viewAssembly.motherAdvisor || '—'}</p></div><div className="view-section full-width"><h4>Term Theme</h4><p>{viewAssembly.termTheme || '—'}</p></div><div className="view-section full-width"><h4>Gallery Link</h4><p>{viewAssembly.galleryFolderUrl || '—'}</p></div><div className="view-section full-width"><h4>Gallery Image URLs</h4><p>{viewAssembly.galleryImageUrls || '—'}</p></div><div className="view-section full-width"><h4>Notes</h4><p>{viewAssembly.notes || '—'}</p></div></div></div>
             <div className="modal-actions"><button className="btn btn-secondary" onClick={() => setViewAssembly(null)}>Close</button><button className="btn btn-primary" onClick={() => { setViewAssembly(null); openEditModal(viewAssembly); }}><Edit size={16}/> Edit</button></div>
           </div>
         </div>
