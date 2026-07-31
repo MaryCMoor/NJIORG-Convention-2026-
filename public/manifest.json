@@ -4,6 +4,7 @@
   "description": "The Greatest Showman - Rainbow Girls Grand Assembly Convention 2026",
   "start_url": "./",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
   "background_color": "#fef9ef",
   "theme_color": "#8B0000",
   "orientation": "portrait-primary",
@@ -59,7 +60,7 @@
       "name": "Speakers",
       "short_name": "Speakers",
       "description": "Meet our distinguished guests",
-      "url": "./#/directory",
+      "url": "./#/speakers",
       "icons": [
         {
           "src": "icons/icon.svg",
