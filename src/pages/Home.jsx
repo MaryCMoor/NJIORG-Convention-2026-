@@ -2,12 +2,9 @@ import { Link } from 'react-router-dom'
 import {
   Calendar,
   Megaphone,
-  Utensils,
-  Award,
   Shield,
   Mic,
   ChevronRight,
-  Compass,
   Images,
   Landmark,
   Info,
@@ -45,9 +42,6 @@ const baseTiles = [
     tone: 'blue',
   },
   { title: 'Announcements', subtitle: 'Important updates', to: '/announcements', icon: Megaphone, tone: 'red' },
-  { title: 'Maps', subtitle: 'Rooms and directions', to: '/maps', icon: Compass, tone: 'green' },
-  { title: 'Meals', subtitle: 'Menus and meal times', to: '/meals', icon: Utensils, tone: 'red' },
-  { title: 'Awards', subtitle: 'Recognition and honors', to: '/awards', icon: Award, tone: 'purple' },
   { title: 'Event Info', subtitle: 'Venue, contacts, links', to: '/event-info', icon: Info, tone: 'gold' },
 ]
 

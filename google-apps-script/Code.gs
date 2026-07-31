@@ -30,6 +30,8 @@ function doPost(e) {
     if (action === 'updateEvent') return updateEvent(body);
     if (action === 'createMember' || action === 'addMember' || action === 'saveMember') return createMember(body);
     if (action === 'updateMember') return updateMember(body);
+    if (action === 'createSpeaker' || action === 'addSpeaker' || action === 'saveSpeaker') return createSpeaker(body);
+    if (action === 'updateSpeaker') return updateSpeaker(body);
     if (action === 'createNotification' || action === 'addNotification' || action === 'saveNotification') return createNotification(body);
     if (action === 'updateNotification') return updateNotification(body);
     if (action === 'saveAppConfig') return saveAppConfig(body);
@@ -155,7 +157,8 @@ function buildMemberData(body, memberId) {
     photo: body.photo || '',
     bio: body.bio || '',
     category: body.category || '',
-    videoUrl: body.videoUrl || ''
+    videoUrl: body.videoUrl || '',
+    isSpeaker: body.isSpeaker === true ? 'TRUE' : 'FALSE'
   };
 }
 
@@ -183,20 +186,100 @@ function findMemberRow(sheet, headers, body) {
 
 function createMember(body) {
   const sheet = getMembersSheet();
-  const headers = ensureHeaders(sheet, ['memberId', 'name', 'station', 'assembly', 'photo', 'bio', 'category', 'videoUrl']);
+  const headers = ensureHeaders(sheet, ['memberId', 'name', 'station', 'assembly', 'photo', 'bio', 'category', 'videoUrl', 'isSpeaker']);
   const memberId = body.memberId || 'member_' + Date.now();
   writeObjectRow(sheet, sheet.getLastRow() + 1, headers, buildMemberData(body, memberId));
+  syncSpeakerFromMember(body, memberId);
   return jsonResponse({ ok: true, success: true, action: 'createMember', memberId: memberId });
 }
 
 function updateMember(body) {
   const sheet = getMembersSheet();
-  const headers = ensureHeaders(sheet, ['memberId', 'name', 'station', 'assembly', 'photo', 'bio', 'category', 'videoUrl']);
+  const headers = ensureHeaders(sheet, ['memberId', 'name', 'station', 'assembly', 'photo', 'bio', 'category', 'videoUrl', 'isSpeaker']);
   const memberId = body.memberId || body.id || 'member_' + Date.now();
   const rowNumber = findMemberRow(sheet, headers, body);
   if (rowNumber === -1) return jsonResponse({ ok: false, success: false, error: 'Member not found' });
   writeObjectRow(sheet, rowNumber, headers, buildMemberData(body, memberId));
+  syncSpeakerFromMember(body, memberId);
   return jsonResponse({ ok: true, success: true, action: 'updateMember', memberId: memberId, updatedAt: new Date().toISOString() });
+}
+
+function getSpeakersSheet() {
+  return getSheetByName('Speakers');
+}
+
+function buildSpeakerData(body, speakerId) {
+  return {
+    speakerId: speakerId,
+    memberId: body.memberId || '',
+    name: body.name || '',
+    title: body.title || body.station || body.position || '',
+    photo: body.photo || '',
+    bio: body.bio || '',
+    event: body.event || ''
+  };
+}
+
+function findSpeakerRow(sheet, headers, body) {
+  const speakerId = body.speakerId || body.id;
+  if (speakerId) {
+    const rowById = findRowById(sheet, headers, 'speakerId', speakerId);
+    if (rowById !== -1) return rowById;
+  }
+  const memberId = body.memberId || '';
+  if (memberId) {
+    const rowByMember = findRowById(sheet, headers, 'memberId', memberId);
+    if (rowByMember !== -1) return rowByMember;
+  }
+  const nameIndex = headers.indexOf('name');
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2 || nameIndex === -1) return -1;
+  const values = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
+  for (let i = 0; i < values.length; i += 1) {
+    if (String(values[i][nameIndex] || '') === String(body.name || '')) return i + 2;
+  }
+  return -1;
+}
+
+function createSpeaker(body) {
+  const sheet = getSpeakersSheet();
+  const headers = ensureHeaders(sheet, ['speakerId', 'memberId', 'name', 'title', 'photo', 'bio', 'event']);
+  const speakerId = body.speakerId || 'speaker_' + Date.now();
+  writeObjectRow(sheet, sheet.getLastRow() + 1, headers, buildSpeakerData(body, speakerId));
+  return jsonResponse({ ok: true, success: true, action: 'createSpeaker', speakerId: speakerId });
+}
+
+function updateSpeaker(body) {
+  const sheet = getSpeakersSheet();
+  const headers = ensureHeaders(sheet, ['speakerId', 'memberId', 'name', 'title', 'photo', 'bio', 'event']);
+  const speakerId = body.speakerId || body.id || 'speaker_' + Date.now();
+  const rowNumber = findSpeakerRow(sheet, headers, body);
+  if (rowNumber === -1) return createSpeaker(Object.assign({}, body, { speakerId: speakerId }));
+  writeObjectRow(sheet, rowNumber, headers, buildSpeakerData(body, speakerId));
+  return jsonResponse({ ok: true, success: true, action: 'updateSpeaker', speakerId: speakerId, updatedAt: new Date().toISOString() });
+}
+
+function deleteSpeakerForMember(memberId, name) {
+  const sheet = getSpeakersSheet();
+  const headers = ensureHeaders(sheet, ['speakerId', 'memberId', 'name', 'title', 'photo', 'bio', 'event']);
+  const rowNumber = findSpeakerRow(sheet, headers, { memberId: memberId, name: name });
+  if (rowNumber !== -1) sheet.deleteRow(rowNumber);
+}
+
+function syncSpeakerFromMember(body, memberId) {
+  if (body.isSpeaker === true) {
+    updateSpeaker({
+      speakerId: 'speaker_' + memberId,
+      memberId: memberId,
+      name: body.name || '',
+      title: body.station || body.position || '',
+      photo: body.photo || '',
+      bio: body.bio || '',
+      event: body.event || ''
+    });
+  } else {
+    deleteSpeakerForMember(memberId, body.name || '');
+  }
 }
 
 function getNotificationsSheet() {

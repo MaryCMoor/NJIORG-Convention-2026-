@@ -4,127 +4,6 @@ import { ArrowLeft, Heart, UserRound, Users } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import './AppArea.css'
 
-const fallbackPeopleTabs = [
-  {
-    id: 'grand-officers',
-    label: 'Grand Officers',
-    description: 'Meet the Grand Officers leading the 2026 Rainbow Grand Assembly Convention.',
-    people: [
-      {
-        id: 'grand-worthy-advisor',
-        name: 'Name Coming Soon',
-        position: 'Grand Worthy Advisor',
-        bio: 'This biography will introduce the Grand Worthy Advisor, her Rainbow journey, leadership goals, and what she is most excited to share at convention.',
-      },
-      {
-        id: 'grand-worthy-associate-advisor',
-        name: 'Name Coming Soon',
-        position: 'Grand Worthy Associate Advisor',
-        bio: 'This biography will share her role, service experience, favorite Rainbow memories, and message for attendees.',
-      },
-      {
-        id: 'grand-charity',
-        name: 'Name Coming Soon',
-        position: 'Grand Charity',
-        bio: 'This biography will highlight her service focus, leadership story, and hopes for the 2026 convention weekend.',
-      },
-      {
-        id: 'grand-hope',
-        name: 'Name Coming Soon',
-        position: 'Grand Hope',
-        bio: 'This biography will introduce her Rainbow background, favorite traditions, and encouragement for members.',
-      },
-      {
-        id: 'grand-faith',
-        name: 'Name Coming Soon',
-        position: 'Grand Faith',
-        bio: 'This biography will share her story, the meaning of faith in Rainbow, and what attendees can look forward to.',
-      },
-    ],
-  },
-  {
-    id: 'mother-advisors',
-    label: 'Mother Advisors',
-    description: 'Adult leaders and advisors supporting assemblies and helping guide the convention experience.',
-    people: [
-      {
-        id: 'grand-mother-advisor',
-        name: 'Name Coming Soon',
-        position: 'Grand Mother Advisor',
-        bio: 'This biography will share her advisory work, Rainbow service, and how she supports members throughout New Jersey.',
-      },
-      {
-        id: 'assistant-grand-mother-advisor',
-        name: 'Name Coming Soon',
-        position: 'Assistant Grand Mother Advisor',
-        bio: 'This biography will introduce her leadership, support role, and favorite parts of working with Rainbow Girls.',
-      },
-      {
-        id: 'convention-mother-advisor',
-        name: 'Name Coming Soon',
-        position: 'Convention Mother Advisor',
-        bio: 'This biography will describe her role in helping make convention organized, welcoming, and memorable.',
-      },
-    ],
-  },
-  {
-    id: 'adult-grand-executive-committee',
-    label: 'Adult Grand Executive Committee',
-    description: 'The adult executive team helping oversee planning, tradition, safety, and convention operations.',
-    people: [
-      {
-        id: 'adult-executive-chair',
-        name: 'Name Coming Soon',
-        position: 'Executive Committee Chair',
-        bio: 'This biography will introduce the committee chair, their service background, and responsibilities for Grand Assembly.',
-      },
-      {
-        id: 'grand-secretary',
-        name: 'Name Coming Soon',
-        position: 'Grand Secretary',
-        bio: 'This biography will share their work supporting records, communication, and convention coordination.',
-      },
-      {
-        id: 'grand-treasurer',
-        name: 'Name Coming Soon',
-        position: 'Grand Treasurer',
-        bio: 'This biography will explain their role supporting financial stewardship and convention planning.',
-      },
-      {
-        id: 'grand-inspector',
-        name: 'Name Coming Soon',
-        position: 'Grand Inspector',
-        bio: 'This biography will highlight their Rainbow service, leadership, and guidance for assemblies.',
-      },
-    ],
-  },
-  {
-    id: 'majority-committee',
-    label: 'Majority Committee',
-    description: 'Majority members staying connected, supporting current members, and celebrating lifelong Rainbow sisterhood.',
-    people: [
-      {
-        id: 'majority-chair',
-        name: 'Name Coming Soon',
-        position: 'Majority Committee Chair',
-        bio: 'This biography will introduce the chair and explain how Majority members continue supporting Rainbow after active membership.',
-      },
-      {
-        id: 'majority-vice-chair',
-        name: 'Name Coming Soon',
-        position: 'Majority Committee Vice Chair',
-        bio: 'This biography will share their Rainbow story and how they help connect Majority members with convention.',
-      },
-      {
-        id: 'majority-outreach-coordinator',
-        name: 'Name Coming Soon',
-        position: 'Majority Outreach Coordinator',
-        bio: 'This biography will describe their work welcoming Majority members and encouraging continued involvement.',
-      },
-    ],
-  },
-]
-
 const tabOrder = ['Grand Officers', 'Mother Advisors', 'Adult Grand Executive Committee', 'Majority Committee']
 
 const buildPeopleTabs = (members) => {
@@ -158,7 +37,7 @@ const getTabDescription = (label) => {
 const NJRainbow = () => {
   const { personId } = useParams()
   const { sheetData } = useApp()
-  const peopleTabs = sheetData.members.length ? buildPeopleTabs(sheetData.members) : fallbackPeopleTabs
+  const peopleTabs = buildPeopleTabs(sheetData.members)
   const allPeople = peopleTabs.flatMap(tab => tab.people.map(person => ({ ...person, group: person.group || tab.label })))
 
   if (personId) {
@@ -182,10 +61,21 @@ const NJRainbow = () => {
 }
 
 const PeopleTabs = ({ peopleTabs }) => {
-  const safeTabs = peopleTabs.length ? peopleTabs : fallbackPeopleTabs
-  const defaultTab = safeTabs[0].id
+  const safeTabs = peopleTabs
+  const defaultTab = safeTabs[0]?.id || 'grand-officers'
   const [activeTab, setActiveTab] = useState(defaultTab)
   const tab = safeTabs.find(item => item.id === activeTab) || safeTabs[0]
+
+  if (!safeTabs.length) {
+    return (
+      <section className="people-directory" aria-labelledby="people-directory-title">
+        <div className="people-directory-header">
+          <h2 id="people-directory-title"><Users size={22} /> Leadership Directory</h2>
+          <p>No members are listed in the Google Sheet yet.</p>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="people-directory" aria-labelledby="people-directory-title">
@@ -250,7 +140,6 @@ const PersonBio = ({ person }) => {
       <div className="app-area-page nj-rainbow-page">
         <section className="area-info-card person-bio-card">
           <h1>Person not found</h1>
-          <p>That biography is not available yet.</p>
           <Link className="back-link" to="/nj-rainbow"><ArrowLeft size={18} /> Back to NJ Rainbow</Link>
         </section>
       </div>
@@ -270,7 +159,7 @@ const PersonBio = ({ person }) => {
           ) : (
             <>
               <UserRound size={68} />
-              <span>Photo coming soon</span>
+              <span>Photo</span>
             </>
           )}
         </div>
@@ -279,7 +168,7 @@ const PersonBio = ({ person }) => {
           <p className="area-kicker">{person.group}</p>
           <h1>{person.name}</h1>
           <p className="person-bio-position">{person.position}</p>
-          {person.bio && person.bio !== 'Biography coming soon.' && <p>{person.bio}</p>}
+          {person.bio && <p>{person.bio}</p>}
           {person.assembly && <p className="person-bio-assembly">Assembly: {person.assembly}</p>}
           {person.videoUrl && (
             <section className="person-video-card" aria-label={`Video for ${person.name}`}>

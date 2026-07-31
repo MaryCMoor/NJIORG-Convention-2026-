@@ -30,6 +30,7 @@ import ManageAttendees from './pages/admin/ManageAttendees'
 import ManageSchedule from './pages/admin/ManageSchedule'
 import ManageAnnouncements from './pages/admin/ManageAnnouncements'
 import ManageMembers from './pages/admin/ManageMembers'
+import ManageSpeakers from './pages/admin/ManageSpeakers'
 import ManageMeals from './pages/admin/ManageMeals'
 import ManageAwards from './pages/admin/ManageAwards'
 import ManageDocuments from './pages/admin/ManageDocuments'
@@ -49,7 +50,7 @@ const AdminRoute = () => {
 const AppRoutes = () => {
   const adminPath = ADMIN_CONFIG.secretRoute; // e.g., '/admin/IORG-2026-ADMIN'
   const adminParentPath = adminPath.replace(/^\/+/, ''); // Remove leading slash for HashRouter
-  const { selectedRole } = useApp()
+  const { selectedRole, adminUnlocked } = useApp()
 
   if (!selectedRole) {
     return <RoleGate />
@@ -61,7 +62,7 @@ const AppRoutes = () => {
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<Layout />}>
-            <Route index element={<Home />} />
+            <Route index element={selectedRole === 'administrator' && adminUnlocked ? <Navigate to={ADMIN_CONFIG.secretRoute} replace /> : <Home />} />
             <Route path="schedule" element={<Schedule />} />
             <Route path="schedule/:eventId" element={<Schedule />} />
             <Route path="registration" element={<Registration />} />
@@ -93,6 +94,7 @@ const AppRoutes = () => {
             <Route path="schedule/new" element={<ManageSchedule />} />
             <Route path="announcements" element={<ManageAnnouncements />} />
             <Route path="members" element={<ManageMembers />} />
+            <Route path="speakers" element={<ManageSpeakers />} />
             <Route path="meals" element={<ManageMeals />} />
             <Route path="awards" element={<ManageAwards />} />
             <Route path="documents" element={<ManageDocuments />} />

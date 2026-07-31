@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import mockConvention from '../data/mockData'
-import { loadPublishedSheetData, normalizeAdminEventForSchedule } from '../utils/googleSheetData'
+import { loadPublishedSheetData } from '../utils/googleSheetData'
 import { DEFAULT_APP_CONFIG, loadAppConfigFromGoogleSheet } from '../utils/appsScriptApi'
 
 const AppContext = createContext(null)
@@ -135,12 +135,53 @@ export const AppProvider = ({ children }) => {
   }, [])
 
   useEffect(() => {
+    const setCssVar = (name, value) => document.documentElement.style.setProperty(name, value)
+    const hexToRgb = (hex) => {
+      const clean = String(hex || '').replace('#', '').trim()
+      if (!/^[0-9a-f]{6}$/i.test(clean)) return '212, 175, 55'
+      return [clean.slice(0, 2), clean.slice(2, 4), clean.slice(4, 6)]
+        .map(value => parseInt(value, 16))
+        .join(', ')
+    }
+
+    const primaryColor = appConfig.primaryColor || DEFAULT_APP_CONFIG.primaryColor
+    const accentColor = appConfig.accentColor || DEFAULT_APP_CONFIG.accentColor
+    const backgroundColor = appConfig.backgroundColor || DEFAULT_APP_CONFIG.backgroundColor
+    const textColor = appConfig.textColor || DEFAULT_APP_CONFIG.textColor
+    const accentRgb = hexToRgb(accentColor)
+
     document.title = appConfig.appTitle || DEFAULT_APP_CONFIG.appTitle
-    document.documentElement.style.setProperty('--color-background', appConfig.backgroundColor || DEFAULT_APP_CONFIG.backgroundColor)
-    document.documentElement.style.setProperty('--color-text', appConfig.textColor || DEFAULT_APP_CONFIG.textColor)
-    document.documentElement.style.setProperty('--color-primary', appConfig.primaryColor || DEFAULT_APP_CONFIG.primaryColor)
-    document.documentElement.style.setProperty('--color-gold-500', appConfig.accentColor || DEFAULT_APP_CONFIG.accentColor)
-    document.documentElement.style.setProperty('--color-gold-600', appConfig.accentColor || DEFAULT_APP_CONFIG.accentColor)
+    setCssVar('--color-background', backgroundColor)
+    setCssVar('--color-text', textColor)
+    setCssVar('--color-primary', primaryColor)
+
+    // The original theme used fixed gold/amber design tokens in many places.
+    // Replace the entire gold scale with the configured accent color so no
+    // leftover amber tint remains anywhere in the app.
+    setCssVar('--color-gold-50', accentColor)
+    setCssVar('--color-gold-100', accentColor)
+    setCssVar('--color-gold-200', accentColor)
+    setCssVar('--color-gold-300', accentColor)
+    setCssVar('--color-gold-400', accentColor)
+    setCssVar('--color-gold-500', accentColor)
+    setCssVar('--color-gold-600', accentColor)
+    setCssVar('--color-gold-700', accentColor)
+    setCssVar('--color-gold-800', accentColor)
+    setCssVar('--color-gold-900', accentColor)
+
+    setCssVar('--color-secondary', accentColor)
+    setCssVar('--theme-accent-exact', accentColor)
+    setCssVar('--gold', accentColor)
+    setCssVar('--gold-light', accentColor)
+    setCssVar('--accent', accentColor)
+    setCssVar('--accent-bg', accentColor)
+    setCssVar('--accent-border', accentColor)
+    setCssVar('--social-bg', accentColor)
+    setCssVar('--color-border', accentColor)
+    setCssVar('--color-border-strong', accentColor)
+    setCssVar('--shadow-gold', `0 8px 32px rgba(${accentRgb}, 0.3)`)
+    setCssVar('--shadow-gold-sm', `0 2px 8px rgba(${accentRgb}, 0.2)`)
+    setCssVar('--shadow-gold-hover', `0 14px 38px rgba(${accentRgb}, 0.38)`)
 
     const iconUrl = appConfig.iconUrl?.trim()
     if (iconUrl) {
@@ -378,28 +419,18 @@ export const AppProvider = ({ children }) => {
 
   const getEventsForDay = useCallback((date) => {
     const requestedDay = new Date(`${date}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long' })
-    const localEvents = state.events.map(normalizeAdminEventForSchedule)
-    const sheetIds = new Set(sheetData.events.map(event => event.id))
-    const sourceEvents = sheetData.events.length > 0
-      ? [...sheetData.events, ...localEvents.filter(event => !sheetIds.has(event.id))]
-      : localEvents
-    return sourceEvents.filter(event =>
+    return sheetData.events.filter(event =>
       event.startTime.startsWith(date) || event.day === requestedDay
     ).sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
-  }, [state.events, sheetData.events])
+  }, [sheetData.events])
 
   const getUpcomingEvents = useCallback((limit = 5) => {
     const now = new Date()
-    const localEvents = state.events.map(normalizeAdminEventForSchedule)
-    const sheetIds = new Set(sheetData.events.map(event => event.id))
-    const sourceEvents = sheetData.events.length > 0
-      ? [...sheetData.events, ...localEvents.filter(event => !sheetIds.has(event.id))]
-      : localEvents
-    return sourceEvents
+    return sheetData.events
       .filter(e => new Date(e.startTime) > now)
       .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
       .slice(0, limit)
-  }, [state.events, sheetData.events])
+  }, [sheetData.events])
 
   const getTodaysEvents = useCallback(() => {
     const today = new Date().toISOString().split('T')[0]

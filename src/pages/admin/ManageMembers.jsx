@@ -16,6 +16,7 @@ const blankForm = () => ({
   bio: '',
   category: 'Grand Officers',
   videoUrl: '',
+  isSpeaker: false,
 });
 
 const sortValue = (member, field) => String(member[field] || '').toLowerCase();
@@ -107,6 +108,7 @@ const ManageMembers = () => {
       bio: member.bio || '',
       category: member.category || 'Grand Officers',
       videoUrl: member.videoUrl || '',
+      isSpeaker: member.isSpeaker === true,
       originalName: member.name || '',
       originalStation: member.station || '',
     });
@@ -155,7 +157,7 @@ const ManageMembers = () => {
   };
 
   const exportMembers = () => {
-    const headers = ['memberId', 'name', 'station', 'assembly', 'photo', 'bio', 'category', 'videoUrl'];
+    const headers = ['memberId', 'name', 'station', 'assembly', 'photo', 'bio', 'category', 'videoUrl', 'isSpeaker'];
     const csv = [
       headers.join(','),
       ...filteredMembers.map(member => headers.map(header => `"${String(member[header] || '').replace(/"/g, '""')}"`).join(',')),
@@ -177,8 +179,8 @@ const ManageMembers = () => {
     <div className="manage-schedule">
       <header className="page-header">
         <div className="header-left">
-          <h1 className="page-title">Manage Members</h1>
-          <p className="page-subtitle">Reading directly from the Google Sheet Members tab · {filteredMembers.length} of {members.length} members</p>
+          <h1 className="page-title">Meet NJ Rainbow</h1>
+          <p className="page-subtitle">Reading directly from the Google Sheet Members tab · {filteredMembers.length} of {members.length} profiles</p>
         </div>
         <div className="header-actions">
           <button className="btn btn-secondary" onClick={refreshMembers} disabled={loading}>
@@ -233,15 +235,16 @@ const ManageMembers = () => {
                 <th><button className="sortable-header" onClick={() => handleSort('station')}>Station <span className="sort-icon">{renderSortIcon('station')}</span></button></th>
                 <th><button className="sortable-header" onClick={() => handleSort('category')}>Category <span className="sort-icon">{renderSortIcon('category')}</span></button></th>
                 <th><button className="sortable-header" onClick={() => handleSort('assembly')}>Assembly <span className="sort-icon">{renderSortIcon('assembly')}</span></button></th>
+                <th>Speaker</th>
                 <th>Video</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} className="empty-state"><RefreshCw size={32}/><p>Loading Members tab...</p></td></tr>
+                <tr><td colSpan={8} className="empty-state"><RefreshCw size={32}/><p>Loading Members tab...</p></td></tr>
               ) : paginatedMembers.length === 0 ? (
-                <tr><td colSpan={7} className="empty-state"><UserRound size={32}/><p>No members found in the Google Sheet.</p><button className="btn btn-primary" onClick={openAddModal}><Plus size={16}/>Add First Member</button></td></tr>
+                <tr><td colSpan={8} className="empty-state"><UserRound size={32}/><p>No members found in the Google Sheet.</p><button className="btn btn-primary" onClick={openAddModal}><Plus size={16}/>Add First Member</button></td></tr>
               ) : (
                 paginatedMembers.map(member => (
                   <tr key={member.id}>
@@ -250,6 +253,7 @@ const ManageMembers = () => {
                     <td>{member.station || '—'}</td>
                     <td><span className="category-badge primary">{member.category || '—'}</span></td>
                     <td>{member.assembly || '—'}</td>
+                    <td>{member.isSpeaker ? 'Yes' : '—'}</td>
                     <td>{member.videoUrl ? 'Yes' : '—'}</td>
                     <td><div className="action-buttons"><button className="icon-btn view" onClick={() => setViewMember(member)} aria-label={`View ${member.name}`}><Eye size={16}/></button></div></td>
                   </tr>
@@ -276,6 +280,7 @@ const ManageMembers = () => {
                 <div className="form-field"><label htmlFor="assembly">Assembly</label><input type="text" id="assembly" value={formData.assembly} onChange={event => setFormData({...formData, assembly: event.target.value})} /></div>
                 <div className="form-field full-width"><label htmlFor="photo">Photo URL</label><input type="url" id="photo" value={formData.photo} onChange={event => setFormData({...formData, photo: event.target.value})} placeholder="https://..." /></div>
                 <div className="form-field full-width"><label htmlFor="videoUrl">Video URL</label><input type="url" id="videoUrl" value={formData.videoUrl} onChange={event => setFormData({...formData, videoUrl: event.target.value})} placeholder="YouTube, Vimeo, or direct video URL" /></div>
+                <div className="form-field full-width"><label htmlFor="isSpeaker"><input type="checkbox" id="isSpeaker" checked={formData.isSpeaker === true} onChange={event => setFormData({...formData, isSpeaker: event.target.checked})} /> Also show this person on the Speaker List</label></div>
                 <div className="form-field full-width"><label htmlFor="bio">Bio</label><textarea id="bio" value={formData.bio} onChange={event => setFormData({...formData, bio: event.target.value})} rows={5} /></div>
               </div>
               {sheetSaveMessage && <div className={`sheet-save-message ${sheetSaveStatus}`}>{sheetSaveMessage}</div>}

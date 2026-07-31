@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Calendar, Megaphone, Utensils, Award,
-  FileText, Images, ClipboardList, Settings, ChevronLeft, ChevronRight,
+  FileText, Images, ClipboardList, Settings, Mic, ChevronLeft, ChevronRight,
   Crown, LogOut, Sun, Moon, Save, Download, RotateCcw, Upload, Plus
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
@@ -48,6 +48,7 @@ const AdminLayout = () => {
     Images,
     ClipboardList,
     Settings,
+    Mic,
   };
 
   return (

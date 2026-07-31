@@ -48,35 +48,31 @@ const EventInfo = () => {
           </div>
         </section>
 
-        <section className="event-info-card">
-          <span className="info-card-icon"><MapPin size={22} /></span>
-          <div>
-            <h2>Venue</h2>
-            {venueLines.length > 0 ? (
-              venueLines.map(line => <p key={line}>{line}</p>)
-            ) : (
-              <p>Venue details coming soon.</p>
-            )}
-          </div>
-        </section>
+        {venueLines.length > 0 && (
+          <section className="event-info-card">
+            <span className="info-card-icon"><MapPin size={22} /></span>
+            <div>
+              <h2>Venue</h2>
+              {venueLines.map(line => <p key={line}>{line}</p>)}
+            </div>
+          </section>
+        )}
 
-        <section className="event-info-card">
-          <span className="info-card-icon"><Mail size={22} /></span>
-          <div>
-            <h2>Contact</h2>
-            {contactLines.length > 0 ? (
-              contactLines.map(line => <p key={line}>{line}</p>)
-            ) : (
-              <p>Contact information coming soon.</p>
-            )}
-          </div>
-        </section>
+        {contactLines.length > 0 && (
+          <section className="event-info-card">
+            <span className="info-card-icon"><Mail size={22} /></span>
+            <div>
+              <h2>Contact</h2>
+              {contactLines.map(line => <p key={line}>{line}</p>)}
+            </div>
+          </section>
+        )}
 
-        <section className="event-info-card">
-          <span className="info-card-icon"><Globe size={22} /></span>
-          <div>
-            <h2>Social & Links</h2>
-            {socialLinks.length > 0 || appConfig.hashtag ? (
+        {(socialLinks.length > 0 || appConfig.hashtag) && (
+          <section className="event-info-card">
+            <span className="info-card-icon"><Globe size={22} /></span>
+            <div>
+              <h2>Social & Links</h2>
               <div className="event-social-links">
                 {socialLinks.map(item => {
                   const Icon = item.icon
@@ -89,11 +85,9 @@ const EventInfo = () => {
                 })}
                 {appConfig.hashtag && <span><Hash size={16} />{appConfig.hashtag}</span>}
               </div>
-            ) : (
-              <p>Social links coming soon.</p>
-            )}
-          </div>
-        </section>
+            </div>
+          </section>
+        )}
       </div>
     </div>
   )

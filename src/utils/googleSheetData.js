@@ -78,6 +78,8 @@ export const loadPublishedEventRows = async () => fetchSheet(SHEETS.events)
 
 export const loadPublishedMemberRows = async () => fetchSheet(SHEETS.members)
 
+export const loadPublishedSpeakerRows = async () => fetchSheet(SHEETS.speakers)
+
 export const loadPublishedNotificationRows = async () => fetchSheet(SHEETS.notifications)
 
 const parseTime = (time) => {
@@ -160,16 +162,31 @@ export const normalizeAdminEventForSchedule = (event) => ({
 
 const normalizeSpeaker = (row, index) => ({
   id: row.speakerId || row.id || `sheet-speaker-${index + 1}`,
-  name: row.name || 'Name Coming Soon',
-  title: row.title || 'Speaker',
+  speakerId: row.speakerId || row.id || `sheet-speaker-${index + 1}`,
+  memberId: row.memberId || '',
+  name: row.name || '',
+  title: row.title || '',
   detail: row.bio || row.detail || '',
+  bio: row.bio || row.detail || '',
   photo: row.photo || '',
   icon: 'mic',
   eventIds: String(row.event || row.eventIds || '')
     .split(',')
     .map(value => value.trim())
     .filter(Boolean),
+  event: row.event || row.eventIds || '',
   source: 'google-sheet',
+})
+
+export const normalizeSheetRowForAdminSpeaker = (row, index) => ({
+  id: row.speakerId || row.id || `sheet-speaker-${index + 1}`,
+  speakerId: row.speakerId || row.id || '',
+  memberId: row.memberId || '',
+  name: row.name || '',
+  title: row.title || '',
+  photo: row.photo || '',
+  bio: row.bio || row.detail || '',
+  event: row.event || row.eventIds || '',
 })
 
 const inferMemberCategory = (station = '') => {
@@ -183,13 +200,14 @@ const inferMemberCategory = (station = '') => {
 const normalizeMember = (row, index) => ({
   id: row.memberId || row.id || `sheet-member-${index + 1}`,
   memberId: row.memberId || row.id || `sheet-member-${index + 1}`,
-  name: row.name || 'Name Coming Soon',
-  position: row.station || row.position || 'Rainbow Leader',
-  station: row.station || row.position || 'Rainbow Leader',
+  name: row.name || '',
+  position: row.station || row.position || '',
+  station: row.station || row.position || '',
   assembly: row.assembly || '',
   photo: row.photo || '',
-  bio: row.bio || 'Biography coming soon.',
+  bio: row.bio || '',
   videoUrl: row.videoUrl || row.video || row.videoLink || '',
+  isSpeaker: String(row.isSpeaker || row.speaker || '').toLowerCase() === 'true',
   category: row.category || inferMemberCategory(row.station),
   source: 'google-sheet',
 })
@@ -204,6 +222,7 @@ export const normalizeSheetRowForAdminMember = (row, index) => ({
   bio: row.bio || '',
   category: row.category || inferMemberCategory(row.station || row.position),
   videoUrl: row.videoUrl || row.video || row.videoLink || '',
+  isSpeaker: String(row.isSpeaker || row.speaker || '').toLowerCase() === 'true',
 })
 
 export const normalizeNotificationRow = (row, index) => ({
@@ -224,8 +243,18 @@ export const normalizeNotificationRow = (row, index) => ({
 const normalizeGalleryPhoto = (row, index) => ({
   id: row.id || `sheet-photo-${index + 1}`,
   url: row.url || '',
-  caption: row.caption || '',
+  title: row.title || row.caption || 'Photo',
+  description: row.description || row.caption || '',
+  caption: row.caption || row.description || '',
   category: row.category || 'Convention',
+  day: row.day || '',
+  photographer: row.photographer || row.uploadedBy || 'Convention Team',
+  tags: String(row.tags || row.tag || '')
+    .split(',')
+    .map(value => value.trim())
+    .filter(Boolean),
+  thumbnail: row.thumbnail || row.thumbnailUrl || '',
+  featured: String(row.featured || '').toLowerCase() === 'true',
   likes: 0,
   comments: 0,
   liked: false,

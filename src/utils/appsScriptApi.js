@@ -101,6 +101,7 @@ const sendMemberToGoogleSheet = async (member, action = 'createMember') => {
     bio: member.bio || '',
     category: member.category || '',
     videoUrl: member.videoUrl || '',
+    isSpeaker: member.isSpeaker === true,
     originalName: member.originalName || '',
     originalStation: member.originalStation || '',
   }
@@ -126,6 +127,41 @@ const sendMemberToGoogleSheet = async (member, action = 'createMember') => {
 export const saveMemberToGoogleSheet = async (member) => sendMemberToGoogleSheet(member, 'createMember')
 
 export const updateMemberInGoogleSheet = async (member) => sendMemberToGoogleSheet(member, 'updateMember')
+
+const sendSpeakerToGoogleSheet = async (speaker, action = 'createSpeaker') => {
+  const payload = {
+    action,
+    token: ADMIN_TOKEN,
+    speakerId: speaker.speakerId || speaker.id,
+    memberId: speaker.memberId || '',
+    name: speaker.name || '',
+    title: speaker.title || '',
+    photo: speaker.photo || '',
+    bio: speaker.bio || speaker.detail || '',
+    event: speaker.event || speaker.eventIds || '',
+  }
+
+  const response = await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload),
+  })
+  const text = await response.text()
+  let data = null
+  try {
+    data = JSON.parse(text)
+  } catch {
+    data = { ok: response.ok, raw: text }
+  }
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.error || `Google Sheet save failed (${response.status})`)
+  }
+  return data
+}
+
+export const saveSpeakerToGoogleSheet = async (speaker) => sendSpeakerToGoogleSheet(speaker, 'createSpeaker')
+
+export const updateSpeakerInGoogleSheet = async (speaker) => sendSpeakerToGoogleSheet(speaker, 'updateSpeaker')
 
 const sendNotificationToGoogleSheet = async (notification, action = 'createNotification') => {
   const payload = {

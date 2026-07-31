@@ -912,3 +912,32 @@ input[type="checkbox"], input[type="radio"] {
   a { text-decoration: none; color: black; }
   a[href]::after { content: " (" attr(href) ")"; font-size: 0.8em; color: #666; }
 }
+
+/* Runtime theme exact-color overrides: no amber/ombre gradients. */
+:root {
+  --theme-accent-exact: var(--color-gold-500);
+}
+
+.btn-primary,
+.btn-primary:hover:not(:disabled),
+.btn-gold,
+.btn-gold:hover:not(:disabled) {
+  background: var(--color-primary) !important;
+  background-image: none !important;
+  border-color: var(--theme-accent-exact) !important;
+  box-shadow: none !important;
+}
+
+.btn-secondary:hover:not(:disabled),
+.badge-gold {
+  background: var(--theme-accent-exact) !important;
+  background-image: none !important;
+  border-color: var(--theme-accent-exact) !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--theme-accent-exact) !important;
+  box-shadow: none !important;
+}

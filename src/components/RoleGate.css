@@ -4,10 +4,7 @@
   display: grid;
   place-items: center;
   padding: clamp(1rem, 4vw, 2rem);
-  background:
-    radial-gradient(circle at 20% 15%, rgba(212, 175, 55, 0.28), transparent 28%),
-    radial-gradient(circle at 80% 5%, rgba(139, 0, 0, 0.18), transparent 30%),
-    linear-gradient(160deg, #1b0606 0%, #6d0000 45%, #f4d77b 160%);
+  background: var(--color-background);
 }
 
 .role-gate-phone {
@@ -41,9 +38,7 @@
   justify-content: center;
   padding: clamp(1.25rem, 6vw, 2rem);
   border-radius: 28px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(255, 249, 235, 0.96)),
-    var(--color-surface);
+  background: var(--color-surface);
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -53,7 +48,8 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.28), transparent 38%, rgba(139, 0, 0, 0.08));
+  background: var(--color-gold-500);
+  opacity: 0;
   pointer-events: none;
 }
 
@@ -69,7 +65,7 @@
   display: grid;
   place-items: center;
   border-radius: 30px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-red-700));
+  background: var(--color-primary);
   color: var(--color-gold-400);
   box-shadow: 0 18px 34px rgba(139, 0, 0, 0.26);
 }
@@ -121,7 +117,7 @@
   min-height: 58px;
   padding: 0 3rem 0 1rem;
   border-radius: 18px;
-  border: 2px solid rgba(212, 175, 55, 0.55);
+  border: 2px solid var(--color-gold-500);
   background: #fff;
   color: var(--color-charcoal);
   font-size: 1.05rem;
@@ -170,7 +166,7 @@
 
 .admin-password-field input:focus {
   border-color: var(--color-primary);
-  outline: 3px solid rgba(139, 0, 0, 0.14);
+  outline: 3px solid var(--color-primary);
 }
 
 .role-error {
@@ -188,7 +184,7 @@
   min-height: 58px;
   border: 0;
   border-radius: 18px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-red-700));
+  background: var(--color-primary);
   color: #fff;
   font-size: 1rem;
   font-weight: 900;

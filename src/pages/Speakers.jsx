@@ -1,6 +1,6 @@
 import { Award, Crown, Mic, Sparkles, Star } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { conventionSpeakers, getSpeakerEvents } from '../data/speakerSchedule'
+import { getSpeakerEvents } from '../data/speakerSchedule'
 import { useApp } from '../context/AppContext'
 import './AppArea.css'
 
@@ -19,9 +19,9 @@ const formatScheduleTag = (event) => {
 }
 
 const Speakers = () => {
-  const { state, sheetData } = useApp()
-  const speakers = sheetData.speakers.length ? sheetData.speakers : conventionSpeakers
-  const events = sheetData.events.length ? sheetData.events : state.events
+  const { sheetData } = useApp()
+  const speakers = sheetData.speakers
+  const events = sheetData.events
 
   return (
     <div className="app-area-page">

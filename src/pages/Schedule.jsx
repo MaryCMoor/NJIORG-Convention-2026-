@@ -3,7 +3,6 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Calendar, Clock, MapPin, Shirt, User, X } from 'lucide-react'
 import { useApp } from '../context/AppContext.jsx'
 import { getEventSpeakerTags } from '../data/speakerSchedule'
-import { normalizeAdminEventForSchedule } from '../utils/googleSheetData'
 import './Schedule.css'
 
 const buildConventionDays = (startDate, numberOfDays) => {
@@ -36,14 +35,9 @@ const formatDay = (iso) => {
 const Schedule = () => {
   const { eventId } = useParams()
   const navigate = useNavigate()
-  const { getEventsForDay, state, sheetData, appConfig } = useApp()
+  const { getEventsForDay, sheetData, appConfig } = useApp()
   const conventionDays = useMemo(() => buildConventionDays(appConfig.startDate, appConfig.numberOfDays), [appConfig.startDate, appConfig.numberOfDays])
-  const localEvents = useMemo(() => state.events.map(normalizeAdminEventForSchedule), [state.events])
-  const sourceEvents = useMemo(() => {
-    if (!sheetData.events.length) return localEvents
-    const sheetIds = new Set(sheetData.events.map(event => event.id))
-    return [...sheetData.events, ...localEvents.filter(event => !sheetIds.has(event.id))]
-  }, [sheetData.events, localEvents])
+  const sourceEvents = useMemo(() => sheetData.events, [sheetData.events])
   const speakers = sheetData.speakers.length ? sheetData.speakers : undefined
   const selectedEvent = useMemo(() => sourceEvents.find(event => event.id === eventId), [sourceEvents, eventId])
   const [selectedDay, setSelectedDay] = useState(() => selectedEvent?.startTime.slice(0, 10) || conventionDays[0].date)

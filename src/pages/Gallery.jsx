@@ -9,7 +9,7 @@ import '../components/ui/UIComponents.css'
 import './Gallery.css'
 
 const Gallery = () => {
-  const { state, currentUser } = useApp()
+  const { sheetData, appConfig, currentUser } = useApp()
   
   const [filterCategory, setFilterCategory] = useState('all')
   const [filterDay, setFilterDay] = useState('all')
@@ -18,7 +18,7 @@ const Gallery = () => {
   const [selectedPhoto, setSelectedPhoto] = useState(null)
   const [lightboxIndex, setLightboxIndex] = useState(0)
 
-  const photos = state.gallery
+  const photos = sheetData.gallery
   const categories = [...new Set(photos.map(p => p.category))].sort()
   const days = [...new Set(photos.map(p => p.day))].sort()
 
@@ -93,7 +93,7 @@ const Gallery = () => {
           <Images className="page-title-icon" size={32} />
           Photo Gallery
         </h1>
-        <p className="page-subtitle">Memories from the 2026 Rainbow Grand Assembly Convention - The Greatest Showman</p>
+        <p className="page-subtitle">Photos from {appConfig.appTitle}</p>
       </div>
 
       {/* Stats */}
@@ -193,8 +193,8 @@ const Gallery = () => {
       </div>
 
       {/* Photo of the Day */}
-      {state.gallery.find(p => p.featured) && (
-        <PhotoOfTheDay photo={state.gallery.find(p => p.featured)} />
+      {photos.find(p => p.featured) && (
+        <PhotoOfTheDay photo={photos.find(p => p.featured)} />
       )}
     </div>
   )

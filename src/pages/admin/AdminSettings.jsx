@@ -98,9 +98,43 @@ const AdminSettings = () => {
     setConfig(prev => ({ ...prev, [section]: { ...(prev[section] || {}), [field]: value } }));
   };
 
-  const saveConfig = () => {
+  const saveConfig = async () => {
     updateConfig(config);
-    showMessage('success', 'Settings saved successfully!');
+
+    const nextAppConfig = {
+      ...appConfigDraft,
+      appTitle: config.general?.name || appConfigDraft.appTitle,
+      themeName: config.general?.theme || appConfigDraft.themeName,
+      startDate: config.general?.countdownDate || appConfigDraft.startDate,
+      venueName: config.venue?.name || '',
+      venueAddress: config.venue?.address || '',
+      venueCity: config.venue?.city || '',
+      venueState: config.venue?.state || '',
+      venueZip: config.venue?.zip || '',
+      contactLine1: config.contact?.email || config.contact?.phone
+        ? [config.contact?.email, config.contact?.phone].filter(Boolean).join(' • ')
+        : appConfigDraft.contactLine1,
+      contactLine2: config.contact?.emergencyContact || config.contact?.emergencyPhone
+        ? [config.contact?.emergencyContact, config.contact?.emergencyPhone].filter(Boolean).join(' • ')
+        : appConfigDraft.contactLine2,
+      facebookUrl: config.social?.facebook || appConfigDraft.facebookUrl,
+      instagramUrl: config.social?.instagram || appConfigDraft.instagramUrl,
+      websiteUrl: config.venue?.website || appConfigDraft.websiteUrl,
+      hashtag: config.social?.hashtag || appConfigDraft.hashtag,
+      primaryColor: config.appearance?.primaryColor || appConfigDraft.primaryColor,
+      accentColor: config.appearance?.goldColor || appConfigDraft.accentColor,
+      iconUrl: config.appearance?.logoUrl || appConfigDraft.iconUrl,
+    };
+
+    try {
+      await saveAppConfigToGoogleSheet(nextAppConfig);
+      setAppConfig(nextAppConfig);
+      setAppConfigDraft(nextAppConfig);
+      showMessage('success', 'Settings saved to the app and Google Sheet.');
+    } catch (error) {
+      console.error(error);
+      showMessage('error', error.message || 'Settings saved locally, but could not save to Google Sheet.');
+    }
   };
 
   const handleAppConfigChange = (field, value) => {
