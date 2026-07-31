@@ -2,7 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   Search, Filter, Plus, Download, ChevronDown, ChevronUp, X, Eye, Edit, RefreshCw, ChevronLeft, ChevronRight, Mic
 } from 'lucide-react';
-import { loadPublishedSpeakerRows, normalizeSheetRowForAdminSpeaker } from '../../utils/googleSheetData';
+import {
+  loadPublishedEventRows,
+  loadPublishedSpeakerRows,
+  normalizeSheetRowForAdminSchedule,
+  normalizeSheetRowForAdminSpeaker,
+} from '../../utils/googleSheetData';
 import { saveSpeakerToGoogleSheet, updateSpeakerInGoogleSheet } from '../../utils/appsScriptApi';
 import './ManageSchedule.css';
 
@@ -17,8 +22,20 @@ const blankForm = () => ({
 
 const sortValue = (speaker, field) => String(speaker[field] || '').toLowerCase();
 
+const splitEventTags = (value) => String(value || '')
+  .split(',')
+  .map(item => item.trim())
+  .filter(Boolean);
+
+const eventOptionLabel = (event) => [
+  event.day,
+  event.time,
+  event.title,
+].filter(Boolean).join(' · ');
+
 const ManageSpeakers = () => {
   const [speakers, setSpeakers] = useState([]);
+  const [eventOptions, setEventOptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -37,8 +54,12 @@ const ManageSpeakers = () => {
     setLoading(true);
     setLoadError('');
     try {
-      const rows = await loadPublishedSpeakerRows();
-      setSpeakers(rows.map(normalizeSheetRowForAdminSpeaker));
+      const [speakerRows, eventRows] = await Promise.all([
+        loadPublishedSpeakerRows(),
+        loadPublishedEventRows(),
+      ]);
+      setSpeakers(speakerRows.map(normalizeSheetRowForAdminSpeaker));
+      setEventOptions(eventRows.map(normalizeSheetRowForAdminSchedule));
     } catch (error) {
       console.error(error);
       setLoadError(error.message || 'Could not load Speakers from Google Sheet.');
@@ -50,6 +71,22 @@ const ManageSpeakers = () => {
   useEffect(() => {
     refreshSpeakers();
   }, []);
+
+  const eventLabelByTag = useMemo(() => {
+    const map = new Map();
+    eventOptions.forEach(event => {
+      const label = eventOptionLabel(event);
+      if (event.eventId) map.set(String(event.eventId), label);
+      if (event.title) map.set(String(event.title), label);
+    });
+    return map;
+  }, [eventOptions]);
+
+  const formatSpeakerEvents = (value) => {
+    const tags = splitEventTags(value);
+    if (!tags.length) return '—';
+    return tags.map(tag => eventLabelByTag.get(tag) || tag).join(', ');
+  };
 
   const filteredSpeakers = useMemo(() => {
     return speakers
@@ -222,7 +259,7 @@ const ManageSpeakers = () => {
                     <td className="row-action-cell"><button className="icon-btn edit" onClick={() => openEditModal(speaker)} aria-label={`Edit ${speaker.name}`}><Edit size={16}/></button></td>
                     <td className="title-cell"><div className="event-title">{speaker.name || '—'}</div></td>
                     <td>{speaker.title || '—'}</td>
-                    <td>{speaker.event || '—'}</td>
+                    <td>{formatSpeakerEvents(speaker.event)}</td>
                     <td>{speaker.bio ? 'Yes' : '—'}</td>
                     <td><div className="action-buttons"><button className="icon-btn view" onClick={() => setViewSpeaker(speaker)} aria-label={`View ${speaker.name}`}><Eye size={16}/></button></div></td>
                   </tr>
@@ -246,7 +283,7 @@ const ManageSpeakers = () => {
                 <div className="form-field"><label htmlFor="speakerName">Name *</label><input type="text" id="speakerName" value={formData.name} onChange={event => setFormData({...formData, name: event.target.value})} required /></div>
                 <div className="form-field"><label htmlFor="speakerTitle">Title *</label><input type="text" id="speakerTitle" value={formData.title} onChange={event => setFormData({...formData, title: event.target.value})} required /></div>
                 <div className="form-field full-width"><label htmlFor="speakerPhoto">Photo URL</label><input type="url" id="speakerPhoto" value={formData.photo} onChange={event => setFormData({...formData, photo: event.target.value})} placeholder="https://..." /></div>
-                <div className="form-field full-width"><label htmlFor="speakerEvent">Event ID(s) / Event Name(s)</label><input type="text" id="speakerEvent" value={formData.event} onChange={event => setFormData({...formData, event: event.target.value})} placeholder="Comma-separated event IDs or names" /></div>
+                <div className="form-field full-width"><label htmlFor="speakerEvent">Events Where Speaker Is Speaking</label><select id="speakerEvent" multiple size={Math.min(Math.max(eventOptions.length, 3), 8)} value={splitEventTags(formData.event)} onChange={event => setFormData({...formData, event: Array.from(event.target.selectedOptions).map(option => option.value).join(', ')})}>{eventOptions.map(event => <option key={event.eventId || event.id} value={event.eventId || event.id}>{eventOptionLabel(event)}</option>)}</select><p className="field-help">Hold Ctrl/Command to select more than one event. These connect the speaker to the public Speaker page and schedule tags.</p></div>
                 <div className="form-field full-width"><label htmlFor="speakerBio">Additional Speaker Info</label><textarea id="speakerBio" value={formData.bio} onChange={event => setFormData({...formData, bio: event.target.value})} rows={5} /></div>
               </div>
               {sheetSaveMessage && <div className={`sheet-save-message ${sheetSaveStatus}`}>{sheetSaveMessage}</div>}
@@ -260,7 +297,7 @@ const ManageSpeakers = () => {
         <div className="modal-overlay" onClick={() => setViewSpeaker(null)}>
           <div className="modal modal-lg" onClick={event => event.stopPropagation()}>
             <div className="modal-header"><h2 className="modal-title">Speaker Details</h2><button className="modal-close" onClick={() => setViewSpeaker(null)}><X size={20}/></button></div>
-            <div className="modal-body"><div className="view-grid"><div className="view-section"><h4>Name</h4><p>{viewSpeaker.name || '—'}</p></div><div className="view-section"><h4>Title</h4><p>{viewSpeaker.title || '—'}</p></div><div className="view-section full-width"><h4>Event</h4><p>{viewSpeaker.event || '—'}</p></div><div className="view-section full-width"><h4>Bio</h4><p>{viewSpeaker.bio || '—'}</p></div></div></div>
+            <div className="modal-body"><div className="view-grid"><div className="view-section"><h4>Name</h4><p>{viewSpeaker.name || '—'}</p></div><div className="view-section"><h4>Title</h4><p>{viewSpeaker.title || '—'}</p></div><div className="view-section full-width"><h4>Event</h4><p>{formatSpeakerEvents(viewSpeaker.event)}</p></div><div className="view-section full-width"><h4>Bio</h4><p>{viewSpeaker.bio || '—'}</p></div></div></div>
             <div className="modal-actions"><button className="btn btn-secondary" onClick={() => setViewSpeaker(null)}>Close</button><button className="btn btn-primary" onClick={() => { setViewSpeaker(null); openEditModal(viewSpeaker); }}><Edit size={16}/> Edit</button></div>
           </div>
         </div>

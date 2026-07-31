@@ -223,11 +223,19 @@ const EventDetail = ({ event, speakers, selectedRole, onClose }) => {
 
         {eventSpeakers.length > 0 && (
           <section className="event-detail-speakers" aria-label="Tagged speakers">
-            <h3>Speaker Tags</h3>
-            <div className="speaker-tag-list">
+            <h3>Speakers</h3>
+            <div className="event-speaker-list">
               {eventSpeakers.map(speaker => (
-                <Link key={speaker.id} className="speaker-detail-tag" to="/speakers">
-                  {speaker.name}
+                <Link key={speaker.id} className="event-speaker-card" to="/speakers">
+                  {speaker.photo ? (
+                    <span className="event-speaker-photo"><img src={speaker.photo} alt={speaker.name} /></span>
+                  ) : (
+                    <span className="event-speaker-photo fallback"><User size={18} aria-hidden="true" /></span>
+                  )}
+                  <span>
+                    <strong>{speaker.name}</strong>
+                    {speaker.title && <small>{speaker.title}</small>}
+                  </span>
                 </Link>
               ))}
             </div>

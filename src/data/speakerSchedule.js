@@ -36,7 +36,10 @@ export const conventionSpeakers = [
 const eventMatchesTag = (event, tag) => {
   const normalized = String(tag || '').trim().toLowerCase()
   if (!normalized) return false
-  return event.id?.toLowerCase() === normalized || event.name?.toLowerCase() === normalized
+  return event.id?.toLowerCase() === normalized
+    || event.eventId?.toLowerCase() === normalized
+    || event.name?.toLowerCase() === normalized
+    || event.title?.toLowerCase() === normalized
 }
 
 export const getSpeakerEvents = (events, speaker) => {

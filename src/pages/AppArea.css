@@ -393,9 +393,9 @@
   display: inline-flex;
   padding: 0.4rem 0.65rem;
   border-radius: var(--radius-full);
-  background: var(--color-gold-50);
-  border: 1px solid var(--color-gold-200);
-  color: var(--color-gold-800);
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
   font-size: 0.76rem;
   font-weight: 900;
   line-height: 1.2;
@@ -403,7 +403,8 @@
 }
 
 .speaker-schedule-tag:hover {
-  background: var(--color-gold-100);
+  background: var(--color-surface);
+  border-color: var(--color-primary);
   color: var(--color-primary);
   text-decoration: none;
 }
@@ -487,4 +488,73 @@
   color: var(--color-white);
   font-weight: 900;
   text-decoration: none;
+}
+
+
+.speaker-avatar {
+  width: 54px;
+  height: 54px;
+  flex: 0 0 54px;
+}
+
+.speaker-avatar.has-photo {
+  overflow: hidden;
+  background: var(--color-surface-elevated);
+  border: 2px solid var(--color-border);
+  color: inherit;
+}
+
+.speaker-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.speaker-name-button {
+  display: inline-flex;
+  width: fit-content;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-charcoal);
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 900;
+  text-align: left;
+  cursor: pointer;
+}
+
+.speaker-name-button:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.speaker-detail-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.speaker-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.speaker-detail-header h2 {
+  margin: 0 0 0.35rem;
+  color: var(--color-text);
+  font-size: clamp(1.8rem, 8vw, 2.8rem);
+  line-height: 1;
+}
+
+.speaker-detail-bio,
+.speaker-detail-empty {
+  margin: 0;
+  color: var(--color-text-light);
+  line-height: 1.55;
+}
+
+.speaker-detail-events {
+  margin-top: 0.65rem;
 }

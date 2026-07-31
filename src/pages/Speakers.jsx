@@ -1,4 +1,5 @@
-import { Award, Crown, Mic, Sparkles, Star } from 'lucide-react'
+import { useState } from 'react'
+import { Award, Crown, Mic, Sparkles, Star, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { getSpeakerEvents } from '../data/speakerSchedule'
 import { useApp } from '../context/AppContext'
@@ -18,10 +19,31 @@ const formatScheduleTag = (event) => {
   return `${day} ${time} · ${event.name}`
 }
 
+const SpeakerAvatar = ({ speaker, size = 54 }) => {
+  const Icon = speakerIcons[speaker.icon] || Mic
+
+  if (speaker.photo) {
+    return (
+      <span className="speaker-avatar has-photo" style={{ width: `${size}px`, height: `${size}px`, flexBasis: `${size}px` }}>
+        <img src={speaker.photo} alt={speaker.name ? `${speaker.name}` : 'Speaker'} />
+      </span>
+    )
+  }
+
+  return (
+    <span className="speaker-avatar" style={{ width: `${size}px`, height: `${size}px`, flexBasis: `${size}px` }}>
+      <Icon size={Math.max(24, Math.round(size * 0.48))} />
+    </span>
+  )
+}
+
 const Speakers = () => {
   const { sheetData } = useApp()
   const speakers = sheetData.speakers
   const events = sheetData.events
+  const [selectedSpeaker, setSelectedSpeaker] = useState(null)
+
+  const selectedSpeakerEvents = selectedSpeaker ? getSpeakerEvents(events, selectedSpeaker) : []
 
   return (
     <div className="app-area-page">
@@ -34,16 +56,17 @@ const Speakers = () => {
 
       <section className="speaker-app-list" aria-label="Convention speakers">
         {speakers.map(speaker => {
-          const Icon = speakerIcons[speaker.icon] || Mic
           const scheduleTags = getSpeakerEvents(events, speaker)
 
           return (
             <article className="speaker-app-card" key={speaker.id}>
-              <span className="speaker-avatar"><Icon size={26} /></span>
+              <SpeakerAvatar speaker={speaker} />
               <div className="speaker-card-content">
-                <h2>{speaker.name}</h2>
+                <button type="button" className="speaker-name-button" onClick={() => setSelectedSpeaker(speaker)}>
+                  {speaker.name}
+                </button>
                 <p className="speaker-role">{speaker.title}</p>
-                <p>{speaker.detail}</p>
+                {speaker.detail && <p>{speaker.detail}</p>}
 
                 {scheduleTags.length > 0 && (
                   <div className="speaker-schedule-tags" aria-label={`Schedule tags for ${speaker.name}`}>
@@ -59,6 +82,41 @@ const Speakers = () => {
           )
         })}
       </section>
+
+      {selectedSpeaker && (
+        <div className="event-detail-overlay" role="dialog" aria-modal="true" aria-labelledby="speaker-detail-title" onClick={() => setSelectedSpeaker(null)}>
+          <article className="event-detail-card speaker-detail-card" onClick={(event) => event.stopPropagation()}>
+            <button type="button" className="event-detail-close" onClick={() => setSelectedSpeaker(null)} aria-label="Close speaker details">
+              <X size={22} />
+            </button>
+            <div className="speaker-detail-header">
+              <SpeakerAvatar speaker={selectedSpeaker} size={96} />
+              <div>
+                <p className="area-kicker">Speaker</p>
+                <h2 id="speaker-detail-title">{selectedSpeaker.name}</h2>
+                {selectedSpeaker.title && <p className="speaker-role">{selectedSpeaker.title}</p>}
+              </div>
+            </div>
+
+            {selectedSpeaker.bio && <p className="speaker-detail-bio">{selectedSpeaker.bio}</p>}
+
+            <section className="event-detail-speakers" aria-label={`Events for ${selectedSpeaker.name}`}>
+              <h3>Speaking Events</h3>
+              {selectedSpeakerEvents.length > 0 ? (
+                <div className="speaker-tag-list speaker-detail-events">
+                  {selectedSpeakerEvents.map(event => (
+                    <Link key={event.id} className="speaker-detail-tag" to={`/schedule/${event.id}`} onClick={() => setSelectedSpeaker(null)}>
+                      {formatScheduleTag(event)}
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="speaker-detail-empty">No speaking events are linked yet.</p>
+              )}
+            </section>
+          </article>
+        </div>
+      )}
     </div>
   )
 }

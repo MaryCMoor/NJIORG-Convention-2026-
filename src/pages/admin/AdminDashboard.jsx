@@ -1,161 +1,46 @@
-import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Users, Calendar, Megaphone, Utensils, Calendar as CalendarIcon,
-  ClipboardList, Award, FileText, Images, TrendingUp, Target,
-  ArrowUpRight, ArrowDownRight, RefreshCw, Crown
+  Calendar as CalendarIcon,
+  Megaphone,
+  Users,
+  Mic,
+  Images,
+  Settings,
+  Crown,
+  Palette,
+  RefreshCw,
 } from 'lucide-react';
-import { useAdmin } from '../../context/AdminContext';
+import { useApp } from '../../context/AppContext';
 import { ADMIN_CONFIG } from '../../config/admin';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
-  const { getStats, attendees, schedule, announcements, config, surveys = [] } = useAdmin();
-  const stats = getStats();
-  const conventionName = typeof config.name === 'string' ? config.name : '2026 Rainbow Grand Assembly Convention';
-  const conventionTheme = typeof config.theme === 'string' ? config.theme : 'The Greatest Showman';
-  const conventionVenue = typeof config.venue === 'string'
-    ? config.venue
-    : [config.venue?.name, config.venue?.city, config.venue?.state].filter(Boolean).join(' • ') || 'Venue coming soon';
-  const conventionDates = [config.startDate, config.endDate].filter(Boolean).join(' - ') || config.general?.countdownDate || 'Dates coming soon';
-  const expectedAttendance = config.expectedAttendees || config.general?.expectedAttendees || 'TBD';
+  const { appConfig } = useApp();
 
-  // Calculate additional metrics
-  const metrics = useMemo(() => {
-    const chapters = new Set(attendees.map(a => a.chapter).filter(Boolean));
-    const grandOfficers = attendees.filter(a => a.grandOffice).length;
-    const byRole = attendees.reduce((acc, a) => {
-      acc[a.role] = (acc[a.role] || 0) + 1;
-      return acc;
-    }, {});
-    const byStatus = attendees.reduce((acc, a) => {
-      acc[a.registrationStatus] = (acc[a.registrationStatus] || 0) + 1;
-      return acc;
-    }, {});
-    const upcomingEvents = schedule.filter(e => new Date(e.startTime) > new Date()).length;
-    const pinnedAnnouncements = announcements.filter(a => a.pinned).length;
-    
-    return {
-      chapters: chapters.size,
-      grandOfficers,
-      byRole,
-      byStatus,
-      upcomingEvents,
-      pinnedAnnouncements,
-    };
-  }, [attendees, schedule, announcements]);
+  const conventionDates = [appConfig.startDate, appConfig.endDate].filter(Boolean).join(' - ');
+  const venue = [
+    appConfig.venueName,
+    appConfig.venueAddress,
+    [appConfig.venueCity, appConfig.venueState, appConfig.venueZip].filter(Boolean).join(' '),
+  ].filter(Boolean).join(' • ');
 
-  const statCards = [
-    {
-      id: 'attendees',
-      label: 'Registered Attendees',
-      value: stats.totalAttendees,
-      icon: Users,
-      color: 'gold',
-      trend: '+12%',
-      trendLabel: 'vs last week',
-      trendUp: true,
-    },
-    {
-      id: 'chapters',
-      label: 'Chapters Attending',
-      value: metrics.chapters,
-      icon: Target,
-      color: 'primary',
-      trend: '+3',
-      trendLabel: 'new chapters',
-      trendUp: true,
-    },
-    {
-      id: 'events',
-      label: 'Scheduled Events',
-      value: stats.scheduledEvents,
-      icon: CalendarIcon,
-      color: 'accent',
-      trend: `${metrics.upcomingEvents} upcoming`,
-      trendLabel: '',
-      trendUp: true,
-    },
-    {
-      id: 'announcements',
-      label: 'Active Announcements',
-      value: stats.activeAnnouncements,
-      icon: Megaphone,
-      color: 'secondary',
-      trend: `${metrics.pinnedAnnouncements} pinned`,
-      trendLabel: '',
-      trendUp: false,
-    },
-    {
-      id: 'meals',
-      label: 'Meal Selections',
-      value: stats.mealsSelected,
-      icon: Utensils,
-      color: 'gold',
-      trend: '3 meal periods',
-      trendLabel: '',
-      trendUp: false,
-    },
-    {
-      id: 'surveys',
-      label: 'Survey Responses',
-      value: stats.surveysCompleted,
-      icon: ClipboardList,
-      color: 'primary',
-      trend: `${surveys.length} surveys`,
-      trendLabel: '',
-      trendUp: true,
-    },
-    {
-      id: 'awards',
-      label: 'Awards Created',
-      value: stats.awardsCreated,
-      icon: Award,
-      color: 'accent',
-      trend: 'Ready to assign',
-      trendLabel: '',
-      trendUp: false,
-    },
-    {
-      id: 'documents',
-      label: 'Documents',
-      value: stats.documentsCount,
-      icon: FileText,
-      color: 'secondary',
-      trend: `${stats.galleryImages} gallery images`,
-      trendLabel: '',
-      trendUp: false,
-    },
-  ];
-
-  // Recent activity (mock)
-  const recentActivity = useMemo(() => [
-    { id: 1, type: 'attendee', action: 'New registration', details: 'Sarah Mitchell - Delta Chapter', time: '2 min ago', icon: Users, color: 'gold' },
-    { id: 2, type: 'announcement', action: 'Announcement published', details: 'Opening Ceremony Details', time: '15 min ago', icon: Megaphone, color: 'primary' },
-    { id: 3, type: 'schedule', action: 'Event updated', details: 'Grand Banquet moved to 7:00 PM', time: '1 hour ago', icon: CalendarIcon, color: 'accent' },
-    { id: 4, type: 'survey', action: 'Survey response', details: 'Pre-Convention Survey - 5 stars', time: '3 hours ago', icon: ClipboardList, color: 'secondary' },
-    { id: 5, type: 'award', action: 'Award winner assigned', details: 'Leadership Award - Emma Wilson', time: 'Yesterday', icon: Award, color: 'gold' },
-  ], []);
-
-  // Quick actions
   const quickActions = [
-    { label: 'Manage Attendees', to: `${ADMIN_CONFIG.routePrefix}/attendees`, icon: Users, primary: true },
-    { label: 'Create Event', to: `${ADMIN_CONFIG.routePrefix}/schedule/new`, icon: CalendarIcon, primary: false },
-    { label: 'Announcements', to: `${ADMIN_CONFIG.routePrefix}/announcements`, icon: Megaphone, primary: false },
-    { label: 'Awards', to: `${ADMIN_CONFIG.routePrefix}/awards`, icon: Award, primary: false },
-    { label: 'Documents', to: `${ADMIN_CONFIG.routePrefix}/documents`, icon: FileText, primary: false },
-    { label: 'Manage Meals', to: `${ADMIN_CONFIG.routePrefix}/meals`, icon: Utensils, primary: false },
+    { label: 'Manage Schedule', description: 'Add, edit, and review Google Sheet events.', to: `${ADMIN_CONFIG.routePrefix}/schedule`, icon: CalendarIcon, primary: true },
+    { label: 'Announcements', description: 'Create updates and ticker alerts from Notifications.', to: `${ADMIN_CONFIG.routePrefix}/announcements`, icon: Megaphone, primary: false },
+    { label: 'Meet NJ Rainbow', description: 'Manage member profiles, photos, bios, videos, and speaker toggle.', to: `${ADMIN_CONFIG.routePrefix}/members`, icon: Users, primary: false },
+    { label: 'Speakers', description: 'Edit speaker-specific details and event tags.', to: `${ADMIN_CONFIG.routePrefix}/speakers`, icon: Mic, primary: false },
+    { label: 'Gallery', description: 'Manage photos from the Gallery sheet.', to: `${ADMIN_CONFIG.routePrefix}/gallery`, icon: Images, primary: false },
+    { label: 'Appearance & Settings', description: 'Update yearly theme, colors, venue, contacts, and social links.', to: `${ADMIN_CONFIG.routePrefix}/settings`, icon: Settings, primary: false },
   ];
 
   return (
     <div className="admin-dashboard">
-      {/* Welcome Header */}
       <section className="dashboard-header">
         <div className="header-content">
           <div>
             <h2 className="welcome-title">Welcome back, Administrator</h2>
             <p className="welcome-subtitle">
-              {conventionName} - {conventionTheme} Convention Management
+              Manage {appConfig.appTitle || 'the convention app'} from the Google Sheet-connected tools below.
             </p>
           </div>
           <div className="header-actions">
@@ -167,148 +52,49 @@ const AdminDashboard = () => {
         </div>
       </section>
 
-      {/* Statistics Grid */}
-      <section className="dashboard-stats" aria-label="Key statistics">
-        <div className="stats-grid">
-          {statCards.map((card) => (
-            <article key={card.id} className="stat-card">
-              <div className="stat-icon" style={{ '--stat-color': `var(--${card.color})` }}>
-                <card.icon size={24} aria-hidden="true" />
-              </div>
-              <div className="stat-content">
-                <div className="stat-value">{card.value}</div>
-                <div className="stat-label">{card.label}</div>
-              </div>
-              <div className={`stat-trend ${card.trendUp ? 'up' : 'down'}`}>
-                <span className="trend-value">{card.trend}</span>
-                {card.trendLabel && <span className="trend-label">{card.trendLabel}</span>}
-                <span className="trend-icon" aria-hidden="true">
-                  {card.trendUp ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                </span>
-              </div>
-            </article>
+      <section className="dashboard-section quick-actions-section" aria-labelledby="quick-actions-title">
+        <h3 id="quick-actions-title" className="section-title">Admin Tools</h3>
+        <p className="section-desc">Use these areas to update the content that appears in the app.</p>
+        <div className="quick-actions-grid admin-tools-grid">
+          {quickActions.map((action) => (
+            <Link key={action.label} to={action.to} className={`quick-action-btn ${action.primary ? 'primary' : ''}`}>
+              <action.icon size={24} aria-hidden="true" />
+              <span>{action.label}</span>
+              <small>{action.description}</small>
+            </Link>
           ))}
         </div>
       </section>
 
-      {/* Main Content Grid */}
-      <div className="dashboard-main-grid">
-        {/* Quick Actions */}
-        <section className="dashboard-section quick-actions-section" aria-labelledby="quick-actions-title">
-          <h3 id="quick-actions-title" className="section-title">Quick Actions</h3>
-          <div className="quick-actions-grid">
-            {quickActions.map((action) => (
-              <Link key={action.label} to={action.to} className={`quick-action-btn ${action.primary ? 'primary' : ''}`}>
-                <action.icon size={20} aria-hidden="true" />
-                <span>{action.label}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        {/* Recent Activity */}
-        <section className="dashboard-section recent-activity-section" aria-labelledby="recent-activity-title">
-          <div className="section-header">
-            <h3 id="recent-activity-title" className="section-title">Recent Activity</h3>
-            <a href={`${ADMIN_CONFIG.routePrefix}/attendees`} className="view-all-link">View All</a>
-          </div>
-          <div className="activity-list">
-            {recentActivity.map((activity) => (
-              <div key={activity.id} className="activity-item">
-                <div className="activity-icon" style={{ '--activity-color': `var(--${activity.color})` }}>
-                  <activity.icon size={18} aria-hidden="true" />
-                </div>
-                <div className="activity-content">
-                  <div className="activity-action">{activity.action}</div>
-                  <div className="activity-details">{activity.details}</div>
-                </div>
-                <time className="activity-time" dateTime={activity.time}>{activity.time}</time>
-              </div>
-            ))}
-          </div>
-        </section>
-      </div>
-
-      {/* Attendee Breakdown */}
-      <section className="dashboard-section breakdown-section" aria-labelledby="breakdown-title">
-        <h3 id="breakdown-title" className="section-title">Attendee Breakdown</h3>
-        <div className="breakdown-grid">
-          <div className="breakdown-card">
-            <h4 className="breakdown-title">By Role</h4>
-            <div className="breakdown-list">
-              {Object.entries(metrics.byRole).map(([role, count]) => (
-                <div key={role} className="breakdown-item">
-                  <span className="breakdown-label">{role}</span>
-                  <span className="breakdown-value">{count}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="breakdown-card">
-            <h4 className="breakdown-title">By Registration Status</h4>
-            <div className="breakdown-list">
-              {Object.entries(metrics.byStatus).map(([status, count]) => (
-                <div key={status} className="breakdown-item">
-                  <span className="breakdown-label">{status.replace(/([A-Z])/g, ' $1').trim()}</span>
-                  <span className="breakdown-value">{count}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="breakdown-card">
-            <h4 className="breakdown-title">Special Designations</h4>
-            <div className="breakdown-list">
-              <div className="breakdown-item">
-                <span className="breakdown-label">Grand Officers</span>
-                <span className="breakdown-value">{metrics.grandOfficers}</span>
-              </div>
-              <div className="breakdown-item">
-                <span className="breakdown-label">Chapters</span>
-                <span className="breakdown-value">{metrics.chapters}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Convention Info */}
       <section className="dashboard-section convention-info-section" aria-labelledby="convention-info-title">
-        <h3 id="convention-info-title" className="section-title">Convention Information</h3>
+        <h3 id="convention-info-title" className="section-title">Current App Setup</h3>
         <div className="convention-info-grid">
           <div className="info-card">
-            <div className="info-icon">
-              <Calendar size={24} />
-            </div>
+            <div className="info-icon"><Crown size={24} /></div>
             <div className="info-content">
-              <label>Convention Dates</label>
-              <p>{conventionDates}</p>
+              <label>App Title</label>
+              <p>{appConfig.appTitle || 'Not set'}</p>
             </div>
           </div>
           <div className="info-card">
-            <div className="info-icon">
-              <Target size={24} />
-            </div>
-            <div className="info-content">
-              <label>Venue</label>
-              <p>{conventionVenue}</p>
-            </div>
-          </div>
-          <div className="info-card">
-            <div className="info-icon">
-              <Users size={24} />
-            </div>
-            <div className="info-content">
-              <label>Expected Attendance</label>
-              <p>{expectedAttendance} attendees</p>
-            </div>
-          </div>
-          <div className="info-card">
-            <div className="info-icon">
-              <Crown size={24} />
-            </div>
+            <div className="info-icon"><Palette size={24} /></div>
             <div className="info-content">
               <label>Theme</label>
-              <p>{conventionTheme}</p>
+              <p>{appConfig.themeName || 'Not set'}</p>
+            </div>
+          </div>
+          <div className="info-card">
+            <div className="info-icon"><CalendarIcon size={24} /></div>
+            <div className="info-content">
+              <label>Dates</label>
+              <p>{conventionDates || 'Not set'}</p>
+            </div>
+          </div>
+          <div className="info-card">
+            <div className="info-icon"><Users size={24} /></div>
+            <div className="info-content">
+              <label>Venue</label>
+              <p>{venue || 'Not set'}</p>
             </div>
           </div>
         </div>
