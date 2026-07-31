@@ -214,15 +214,55 @@ export const AppProvider = ({ children }) => {
     setCssVar('--shadow-gold-sm', `0 2px 8px rgba(${accentRgb}, 0.2)`)
     setCssVar('--shadow-gold-hover', `0 14px 38px rgba(${accentRgb}, 0.38)`)
 
-    const iconUrl = appConfig.iconUrl?.trim()
-    if (iconUrl) {
-      let icon = document.querySelector('link[rel="icon"]')
-      if (!icon) {
-        icon = document.createElement('link')
-        icon.rel = 'icon'
-        document.head.appendChild(icon)
+    const setHeadLink = (rel, href, attrs = {}) => {
+      let link = document.querySelector(`link[rel="${rel}"]`)
+      if (!link) {
+        link = document.createElement('link')
+        link.rel = rel
+        document.head.appendChild(link)
       }
-      icon.href = iconUrl
+      link.href = href
+      Object.entries(attrs).forEach(([key, value]) => link.setAttribute(key, value))
+    }
+
+    const setMeta = (name, content) => {
+      let meta = document.querySelector(`meta[name="${name}"]`)
+      if (!meta) {
+        meta = document.createElement('meta')
+        meta.name = name
+        document.head.appendChild(meta)
+      }
+      meta.content = content
+    }
+
+    const iconUrl = appConfig.iconUrl?.trim()
+    const appTitle = appConfig.appTitle || DEFAULT_APP_CONFIG.appTitle
+    if (iconUrl) {
+      setHeadLink('icon', iconUrl)
+      setHeadLink('apple-touch-icon', iconUrl)
+
+      const manifest = {
+        name: appTitle,
+        short_name: appTitle.length > 24 ? 'Rainbow Convention' : appTitle,
+        description: '2026 Rainbow Grand Assembly Convention',
+        start_url: './',
+        scope: './',
+        display: 'standalone',
+        display_override: ['standalone', 'minimal-ui', 'browser'],
+        background_color: backgroundColor,
+        theme_color: primaryColor,
+        orientation: 'portrait-primary',
+        icons: [
+          { src: iconUrl, sizes: 'any', type: 'image/png', purpose: 'any' },
+          { src: iconUrl, sizes: 'any', type: 'image/png', purpose: 'maskable' },
+        ],
+      }
+      const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' })
+      const manifestUrl = URL.createObjectURL(manifestBlob)
+      setHeadLink('manifest', manifestUrl)
+      setMeta('apple-mobile-web-app-title', appTitle)
+      setMeta('theme-color', primaryColor)
+      return () => URL.revokeObjectURL(manifestUrl)
     }
   }, [appConfig])
 
