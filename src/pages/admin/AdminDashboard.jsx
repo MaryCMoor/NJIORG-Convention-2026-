@@ -6,6 +6,8 @@ import {
   Mic,
   Images,
   Settings,
+  Award,
+  Landmark,
   Crown,
   Palette,
   RefreshCw,
@@ -25,10 +27,13 @@ const AdminDashboard = () => {
   ].filter(Boolean).join(' • ');
 
   const quickActions = [
+    { label: 'Manage Attendees', description: 'Review and update attendee records.', to: `${ADMIN_CONFIG.routePrefix}/attendees`, icon: Users, primary: false },
     { label: 'Manage Schedule', description: 'Add, edit, and review Google Sheet events.', to: `${ADMIN_CONFIG.routePrefix}/schedule`, icon: CalendarIcon, primary: true },
     { label: 'Announcements', description: 'Create updates and ticker alerts from Notifications.', to: `${ADMIN_CONFIG.routePrefix}/announcements`, icon: Megaphone, primary: false },
     { label: 'Meet NJ Rainbow', description: 'Manage member profiles, photos, bios, videos, and speaker toggle.', to: `${ADMIN_CONFIG.routePrefix}/members`, icon: Users, primary: false },
+    { label: 'NJ Assemblies', description: 'Manage assemblies, Mother Advisors, term themes, and photos.', to: `${ADMIN_CONFIG.routePrefix}/assemblies`, icon: Landmark, primary: false },
     { label: 'Speakers', description: 'Edit speaker-specific details and event tags.', to: `${ADMIN_CONFIG.routePrefix}/speakers`, icon: Mic, primary: false },
+    { label: 'Awards', description: 'Manage awards and recognitions.', to: `${ADMIN_CONFIG.routePrefix}/awards`, icon: Award, primary: false },
     { label: 'Gallery', description: 'Manage photos from the Gallery sheet.', to: `${ADMIN_CONFIG.routePrefix}/gallery`, icon: Images, primary: false },
     { label: 'Appearance & Settings', description: 'Update yearly theme, colors, venue, contacts, and social links.', to: `${ADMIN_CONFIG.routePrefix}/settings`, icon: Settings, primary: false },
   ];
