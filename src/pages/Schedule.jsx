@@ -129,6 +129,12 @@ const EventCardContent = ({ event, speakers }) => {
           {event.dressCode && (
             <span className="event-meta-item"><Shirt size={13} aria-hidden="true" /> {event.dressCode}</span>
           )}
+          {event.mensDressCode && (
+            <span className="event-meta-item"><Shirt size={13} aria-hidden="true" /> Men: {event.mensDressCode}</span>
+          )}
+          {event.requiredRole && (
+            <span className="event-meta-item"><User size={13} aria-hidden="true" /> Required: {event.requiredRole}</span>
+          )}
           {event.presenter && (
             <span className="event-meta-item"><User size={13} aria-hidden="true" /> {event.presenter}</span>
           )}
@@ -159,6 +165,8 @@ const EventDetail = ({ event, speakers, onClose }) => {
         <div className="event-detail-grid">
           {event.room && <span><MapPin size={16} aria-hidden="true" /> {event.room}</span>}
           {event.dressCode && <span><Shirt size={16} aria-hidden="true" /> {event.dressCode}</span>}
+          {event.mensDressCode && <span><Shirt size={16} aria-hidden="true" /> Men: {event.mensDressCode}</span>}
+          {event.requiredRole && <span><User size={16} aria-hidden="true" /> Required: {event.requiredRole}</span>}
           {event.presenter && <span><User size={16} aria-hidden="true" /> {event.presenter}</span>}
         </div>
 

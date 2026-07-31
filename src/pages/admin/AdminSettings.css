@@ -120,3 +120,35 @@
   .modal-actions .btn { width: 100%; justify-content: center; }
   .tab-btn { min-width: 0; padding: var(--space-2); }
 }
+
+.color-explainer {
+  padding: var(--space-4);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--gold);
+  border-radius: var(--radius-lg);
+  background: var(--bg-tertiary);
+}
+
+.color-explainer h3 {
+  margin: 0 0 var(--space-2);
+  color: var(--text-primary);
+  font-size: var(--text-base);
+}
+
+.color-explainer ul {
+  margin: 0;
+  padding-left: var(--space-5);
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.color-explainer li + li {
+  margin-top: var(--space-1);
+}
+
+.field-help {
+  margin: var(--space-1) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  line-height: 1.35;
+}

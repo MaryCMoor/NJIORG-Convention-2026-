@@ -118,6 +118,8 @@ const normalizeEvent = (row, index) => {
     room: row.location || '',
     roomId: (row.location || '').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
     dressCode: row.dressCode || '',
+    requiredRole: row.requiredRole || row.required || '',
+    mensDressCode: row.mensDressCode || row.mensDress || '',
     presenter: row.speaker || row.presenter || '',
     category: row.type || 'event',
     notes: row.notes || '',
@@ -139,6 +141,9 @@ export const normalizeSheetRowForAdminSchedule = (row, index) => ({
   description: row.description || '',
   type: row.type || '',
   speaker: row.speaker || '',
+  requiredRole: row.requiredRole || row.required || (Array.isArray(row.requiredRoles) ? row.requiredRoles.join(', ') : ''),
+  dressCode: row.dressCode || (Array.isArray(row.dressCodes) ? row.dressCodes.join(', ') : ''),
+  mensDressCode: row.mensDressCode || row.mensDress || '',
   dateCreated: row.dateCreated || '',
 })
 

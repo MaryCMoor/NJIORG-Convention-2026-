@@ -298,15 +298,6 @@ const AdminSettings = () => {
                 <div className="form-field"><label htmlFor="tiktokUrl">TikTok URL</label><input type="url" id="tiktokUrl" value={appConfigDraft.tiktokUrl || ''} onChange={e=>handleAppConfigChange('tiktokUrl', e.target.value)} placeholder="https://www.tiktok.com/@..." /></div>
                 <div className="form-field"><label htmlFor="websiteUrl">Website URL</label><input type="url" id="websiteUrl" value={appConfigDraft.websiteUrl || ''} onChange={e=>handleAppConfigChange('websiteUrl', e.target.value)} placeholder="https://..." /></div>
                 <div className="form-field"><label htmlFor="hashtagYear">Hashtag</label><input type="text" id="hashtagYear" value={appConfigDraft.hashtag || ''} onChange={e=>handleAppConfigChange('hashtag', e.target.value)} placeholder="#IORG2026" /></div>
-                <div className="form-field"><label htmlFor="primaryColorYear">Primary Color</label><input type="color" id="primaryColorYear" value={appConfigDraft.primaryColor || '#8B0000'} onChange={e=>handleAppConfigChange('primaryColor', e.target.value)} /></div>
-                <div className="form-field"><label htmlFor="accentColorYear">Accent Color</label><input type="color" id="accentColorYear" value={appConfigDraft.accentColor || '#D4AF37'} onChange={e=>handleAppConfigChange('accentColor', e.target.value)} /></div>
-                <div className="form-field"><label htmlFor="textColorYear">Text Color</label><input type="color" id="textColorYear" value={appConfigDraft.textColor || '#1c1c1c'} onChange={e=>handleAppConfigChange('textColor', e.target.value)} /></div>
-                <div className="form-field"><label htmlFor="secondaryTextColorYear">Secondary Text Color</label><input type="color" id="secondaryTextColorYear" value={appConfigDraft.secondaryTextColor || '#6b6b6b'} onChange={e=>handleAppConfigChange('secondaryTextColor', e.target.value)} /></div>
-                <div className="form-field"><label htmlFor="backgroundColorYear">Background Color</label><input type="color" id="backgroundColorYear" value={appConfigDraft.backgroundColor || '#fef9ef'} onChange={e=>handleAppConfigChange('backgroundColor', e.target.value)} /></div>
-                <div className="form-field"><label htmlFor="surfaceColorYear">Card/Surface Color</label><input type="color" id="surfaceColorYear" value={appConfigDraft.surfaceColor || '#ffffff'} onChange={e=>handleAppConfigChange('surfaceColor', e.target.value)} /></div>
-                <div className="form-field"><label htmlFor="surfaceElevatedColorYear">Elevated Surface Color</label><input type="color" id="surfaceElevatedColorYear" value={appConfigDraft.surfaceElevatedColor || '#fffdf5'} onChange={e=>handleAppConfigChange('surfaceElevatedColor', e.target.value)} /></div>
-                <div className="form-field"><label htmlFor="borderColorYear">Border Color</label><input type="color" id="borderColorYear" value={appConfigDraft.borderColor || appConfigDraft.accentColor || '#D4AF37'} onChange={e=>handleAppConfigChange('borderColor', e.target.value)} /></div>
-                <div className="form-field"><label htmlFor="buttonTextColorYear">Button/Icon Text Color</label><input type="color" id="buttonTextColorYear" value={appConfigDraft.buttonTextColor || '#ffffff'} onChange={e=>handleAppConfigChange('buttonTextColor', e.target.value)} /></div>
               </div>
             </section>
           )}
@@ -368,14 +359,40 @@ const AdminSettings = () => {
           {/* Appearance Tab */}
           {activeTab==='appearance' && (
             <section className="settings-section">
-              <h2 className="section-title">Appearance & Branding</h2>
+              <div className="section-header">
+                <div>
+                  <h2 className="section-title">Appearance & Branding</h2>
+                  <p className="section-desc">All app colors live here. These save to the Google Sheet AppConfig tab and update the public app, role selector, cards, buttons, and admin UI.</p>
+                </div>
+                <button className="btn btn-primary" onClick={saveYearlyTheme}><Save size={18} /><span>Save Appearance</span></button>
+              </div>
+
+              <div className="color-explainer">
+                <h3>What each color controls</h3>
+                <ul>
+                  <li><strong>Primary Color:</strong> main brand color, headings, primary buttons, role page main blocks, and important accents.</li>
+                  <li><strong>Accent Color:</strong> secondary brand color used for highlights, icon accents, focus rings, chips, and decorative borders.</li>
+                  <li><strong>Text Color:</strong> main text on pages and cards.</li>
+                  <li><strong>Secondary Text Color:</strong> subtitles, helper text, descriptions, and muted details.</li>
+                  <li><strong>Background Color:</strong> overall page/app background.</li>
+                  <li><strong>Card/Surface Color:</strong> normal cards, tiles, panels, and modal backgrounds.</li>
+                  <li><strong>Elevated Surface Color:</strong> inputs, secondary panels, table headers, and slightly raised areas.</li>
+                  <li><strong>Border Color:</strong> card borders, input borders, separators, and outlines.</li>
+                  <li><strong>Button/Icon Text Color:</strong> text/icons that sit on top of primary colored buttons or icon blocks.</li>
+                </ul>
+              </div>
+
               <div className="settings-grid">
-                <div className="form-field"><label htmlFor="primaryColor">Primary Color</label><input type="color" id="primaryColor" value={config.appearance?.primaryColor||'#8B0000'} onChange={e=>handleConfigChange('appearance','primaryColor',e.target.value)} /></div>
-                <div className="form-field"><label htmlFor="goldColor">Gold/Accent Color</label><input type="color" id="goldColor" value={config.appearance?.goldColor||'#D4AF37'} onChange={e=>handleConfigChange('appearance','goldColor',e.target.value)} /></div>
-                <div className="form-field"><label htmlFor="darkModeDefault">Default Dark Mode</label><select id="darkModeDefault" value={config.appearance?.darkModeDefault||'auto'} onChange={e=>handleConfigChange('appearance','darkModeDefault',e.target.value)}><option value="auto">Auto (System)</option><option value="true">Always Dark</option><option value="false">Always Light</option></select></div>
-                <div className="form-field"><label htmlFor="logoUrl">Logo URL</label><input type="url" id="logoUrl" value={config.appearance?.logoUrl||''} onChange={e=>handleConfigChange('appearance','logoUrl',e.target.value)} /></div>
-                <div className="form-field"><label htmlFor="faviconUrl">Favicon URL</label><input type="url" id="faviconUrl" value={config.appearance?.faviconUrl||''} onChange={e=>handleConfigChange('appearance','faviconUrl',e.target.value)} /></div>
-                <div className="form-field"><label htmlFor="mascotImage">Mascot Image URL</label><input type="url" id="mascotImage" value={config.appearance?.mascotImage||''} onChange={e=>handleConfigChange('appearance','mascotImage',e.target.value)} /></div>
+                <div className="form-field"><label htmlFor="primaryColorYear">Primary Color</label><input type="color" id="primaryColorYear" value={appConfigDraft.primaryColor || '#8B0000'} onChange={e=>handleAppConfigChange('primaryColor', e.target.value)} /><p className="field-help">Main brand color: headings, primary buttons, and major UI accents.</p></div>
+                <div className="form-field"><label htmlFor="accentColorYear">Accent Color</label><input type="color" id="accentColorYear" value={appConfigDraft.accentColor || '#D4AF37'} onChange={e=>handleAppConfigChange('accentColor', e.target.value)} /><p className="field-help">Highlight color: chips, icon accents, focus rings, and decorative borders.</p></div>
+                <div className="form-field"><label htmlFor="textColorYear">Text Color</label><input type="color" id="textColorYear" value={appConfigDraft.textColor || '#1c1c1c'} onChange={e=>handleAppConfigChange('textColor', e.target.value)} /><p className="field-help">Main readable text across the app.</p></div>
+                <div className="form-field"><label htmlFor="secondaryTextColorYear">Secondary Text Color</label><input type="color" id="secondaryTextColorYear" value={appConfigDraft.secondaryTextColor || '#6b6b6b'} onChange={e=>handleAppConfigChange('secondaryTextColor', e.target.value)} /><p className="field-help">Subtitles, descriptions, hints, and muted details.</p></div>
+                <div className="form-field"><label htmlFor="backgroundColorYear">Background Color</label><input type="color" id="backgroundColorYear" value={appConfigDraft.backgroundColor || '#fef9ef'} onChange={e=>handleAppConfigChange('backgroundColor', e.target.value)} /><p className="field-help">The full page/app background, including role selection.</p></div>
+                <div className="form-field"><label htmlFor="surfaceColorYear">Card/Surface Color</label><input type="color" id="surfaceColorYear" value={appConfigDraft.surfaceColor || '#ffffff'} onChange={e=>handleAppConfigChange('surfaceColor', e.target.value)} /><p className="field-help">Cards, Home tiles, panels, and modal surfaces.</p></div>
+                <div className="form-field"><label htmlFor="surfaceElevatedColorYear">Elevated Surface Color</label><input type="color" id="surfaceElevatedColorYear" value={appConfigDraft.surfaceElevatedColor || '#fffdf5'} onChange={e=>handleAppConfigChange('surfaceElevatedColor', e.target.value)} /><p className="field-help">Inputs, table headers, and secondary raised areas.</p></div>
+                <div className="form-field"><label htmlFor="borderColorYear">Border Color</label><input type="color" id="borderColorYear" value={appConfigDraft.borderColor || appConfigDraft.accentColor || '#D4AF37'} onChange={e=>handleAppConfigChange('borderColor', e.target.value)} /><p className="field-help">Card borders, input borders, separators, and outlines.</p></div>
+                <div className="form-field"><label htmlFor="buttonTextColorYear">Button/Icon Text Color</label><input type="color" id="buttonTextColorYear" value={appConfigDraft.buttonTextColor || '#ffffff'} onChange={e=>handleAppConfigChange('buttonTextColor', e.target.value)} /><p className="field-help">Text and icons shown on top of primary colored buttons or icon blocks.</p></div>
+                <div className="form-field"><label htmlFor="logoUrl">Logo URL</label><input type="url" id="logoUrl" value={appConfigDraft.iconUrl || ''} onChange={e=>handleAppConfigChange('iconUrl', e.target.value)} placeholder="https://..." /><p className="field-help">Used as the app icon/logo where supported.</p></div>
               </div>
             </section>
           )}

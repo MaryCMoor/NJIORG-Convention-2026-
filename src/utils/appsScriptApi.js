@@ -66,6 +66,9 @@ const sendEventToGoogleSheet = async (event, action = 'createEvent') => {
     description: event.description || '',
     type: event.category || event.type || '',
     speaker: event.presenter || event.speaker || '',
+    requiredRole: Array.isArray(event.requiredRoles) ? event.requiredRoles.join(', ') : (event.requiredRole || event.required || ''),
+    dressCode: Array.isArray(event.dressCodes) ? event.dressCodes.join(', ') : (event.dressCode || ''),
+    mensDressCode: event.mensDressCode || '',
   }
 
   const response = await fetch(APPS_SCRIPT_URL, {

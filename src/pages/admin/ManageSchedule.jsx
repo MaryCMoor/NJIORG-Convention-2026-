@@ -17,10 +17,23 @@ const blankForm = () => ({
   description: '',
   type: 'General',
   speaker: '',
+  requiredRoles: ['All Roles'],
+  dressCodes: [],
+  mensDressCode: '',
 });
 
 const dayOptions = ['Friday', 'Saturday', 'Sunday'];
 const typeOptions = ['General', 'Ceremony', 'Workshop', 'Meal', 'Entertainment', 'Meeting', 'Competition', 'Social'];
+const requiredRoleOptions = ['All Roles', 'Rainbow Girl', 'Grand Officer', 'Advisor', 'Administrator'];
+const dressCodeOptions = ['Casual', 'Business Casual', 'Formal', 'Rainbow Dress', 'Grand Officer Attire', 'Comfortable Shoes', 'Theme Attire'];
+
+const splitList = (value, fallback = []) => {
+  if (Array.isArray(value)) return value.filter(Boolean);
+  return String(value || '')
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean) || fallback;
+};
 
 const sortValue = (event, field) => String(event[field] || '').toLowerCase();
 
@@ -104,6 +117,23 @@ const ManageSchedule = () => {
     }
   };
 
+  const toggleMultiValue = (field, value) => {
+    setFormData(prev => {
+      const current = Array.isArray(prev[field]) ? prev[field] : [];
+      let next = current.includes(value)
+        ? current.filter(item => item !== value)
+        : [...current, value];
+
+      if (field === 'requiredRoles') {
+        if (value === 'All Roles' && !current.includes('All Roles')) next = ['All Roles'];
+        else if (value !== 'All Roles') next = next.filter(item => item !== 'All Roles');
+        if (!next.length) next = ['All Roles'];
+      }
+
+      return { ...prev, [field]: next };
+    });
+  };
+
   const openAddModal = () => {
     setFormData(blankForm());
     setEditingEvent(null);
@@ -123,6 +153,9 @@ const ManageSchedule = () => {
       description: event.description || '',
       type: event.type || 'General',
       speaker: event.speaker || '',
+      requiredRoles: splitList(event.requiredRole, ['All Roles']),
+      dressCodes: splitList(event.dressCode),
+      mensDressCode: event.mensDressCode || '',
       eventId: event.eventId || event.id,
     });
     setSheetSaveStatus('idle');
@@ -171,7 +204,7 @@ const ManageSchedule = () => {
   };
 
   const exportSchedule = () => {
-    const headers = ['eventId', 'title', 'day', 'time', 'timeEnd', 'location', 'description', 'type', 'speaker', 'dateCreated'];
+    const headers = ['eventId', 'title', 'day', 'time', 'timeEnd', 'location', 'description', 'type', 'speaker', 'requiredRole', 'dressCode', 'mensDressCode', 'dateCreated'];
     const csv = [
       headers.join(','),
       ...filteredEvents.map(event => headers.map(header => `"${String(event[header] || '').replace(/"/g, '""')}"`).join(',')),
@@ -255,14 +288,17 @@ const ManageSchedule = () => {
                 <th><button className="sortable-header" onClick={() => handleSort('type')}>Type <span className="sort-icon">{renderSortIcon('type')}</span></button></th>
                 <th><button className="sortable-header" onClick={() => handleSort('location')}>Location <span className="sort-icon">{renderSortIcon('location')}</span></button></th>
                 <th><button className="sortable-header" onClick={() => handleSort('speaker')}>Speaker <span className="sort-icon">{renderSortIcon('speaker')}</span></button></th>
+                <th><button className="sortable-header" onClick={() => handleSort('requiredRole')}>Required <span className="sort-icon">{renderSortIcon('requiredRole')}</span></button></th>
+                <th><button className="sortable-header" onClick={() => handleSort('dressCode')}>Dress Code <span className="sort-icon">{renderSortIcon('dressCode')}</span></button></th>
+                <th><button className="sortable-header" onClick={() => handleSort('mensDressCode')}>Men's Dress <span className="sort-icon">{renderSortIcon('mensDressCode')}</span></button></th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={8} className="empty-state"><Calendar size={32}/><p>Loading Google Sheet events...</p></td></tr>
+                <tr><td colSpan={11} className="empty-state"><Calendar size={32}/><p>Loading Google Sheet events...</p></td></tr>
               ) : paginatedEvents.length === 0 ? (
-                <tr><td colSpan={8} className="empty-state"><Info size={32}/><p>No events found in the Google Sheet.</p><button className="btn btn-primary" onClick={openAddModal}><Plus size={16}/>Add First Event</button></td></tr>
+                <tr><td colSpan={11} className="empty-state"><Info size={32}/><p>No events found in the Google Sheet.</p><button className="btn btn-primary" onClick={openAddModal}><Plus size={16}/>Add First Event</button></td></tr>
               ) : (
                 paginatedEvents.map(event => (
                   <tr key={event.id}>
@@ -273,6 +309,9 @@ const ManageSchedule = () => {
                     <td><span className={`category-badge ${event.type || 'muted'}`}>{event.type || '—'}</span></td>
                     <td>{event.location || '—'}</td>
                     <td>{event.speaker || '—'}</td>
+                    <td>{event.requiredRole || 'All Roles'}</td>
+                    <td>{event.dressCode || '—'}</td>
+                    <td>{event.mensDressCode || '—'}</td>
                     <td><div className="action-buttons"><button className="icon-btn view" onClick={() => setViewEvent(event)} aria-label="View event"><Eye size={16}/></button></div></td>
                   </tr>
                 ))
@@ -304,6 +343,23 @@ const ManageSchedule = () => {
                 <div className="form-field"><label htmlFor="timeEnd">End Time</label><input type="text" id="timeEnd" placeholder="1:45 PM" value={formData.timeEnd} onChange={event => setFormData({...formData, timeEnd: event.target.value})}/></div>
                 <div className="form-field"><label htmlFor="location">Location</label><input type="text" id="location" value={formData.location} onChange={event => setFormData({...formData, location: event.target.value})}/></div>
                 <div className="form-field"><label htmlFor="type">Type</label><select id="type" value={formData.type} onChange={event => setFormData({...formData, type: event.target.value})}>{typeOptions.map(type => <option key={type} value={type}>{type}</option>)}</select></div>
+                <div className="form-field full-width">
+                  <label>Required To Attend</label>
+                  <div className="checkbox-chip-group">
+                    {requiredRoleOptions.map(role => (
+                      <label key={role} className="checkbox-chip"><input type="checkbox" checked={(formData.requiredRoles || []).includes(role)} onChange={() => toggleMultiValue('requiredRoles', role)} /> {role}</label>
+                    ))}
+                  </div>
+                </div>
+                <div className="form-field full-width">
+                  <label>Dress Code</label>
+                  <div className="checkbox-chip-group">
+                    {dressCodeOptions.map(code => (
+                      <label key={code} className="checkbox-chip"><input type="checkbox" checked={(formData.dressCodes || []).includes(code)} onChange={() => toggleMultiValue('dressCodes', code)} /> {code}</label>
+                    ))}
+                  </div>
+                </div>
+                <div className="form-field full-width"><label htmlFor="mensDressCode">Men's Dress Code</label><input type="text" id="mensDressCode" placeholder="Example: Dark suit and tie" value={formData.mensDressCode} onChange={event => setFormData({...formData, mensDressCode: event.target.value})}/></div>
                 <div className="form-field full-width"><label htmlFor="speaker">Speaker</label><input type="text" id="speaker" value={formData.speaker} onChange={event => setFormData({...formData, speaker: event.target.value})}/></div>
                 <div className="form-field full-width"><label htmlFor="description">Description</label><textarea id="description" value={formData.description} onChange={event => setFormData({...formData, description: event.target.value})} rows={3}/></div>
               </div>
@@ -323,7 +379,7 @@ const ManageSchedule = () => {
             <div className="modal-header"><h2 className="modal-title">Event Details</h2><button className="modal-close" onClick={() => setViewEvent(null)}><X size={20}/></button></div>
             <div className="modal-body">
               <div className="view-grid">
-                <div className="view-section"><h4>Google Sheet Row</h4><dl><dt>eventId</dt><dd>{viewEvent.eventId}</dd><dt>title</dt><dd>{viewEvent.title}</dd><dt>day</dt><dd>{viewEvent.day}</dd><dt>time</dt><dd>{viewEvent.time}</dd><dt>timeEnd</dt><dd>{viewEvent.timeEnd || '—'}</dd><dt>location</dt><dd>{viewEvent.location || '—'}</dd><dt>type</dt><dd>{viewEvent.type || '—'}</dd><dt>speaker</dt><dd>{viewEvent.speaker || '—'}</dd></dl></div>
+                <div className="view-section"><h4>Google Sheet Row</h4><dl><dt>eventId</dt><dd>{viewEvent.eventId}</dd><dt>title</dt><dd>{viewEvent.title}</dd><dt>day</dt><dd>{viewEvent.day}</dd><dt>time</dt><dd>{viewEvent.time}</dd><dt>timeEnd</dt><dd>{viewEvent.timeEnd || '—'}</dd><dt>location</dt><dd>{viewEvent.location || '—'}</dd><dt>type</dt><dd>{viewEvent.type || '—'}</dd><dt>speaker</dt><dd>{viewEvent.speaker || '—'}</dd><dt>requiredRole</dt><dd>{viewEvent.requiredRole || 'All Roles'}</dd><dt>dressCode</dt><dd>{viewEvent.dressCode || '—'}</dd><dt>mensDressCode</dt><dd>{viewEvent.mensDressCode || '—'}</dd></dl></div>
                 <div className="view-section full-width"><h4>description</h4><p>{viewEvent.description || '—'}</p></div>
               </div>
             </div>
