@@ -28,6 +28,8 @@ function doPost(e) {
 
     if (action === 'createEvent' || action === 'addEvent' || action === 'saveEvent') return createEvent(body);
     if (action === 'updateEvent') return updateEvent(body);
+    if (action === 'createMember' || action === 'addMember' || action === 'saveMember') return createMember(body);
+    if (action === 'updateMember') return updateMember(body);
     if (action === 'createNotification' || action === 'addNotification' || action === 'saveNotification') return createNotification(body);
     if (action === 'updateNotification') return updateNotification(body);
     if (action === 'saveAppConfig') return saveAppConfig(body);
@@ -140,6 +142,63 @@ function updateEvent(body) {
   return jsonResponse({ ok: true, success: true, action: 'updateEvent', eventId: eventId, updatedAt: new Date().toISOString() });
 }
 
+function getMembersSheet() {
+  return getSheetByName('Members');
+}
+
+function buildMemberData(body, memberId) {
+  return {
+    memberId: memberId,
+    name: body.name || '',
+    station: body.station || body.position || '',
+    assembly: body.assembly || '',
+    photo: body.photo || '',
+    bio: body.bio || '',
+    category: body.category || '',
+    videoUrl: body.videoUrl || ''
+  };
+}
+
+function findMemberRow(sheet, headers, body) {
+  const memberId = body.memberId || body.id;
+  if (memberId) {
+    const rowById = findRowById(sheet, headers, 'memberId', memberId);
+    if (rowById !== -1) return rowById;
+  }
+
+  const nameIndex = headers.indexOf('name');
+  const stationIndex = headers.indexOf('station');
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2 || nameIndex === -1) return -1;
+
+  const values = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
+  for (let i = 0; i < values.length; i += 1) {
+    const row = values[i];
+    const sameName = String(row[nameIndex] || '') === String(body.originalName || body.name || '');
+    const sameStation = stationIndex === -1 || String(row[stationIndex] || '') === String(body.originalStation || body.station || '');
+    if (sameName && sameStation) return i + 2;
+  }
+  return -1;
+}
+
+function createMember(body) {
+  const sheet = getMembersSheet();
+  const headers = ensureHeaders(sheet, ['memberId', 'name', 'station', 'assembly', 'photo', 'bio', 'category', 'videoUrl']);
+  const memberId = body.memberId || 'member_' + Date.now();
+  writeObjectRow(sheet, sheet.getLastRow() + 1, headers, buildMemberData(body, memberId));
+  return jsonResponse({ ok: true, success: true, action: 'createMember', memberId: memberId });
+}
+
+function updateMember(body) {
+  const sheet = getMembersSheet();
+  const headers = ensureHeaders(sheet, ['memberId', 'name', 'station', 'assembly', 'photo', 'bio', 'category', 'videoUrl']);
+  const memberId = body.memberId || body.id || 'member_' + Date.now();
+  const rowNumber = findMemberRow(sheet, headers, body);
+  if (rowNumber === -1) return jsonResponse({ ok: false, success: false, error: 'Member not found' });
+  writeObjectRow(sheet, rowNumber, headers, buildMemberData(body, memberId));
+  return jsonResponse({ ok: true, success: true, action: 'updateMember', memberId: memberId, updatedAt: new Date().toISOString() });
+}
+
 function getNotificationsSheet() {
   return getSheetByName('Notifications');
 }
@@ -197,6 +256,7 @@ function defaultAppConfig() {
     contactLine2: '',
     facebookUrl: '',
     instagramUrl: '',
+    tiktokUrl: '',
     websiteUrl: '',
     hashtag: ''
   };

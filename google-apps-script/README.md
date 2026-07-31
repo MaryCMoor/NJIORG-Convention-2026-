@@ -27,6 +27,8 @@ Supported actions:
 
 - `createEvent`
 - `updateEvent`
+- `createMember`
+- `updateMember`
 - `createNotification`
 - `updateNotification`
 - `getAppConfig`
@@ -35,5 +37,6 @@ Supported actions:
 Sheets used:
 
 - `Events`
+- `Members`
 - `Notifications`
 - `AppConfig`
