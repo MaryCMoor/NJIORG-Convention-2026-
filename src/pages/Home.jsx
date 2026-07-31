@@ -84,15 +84,18 @@ const roleTiles = {
 }
 
 const Home = () => {
-  const { selectedRole } = useApp()
+  const { selectedRole, clearRole } = useApp()
   const tiles = roleTiles[selectedRole] || roleTiles.attendee
 
   return (
     <div className="mobile-home-page icon-only-home">
       <header className="home-welcome" aria-labelledby="home-title">
-        <span className="home-kicker">2026 Rainbow Grand Assembly Convention</span>
-        <h1 id="home-title">Welcome to Convention</h1>
-        <p>Tap a button below to quickly find what you need.</p>
+        <div>
+          <span className="home-kicker">2026 Rainbow Grand Assembly Convention</span>
+          <h1 id="home-title">Welcome to Convention</h1>
+          <p>Tap a button below to quickly find what you need.</p>
+        </div>
+        <button type="button" className="home-role-reset" onClick={clearRole}>Change Role</button>
       </header>
       <div className="app-tile-grid" aria-label="Convention areas">
         {tiles.map(tile => (

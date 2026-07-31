@@ -40,24 +40,19 @@ export const AppProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null)
   const [selectedRole, setSelectedRole] = useState(() => {
     try {
-      // Role is chosen for the current browser session only. Clear the older
-      // localStorage value so returning users still see the role dropdown on a
-      // fresh session instead of being silently sent to the main page.
+      // Always show the role gate when the app first opens. The selected role
+      // lives only in React state after the user chooses it, so a fresh page
+      // load starts at the role selector before the home dashboard opens.
       localStorage.removeItem('selectedRole')
-      const storedRole = sessionStorage.getItem('selectedRole')
-      const adminUnlocked = sessionStorage.getItem('adminUnlocked') === 'true'
-      if (storedRole === 'administrator' && !adminUnlocked) return null
-      return storedRole || null
+      sessionStorage.removeItem('selectedRole')
+      sessionStorage.removeItem('adminUnlocked')
+      return null
     } catch {
       return null
     }
   })
   const [adminUnlocked, setAdminUnlocked] = useState(() => {
-    try {
-      return sessionStorage.getItem('adminUnlocked') === 'true'
-    } catch {
-      return false
-    }
+    return false
   })
   const [theme, setTheme] = useState(() => {
     try {
@@ -136,12 +131,8 @@ export const AppProvider = ({ children }) => {
 
     setSelectedRole(role)
     try {
-      sessionStorage.setItem('selectedRole', role)
-      if (role === 'administrator') {
-        sessionStorage.setItem('adminUnlocked', 'true')
-      } else {
-        sessionStorage.removeItem('adminUnlocked')
-      }
+      sessionStorage.removeItem('selectedRole')
+      sessionStorage.removeItem('adminUnlocked')
       localStorage.removeItem('selectedRole')
     } catch (e) {
       console.warn('Failed to persist selected role:', e)

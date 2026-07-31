@@ -29,6 +29,14 @@ const Layout = () => {
     }
   }, [])
 
+  useEffect(() => {
+    // Always start public users on the home dashboard. They can then open
+    // NJ Rainbow and other areas from the home screen tiles.
+    if (location.pathname !== '/') {
+      navigate('/', { replace: true })
+    }
+  }, [])
+
   // Navigation items based on role
   const getNavItems = useCallback(() => {
     if (!selectedRole) return []
