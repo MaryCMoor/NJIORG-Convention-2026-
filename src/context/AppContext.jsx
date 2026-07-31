@@ -147,13 +147,23 @@ export const AppProvider = ({ children }) => {
     const primaryColor = appConfig.primaryColor || DEFAULT_APP_CONFIG.primaryColor
     const accentColor = appConfig.accentColor || DEFAULT_APP_CONFIG.accentColor
     const backgroundColor = appConfig.backgroundColor || DEFAULT_APP_CONFIG.backgroundColor
+    const surfaceColor = appConfig.surfaceColor || DEFAULT_APP_CONFIG.surfaceColor
+    const surfaceElevatedColor = appConfig.surfaceElevatedColor || DEFAULT_APP_CONFIG.surfaceElevatedColor
     const textColor = appConfig.textColor || DEFAULT_APP_CONFIG.textColor
+    const secondaryTextColor = appConfig.secondaryTextColor || DEFAULT_APP_CONFIG.secondaryTextColor
+    const borderColor = appConfig.borderColor || accentColor
+    const buttonTextColor = appConfig.buttonTextColor || DEFAULT_APP_CONFIG.buttonTextColor
     const accentRgb = hexToRgb(accentColor)
 
     document.title = appConfig.appTitle || DEFAULT_APP_CONFIG.appTitle
     setCssVar('--color-background', backgroundColor)
+    setCssVar('--color-surface', surfaceColor)
+    setCssVar('--color-surface-elevated', surfaceElevatedColor)
     setCssVar('--color-text', textColor)
+    setCssVar('--color-text-light', secondaryTextColor)
     setCssVar('--color-primary', primaryColor)
+    setCssVar('--color-text-on-primary', buttonTextColor)
+    setCssVar('--color-white', buttonTextColor)
 
     // The original theme used fixed gold/amber design tokens in many places.
     // Replace the entire gold scale with the configured accent color so no
@@ -177,8 +187,17 @@ export const AppProvider = ({ children }) => {
     setCssVar('--accent-bg', accentColor)
     setCssVar('--accent-border', accentColor)
     setCssVar('--social-bg', accentColor)
-    setCssVar('--color-border', accentColor)
-    setCssVar('--color-border-strong', accentColor)
+    setCssVar('--color-border', borderColor)
+    setCssVar('--color-border-strong', borderColor)
+    setCssVar('--border', borderColor)
+    setCssVar('--border-color', borderColor)
+    setCssVar('--border-subtle', borderColor)
+    setCssVar('--bg-primary', backgroundColor)
+    setCssVar('--bg-secondary', surfaceColor)
+    setCssVar('--bg-tertiary', surfaceElevatedColor)
+    setCssVar('--surface', surfaceColor)
+    setCssVar('--text-primary', textColor)
+    setCssVar('--text-secondary', secondaryTextColor)
     setCssVar('--shadow-gold', `0 8px 32px rgba(${accentRgb}, 0.3)`)
     setCssVar('--shadow-gold-sm', `0 2px 8px rgba(${accentRgb}, 0.2)`)
     setCssVar('--shadow-gold-hover', `0 14px 38px rgba(${accentRgb}, 0.38)`)

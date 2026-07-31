@@ -123,6 +123,13 @@ const AdminSettings = () => {
       hashtag: config.social?.hashtag || appConfigDraft.hashtag,
       primaryColor: config.appearance?.primaryColor || appConfigDraft.primaryColor,
       accentColor: config.appearance?.goldColor || appConfigDraft.accentColor,
+      backgroundColor: appConfigDraft.backgroundColor,
+      surfaceColor: appConfigDraft.surfaceColor,
+      surfaceElevatedColor: appConfigDraft.surfaceElevatedColor,
+      textColor: appConfigDraft.textColor,
+      secondaryTextColor: appConfigDraft.secondaryTextColor,
+      borderColor: appConfigDraft.borderColor,
+      buttonTextColor: appConfigDraft.buttonTextColor,
       iconUrl: config.appearance?.logoUrl || appConfigDraft.iconUrl,
     };
 
@@ -294,7 +301,12 @@ const AdminSettings = () => {
                 <div className="form-field"><label htmlFor="primaryColorYear">Primary Color</label><input type="color" id="primaryColorYear" value={appConfigDraft.primaryColor || '#8B0000'} onChange={e=>handleAppConfigChange('primaryColor', e.target.value)} /></div>
                 <div className="form-field"><label htmlFor="accentColorYear">Accent Color</label><input type="color" id="accentColorYear" value={appConfigDraft.accentColor || '#D4AF37'} onChange={e=>handleAppConfigChange('accentColor', e.target.value)} /></div>
                 <div className="form-field"><label htmlFor="textColorYear">Text Color</label><input type="color" id="textColorYear" value={appConfigDraft.textColor || '#1c1c1c'} onChange={e=>handleAppConfigChange('textColor', e.target.value)} /></div>
+                <div className="form-field"><label htmlFor="secondaryTextColorYear">Secondary Text Color</label><input type="color" id="secondaryTextColorYear" value={appConfigDraft.secondaryTextColor || '#6b6b6b'} onChange={e=>handleAppConfigChange('secondaryTextColor', e.target.value)} /></div>
                 <div className="form-field"><label htmlFor="backgroundColorYear">Background Color</label><input type="color" id="backgroundColorYear" value={appConfigDraft.backgroundColor || '#fef9ef'} onChange={e=>handleAppConfigChange('backgroundColor', e.target.value)} /></div>
+                <div className="form-field"><label htmlFor="surfaceColorYear">Card/Surface Color</label><input type="color" id="surfaceColorYear" value={appConfigDraft.surfaceColor || '#ffffff'} onChange={e=>handleAppConfigChange('surfaceColor', e.target.value)} /></div>
+                <div className="form-field"><label htmlFor="surfaceElevatedColorYear">Elevated Surface Color</label><input type="color" id="surfaceElevatedColorYear" value={appConfigDraft.surfaceElevatedColor || '#fffdf5'} onChange={e=>handleAppConfigChange('surfaceElevatedColor', e.target.value)} /></div>
+                <div className="form-field"><label htmlFor="borderColorYear">Border Color</label><input type="color" id="borderColorYear" value={appConfigDraft.borderColor || appConfigDraft.accentColor || '#D4AF37'} onChange={e=>handleAppConfigChange('borderColor', e.target.value)} /></div>
+                <div className="form-field"><label htmlFor="buttonTextColorYear">Button/Icon Text Color</label><input type="color" id="buttonTextColorYear" value={appConfigDraft.buttonTextColor || '#ffffff'} onChange={e=>handleAppConfigChange('buttonTextColor', e.target.value)} /></div>
               </div>
             </section>
           )}
