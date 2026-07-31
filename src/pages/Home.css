@@ -1,28 +1,52 @@
 .mobile-home-page {
   min-height: 100%;
   padding: clamp(0.75rem, 3vw, 1.25rem);
-  background:
-    radial-gradient(circle at 18% 0%, rgba(139, 0, 0, 0.42), transparent 30%),
-    radial-gradient(circle at 88% 12%, rgba(212, 175, 55, 0.16), transparent 24%),
-    linear-gradient(180deg, #060303 0%, #130707 52%, #030202 100%);
+  background: var(--color-background);
 }
 
 .icon-only-home {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
+  gap: clamp(0.9rem, 3vw, 1.15rem);
   padding-top: max(0.75rem, env(safe-area-inset-top, 0));
 }
 
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
+.home-welcome {
+  width: 100%;
+  padding: clamp(1rem, 4vw, 1.25rem);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-gold-500);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-sm);
+}
+
+.home-kicker {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: var(--color-gold-700);
+  font-size: clamp(0.72rem, 2.5vw, 0.82rem);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.home-welcome h1 {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: clamp(1.7rem, 8vw, 2.55rem);
+  line-height: 0.98;
+}
+
+.home-welcome p {
+  margin: 0.55rem 0 0;
+  color: var(--color-text-light);
+  font-size: clamp(0.95rem, 3.5vw, 1.05rem);
+  font-weight: 700;
+  line-height: 1.35;
 }
 
 .app-tile-grid {
@@ -40,14 +64,13 @@
   justify-content: space-between;
   gap: 0.55rem;
   padding: 1rem;
-  border-radius: 26px;
-  background:
-    linear-gradient(145deg, rgba(139, 0, 0, 0.98), rgba(78, 0, 0, 0.98)),
-    var(--color-primary);
-  color: var(--color-gold-300);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  color: var(--color-text);
   text-decoration: none;
-  border: 1px solid rgba(212, 175, 55, 0.58);
-  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 232, 150, 0.16);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-gold-500);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
   transition: transform 160ms ease, box-shadow 160ms ease;
 }
@@ -56,10 +79,8 @@
   content: '';
   position: absolute;
   inset: 0;
-  opacity: 0.22;
-  background:
-    radial-gradient(circle at 18% 18%, rgba(212, 175, 55, 0.38), transparent 28%),
-    linear-gradient(135deg, rgba(255, 235, 168, 0.18), transparent 68%);
+  opacity: 0;
+  background: linear-gradient(135deg, var(--color-gold-50), transparent 68%);
 }
 
 .app-tile:active {
@@ -68,9 +89,10 @@
 
 .app-tile:hover {
   text-decoration: none;
-  color: var(--color-gold-300);
+  color: var(--color-text);
   transform: translateY(-3px);
-  box-shadow: 0 22px 42px rgba(0, 0, 0, 0.44), 0 0 0 1px rgba(212, 175, 55, 0.28);
+  border-color: var(--color-gold-300);
+  box-shadow: var(--shadow-md);
 }
 
 .tile-icon,
@@ -87,16 +109,16 @@
   display: grid;
   place-items: center;
   border-radius: 18px;
-  background: rgba(8, 4, 4, 0.72);
-  color: var(--color-gold-400);
-  border: 1px solid rgba(212, 175, 55, 0.42);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.24);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-red-700));
+  color: var(--color-white);
+  border: 1px solid var(--color-gold-500);
+  box-shadow: var(--shadow-gold-sm);
 }
 
 .tile-title {
   display: block;
   margin-top: auto;
-  color: var(--color-gold-300);
+  color: var(--color-text);
   font-family: var(--font-heading);
   font-size: 1.15rem;
   font-weight: 800;
@@ -105,7 +127,7 @@
 
 .tile-subtitle {
   display: block;
-  color: rgba(255, 237, 184, 0.82);
+  color: var(--color-text-light);
   font-size: 0.82rem;
   line-height: 1.3;
 }
@@ -114,7 +136,7 @@
   position: absolute;
   right: 0.85rem;
   top: 0.85rem;
-  color: rgba(212, 175, 55, 0.86);
+  color: var(--color-gold-700);
 }
 
 .tone-red { --tile-color: #8B0000; }
@@ -124,14 +146,13 @@
 .tone-green { --tile-color: #15803d; }
 
 [data-theme="dark"] .app-tile {
-  background:
-    linear-gradient(145deg, rgba(139, 0, 0, 0.98), rgba(78, 0, 0, 0.98)),
-    var(--color-primary);
-  border-color: rgba(212, 175, 55, 0.58);
+  background: var(--color-surface-elevated);
+  border-color: var(--color-border);
+  border-left-color: var(--color-gold-500);
 }
 
 [data-theme="dark"] .tile-title {
-  color: var(--color-gold-300);
+  color: var(--color-text);
 }
 
 @media (min-width: 700px) {

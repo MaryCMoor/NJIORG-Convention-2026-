@@ -89,7 +89,11 @@ const Home = () => {
 
   return (
     <div className="mobile-home-page icon-only-home">
-      <h1 className="sr-only">Convention Areas</h1>
+      <header className="home-welcome" aria-labelledby="home-title">
+        <span className="home-kicker">2026 Rainbow Grand Assembly Convention</span>
+        <h1 id="home-title">Welcome to Convention</h1>
+        <p>Tap a button below to quickly find what you need.</p>
+      </header>
       <div className="app-tile-grid" aria-label="Convention areas">
         {tiles.map(tile => (
           <AppTile key={`${tile.title}-${tile.to}`} tile={tile} />

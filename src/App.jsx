@@ -71,6 +71,7 @@ const AppRoutes = () => {
             <Route path="housing" element={<Housing />} />
             <Route path="directory" element={<Directory />} />
             <Route path="nj-rainbow" element={<NJRainbow />} />
+            <Route path="nj-rainbow/:personId" element={<NJRainbow />} />
             <Route path="speakers" element={<Speakers />} />
             <Route path="gallery" element={<Gallery />} />
             <Route path="awards" element={<Awards />} />
