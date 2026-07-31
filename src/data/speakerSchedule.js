@@ -33,15 +33,25 @@ export const conventionSpeakers = [
   },
 ]
 
-export const getSpeakerScheduleTags = (events, speakerId) => {
-  const speaker = conventionSpeakers.find(item => item.id === speakerId)
+const eventMatchesTag = (event, tag) => {
+  const normalized = String(tag || '').trim().toLowerCase()
+  if (!normalized) return false
+  return event.id?.toLowerCase() === normalized || event.name?.toLowerCase() === normalized
+}
+
+export const getSpeakerEvents = (events, speaker) => {
   if (!speaker) return []
 
-  return speaker.eventIds
-    .map(eventId => events.find(event => event.id === eventId))
+  return (speaker.eventIds || [])
+    .map(eventId => events.find(event => eventMatchesTag(event, eventId)))
     .filter(Boolean)
 }
 
-export const getEventSpeakerTags = (event) => {
-  return conventionSpeakers.filter(speaker => speaker.eventIds.includes(event.id))
+export const getSpeakerScheduleTags = (events, speakerId, speakers = conventionSpeakers) => {
+  const speaker = speakers.find(item => item.id === speakerId)
+  return getSpeakerEvents(events, speaker)
+}
+
+export const getEventSpeakerTags = (event, speakers = conventionSpeakers) => {
+  return speakers.filter(speaker => (speaker.eventIds || []).some(eventId => eventMatchesTag(event, eventId)))
 }

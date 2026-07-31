@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import mockConvention from '../data/mockData'
+import { loadPublishedSheetData, normalizeAdminEventForSchedule } from '../utils/googleSheetData'
+import { DEFAULT_APP_CONFIG, loadAppConfigFromGoogleSheet } from '../utils/appsScriptApi'
 
 const AppContext = createContext(null)
 
@@ -62,6 +64,9 @@ export const AppProvider = ({ children }) => {
     }
   })
   const [notifications, setNotifications] = useState([])
+  const [sheetData, setSheetData] = useState({ events: [], members: [], speakers: [], notifications: [], gallery: [] })
+  const [sheetStatus, setSheetStatus] = useState('idle')
+  const [appConfig, setAppConfig] = useState(DEFAULT_APP_CONFIG)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activePage, setActivePage] = useState('home')
 
@@ -88,6 +93,66 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadSheetData = async () => {
+      setSheetStatus('loading')
+      try {
+        const data = await loadPublishedSheetData()
+        if (cancelled) return
+        setSheetData(data)
+        setSheetStatus('loaded')
+        setNotifications(prev => {
+          const existingIds = new Set(prev.map(item => item.id))
+          return [...data.notifications.filter(item => !existingIds.has(item.id)), ...prev].slice(0, 50)
+        })
+      } catch (error) {
+        console.warn('Failed to load Google Sheet data:', error)
+        if (!cancelled) setSheetStatus('error')
+      }
+    }
+
+    loadSheetData()
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadAppConfig = async () => {
+      try {
+        const config = await loadAppConfigFromGoogleSheet()
+        if (!cancelled) setAppConfig(config)
+      } catch (error) {
+        console.warn('Failed to load app config from Google Sheet:', error)
+      }
+    }
+
+    loadAppConfig()
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    document.title = appConfig.appTitle || DEFAULT_APP_CONFIG.appTitle
+    document.documentElement.style.setProperty('--color-background', appConfig.backgroundColor || DEFAULT_APP_CONFIG.backgroundColor)
+    document.documentElement.style.setProperty('--color-text', appConfig.textColor || DEFAULT_APP_CONFIG.textColor)
+    document.documentElement.style.setProperty('--color-primary', appConfig.primaryColor || DEFAULT_APP_CONFIG.primaryColor)
+    document.documentElement.style.setProperty('--color-gold-500', appConfig.accentColor || DEFAULT_APP_CONFIG.accentColor)
+    document.documentElement.style.setProperty('--color-gold-600', appConfig.accentColor || DEFAULT_APP_CONFIG.accentColor)
+
+    const iconUrl = appConfig.iconUrl?.trim()
+    if (iconUrl) {
+      let icon = document.querySelector('link[rel="icon"]')
+      if (!icon) {
+        icon = document.createElement('link')
+        icon.rel = 'icon'
+        document.head.appendChild(icon)
+      }
+      icon.href = iconUrl
+    }
+  }, [appConfig])
 
   const toggleTheme = useCallback(() => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light')
@@ -312,18 +377,29 @@ export const AppProvider = ({ children }) => {
   }, [updateState, addNotification])
 
   const getEventsForDay = useCallback((date) => {
-    return state.events.filter(event => 
-      event.startTime.startsWith(date)
+    const requestedDay = new Date(`${date}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long' })
+    const localEvents = state.events.map(normalizeAdminEventForSchedule)
+    const sheetIds = new Set(sheetData.events.map(event => event.id))
+    const sourceEvents = sheetData.events.length > 0
+      ? [...sheetData.events, ...localEvents.filter(event => !sheetIds.has(event.id))]
+      : localEvents
+    return sourceEvents.filter(event =>
+      event.startTime.startsWith(date) || event.day === requestedDay
     ).sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
-  }, [state.events])
+  }, [state.events, sheetData.events])
 
   const getUpcomingEvents = useCallback((limit = 5) => {
     const now = new Date()
-    return state.events
+    const localEvents = state.events.map(normalizeAdminEventForSchedule)
+    const sheetIds = new Set(sheetData.events.map(event => event.id))
+    const sourceEvents = sheetData.events.length > 0
+      ? [...sheetData.events, ...localEvents.filter(event => !sheetIds.has(event.id))]
+      : localEvents
+    return sourceEvents
       .filter(e => new Date(e.startTime) > now)
       .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
       .slice(0, limit)
-  }, [state.events])
+  }, [state.events, sheetData.events])
 
   const getTodaysEvents = useCallback(() => {
     const today = new Date().toISOString().split('T')[0]
@@ -392,6 +468,10 @@ export const AppProvider = ({ children }) => {
     currentUser,
     selectedRole,
     adminUnlocked,
+    sheetData,
+    sheetStatus,
+    appConfig,
+    setAppConfig,
     theme,
     notifications,
     sidebarOpen,

@@ -12,6 +12,7 @@ import Registration from './pages/Registration'
 import MyConvention from './pages/MyConvention'
 import Announcements from './pages/Announcements'
 import Maps from './pages/Maps'
+import EventInfo from './pages/EventInfo'
 import ProgramBook from './pages/ProgramBook'
 import Committees from './pages/Committees'
 import Meals from './pages/Meals'
@@ -28,6 +29,7 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import ManageAttendees from './pages/admin/ManageAttendees'
 import ManageSchedule from './pages/admin/ManageSchedule'
 import ManageAnnouncements from './pages/admin/ManageAnnouncements'
+import ManageMembers from './pages/admin/ManageMembers'
 import ManageMeals from './pages/admin/ManageMeals'
 import ManageAwards from './pages/admin/ManageAwards'
 import ManageDocuments from './pages/admin/ManageDocuments'
@@ -65,6 +67,7 @@ const AppRoutes = () => {
             <Route path="registration" element={<Registration />} />
             <Route path="my-convention" element={<MyConvention />} />
             <Route path="announcements" element={<Announcements />} />
+            <Route path="event-info" element={<EventInfo />} />
             <Route path="maps" element={<Maps />} />
             <Route path="program-book" element={<ProgramBook />} />
             <Route path="committees" element={<Committees />} />
@@ -84,9 +87,12 @@ const AppRoutes = () => {
           {/* Hidden Admin Portal - only accessible via secret URL */}
           <Route path={adminParentPath} element={<AdminRoute />}>
             <Route index element={<AdminDashboard />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="attendees" element={<ManageAttendees />} />
             <Route path="schedule" element={<ManageSchedule />} />
+            <Route path="schedule/new" element={<ManageSchedule />} />
             <Route path="announcements" element={<ManageAnnouncements />} />
+            <Route path="members" element={<ManageMembers />} />
             <Route path="meals" element={<ManageMeals />} />
             <Route path="awards" element={<ManageAwards />} />
             <Route path="documents" element={<ManageDocuments />} />

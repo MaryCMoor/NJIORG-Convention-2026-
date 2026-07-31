@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Users, Calendar, Megaphone, Utensils, Calendar as CalendarIcon,
   ClipboardList, Award, FileText, Images, TrendingUp, Target,
@@ -9,8 +10,15 @@ import { ADMIN_CONFIG } from '../../config/admin';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
-  const { getStats, attendees, schedule, announcements, config } = useAdmin();
+  const { getStats, attendees, schedule, announcements, config, surveys = [] } = useAdmin();
   const stats = getStats();
+  const conventionName = typeof config.name === 'string' ? config.name : '2026 Rainbow Grand Assembly Convention';
+  const conventionTheme = typeof config.theme === 'string' ? config.theme : 'The Greatest Showman';
+  const conventionVenue = typeof config.venue === 'string'
+    ? config.venue
+    : [config.venue?.name, config.venue?.city, config.venue?.state].filter(Boolean).join(' • ') || 'Venue coming soon';
+  const conventionDates = [config.startDate, config.endDate].filter(Boolean).join(' - ') || config.general?.countdownDate || 'Dates coming soon';
+  const expectedAttendance = config.expectedAttendees || config.general?.expectedAttendees || 'TBD';
 
   // Calculate additional metrics
   const metrics = useMemo(() => {
@@ -120,8 +128,6 @@ const AdminDashboard = () => {
     },
   ];
 
-  const surveys = useAdmin().surveys || [];
-
   // Recent activity (mock)
   const recentActivity = useMemo(() => [
     { id: 1, type: 'attendee', action: 'New registration', details: 'Sarah Mitchell - Delta Chapter', time: '2 min ago', icon: Users, color: 'gold' },
@@ -133,12 +139,12 @@ const AdminDashboard = () => {
 
   // Quick actions
   const quickActions = [
-    { label: 'Add Attendee', href: `${ADMIN_CONFIG.routePrefix}/attendees/new`, icon: Users, primary: true },
-    { label: 'Create Event', href: `${ADMIN_CONFIG.routePrefix}/schedule/new`, icon: CalendarIcon, primary: false },
-    { label: 'Post Announcement', href: `${ADMIN_CONFIG.routePrefix}/announcements/new`, icon: Megaphone, primary: false },
-    { label: 'Add Award', href: `${ADMIN_CONFIG.routePrefix}/awards/new`, icon: Award, primary: false },
-    { label: 'Upload Document', href: `${ADMIN_CONFIG.routePrefix}/documents/new`, icon: FileText, primary: false },
-    { label: 'Manage Meals', href: `${ADMIN_CONFIG.routePrefix}/meals`, icon: Utensils, primary: false },
+    { label: 'Manage Attendees', to: `${ADMIN_CONFIG.routePrefix}/attendees`, icon: Users, primary: true },
+    { label: 'Create Event', to: `${ADMIN_CONFIG.routePrefix}/schedule/new`, icon: CalendarIcon, primary: false },
+    { label: 'Announcements', to: `${ADMIN_CONFIG.routePrefix}/announcements`, icon: Megaphone, primary: false },
+    { label: 'Awards', to: `${ADMIN_CONFIG.routePrefix}/awards`, icon: Award, primary: false },
+    { label: 'Documents', to: `${ADMIN_CONFIG.routePrefix}/documents`, icon: FileText, primary: false },
+    { label: 'Manage Meals', to: `${ADMIN_CONFIG.routePrefix}/meals`, icon: Utensils, primary: false },
   ];
 
   return (
@@ -149,7 +155,7 @@ const AdminDashboard = () => {
           <div>
             <h2 className="welcome-title">Welcome back, Administrator</h2>
             <p className="welcome-subtitle">
-              {config.name} - {config.theme} Convention Management
+              {conventionName} - {conventionTheme} Convention Management
             </p>
           </div>
           <div className="header-actions">
@@ -192,10 +198,10 @@ const AdminDashboard = () => {
           <h3 id="quick-actions-title" className="section-title">Quick Actions</h3>
           <div className="quick-actions-grid">
             {quickActions.map((action) => (
-              <a key={action.label} href={action.href} className={`quick-action-btn ${action.primary ? 'primary' : ''}`}>
+              <Link key={action.label} to={action.to} className={`quick-action-btn ${action.primary ? 'primary' : ''}`}>
                 <action.icon size={20} aria-hidden="true" />
                 <span>{action.label}</span>
-              </a>
+              </Link>
             ))}
           </div>
         </section>
@@ -275,7 +281,7 @@ const AdminDashboard = () => {
             </div>
             <div className="info-content">
               <label>Convention Dates</label>
-              <p>{config.startDate} - {config.endDate}</p>
+              <p>{conventionDates}</p>
             </div>
           </div>
           <div className="info-card">
@@ -284,7 +290,7 @@ const AdminDashboard = () => {
             </div>
             <div className="info-content">
               <label>Venue</label>
-              <p>{config.venue}</p>
+              <p>{conventionVenue}</p>
             </div>
           </div>
           <div className="info-card">
@@ -293,7 +299,7 @@ const AdminDashboard = () => {
             </div>
             <div className="info-content">
               <label>Expected Attendance</label>
-              <p>{config.expectedAttendees} attendees</p>
+              <p>{expectedAttendance} attendees</p>
             </div>
           </div>
           <div className="info-card">
@@ -302,7 +308,7 @@ const AdminDashboard = () => {
             </div>
             <div className="info-content">
               <label>Theme</label>
-              <p>{config.theme}</p>
+              <p>{conventionTheme}</p>
             </div>
           </div>
         </div>

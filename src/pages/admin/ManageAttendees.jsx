@@ -275,7 +275,7 @@ const ManageAttendees = () => {
                 <option value="all">All Statuses</option>
                 {statuses.map(status => (
                   <option key={status} value={status}>
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                    {String(status || '').charAt(0).toUpperCase() + String(status || '').slice(1)}
                   </option>
                 ))}
               </select>
@@ -380,7 +380,7 @@ const ManageAttendees = () => {
                     <td>{attendee.grandOffice || '—'}</td>
                     <td>
                       <span className={`status-badge ${getStatusBadge(attendee.registrationStatus)}`}>
-                        {attendee.registrationStatus.charAt(0).toUpperCase() + attendee.registrationStatus.slice(1)}
+                        {String(attendee.registrationStatus || attendee.status || 'unknown').charAt(0).toUpperCase() + String(attendee.registrationStatus || attendee.status || 'unknown').slice(1)}
                       </span>
                     </td>
                     <td className="contact-cell">
@@ -556,7 +556,7 @@ const ManageAttendees = () => {
                   >
                     {statuses.map(status => (
                       <option key={status} value={status}>
-                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                        {String(status || '').charAt(0).toUpperCase() + String(status || '').slice(1)}
                       </option>
                     ))}
                   </select>

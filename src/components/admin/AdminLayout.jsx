@@ -37,6 +37,18 @@ const AdminLayout = () => {
   };
 
   const navigation = ADMIN_CONFIG.navigation;
+  const iconMap = {
+    LayoutDashboard,
+    Users,
+    Calendar,
+    Megaphone,
+    Utensils,
+    Award,
+    FileText,
+    Images,
+    ClipboardList,
+    Settings,
+  };
 
   return (
     <div className="admin-layout">
@@ -60,7 +72,7 @@ const AdminLayout = () => {
         <nav className="sidebar-nav" aria-label="Admin sections">
           <ul role="list">
             {navigation.map((item) => {
-              const Icon = item.icon;
+              const Icon = iconMap[item.icon] || LayoutDashboard;
               return (
                 <li key={item.id}>
                   <NavLink

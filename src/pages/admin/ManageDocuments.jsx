@@ -123,7 +123,7 @@ const ManageDocuments = () => {
               <td className="name-cell"><div className="doc-name"><TypeIcon size={16} className="type-icon"/>{d.title}</div>{d.description&&<div className="doc-desc">{d.description}</div>}</td>
               <td><span className="category-badge">{d.category}</span></td>
               <td><span className="type-badge">{d.type}</span></td>
-              <td><span className={`access-badge ${getAccessClass(d.accessLevel)}`}>{d.accessLevel.charAt(0).toUpperCase()+d.accessLevel.slice(1)}</span></td>
+              <td><span className={`access-badge ${getAccessClass(d.accessLevel)}`}>{String(d.accessLevel || 'public').charAt(0).toUpperCase()+String(d.accessLevel || 'public').slice(1)}</span></td>
               <td>{d.displayOrder}</td>
               <td><div className="action-buttons"><button className="icon-btn view" onClick={()=>{setViewDoc(d);}}><Eye size={16}/></button><button className="icon-btn edit" onClick={()=>openEditModal(d)}><Edit size={16}/></button><button className="icon-btn delete" onClick={()=>handleDelete(d.id)}><Trash2 size={16}/></button></div></td>
             </tr>})

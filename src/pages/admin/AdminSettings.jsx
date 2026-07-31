@@ -1,15 +1,17 @@
-import { useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   Settings, Save, RefreshCw, Trash2, AlertTriangle, CheckCircle, XCircle, Database, Wrench, Bell, Shield, Palette, Calendar, MapPin, Phone, Mail, Globe, Twitter, Facebook, Instagram, Youtube, Linkedin, Eye, EyeOff, Download, Upload, X
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
+import { useApp } from '../../context/AppContext';
+import { saveAppConfigToGoogleSheet } from '../../utils/appsScriptApi';
 import { ADMIN_CONFIG } from '../../config/admin';
 import './AdminSettings.css';
 
 const AdminSettings = () => {
   const { 
-    conventionConfig, 
-    updateConventionConfig, 
+    config: adminConfig,
+    updateConfig,
     clearAllData, 
     resetMockData, 
     toggleMaintenanceMode,
@@ -17,15 +19,72 @@ const AdminSettings = () => {
     auditLog,
     clearAuditLog
   } = useAdmin();
+  const { appConfig, setAppConfig } = useApp();
 
-  const [config, setConfig] = useState(conventionConfig);
+  const buildSettingsConfig = (source = {}) => ({
+    general: {
+      name: source.general?.name || source.name || '2026 Rainbow Grand Assembly Convention',
+      theme: source.general?.theme || source.theme || 'The Greatest Showman',
+      countdownDate: source.general?.countdownDate || source.startDate || '2026-08-14',
+      year: source.general?.year || '2026',
+      tagline: source.general?.tagline || source.tagline || '',
+      description: source.general?.description || source.description || '',
+    },
+    venue: {
+      name: source.venue?.name || '',
+      address: source.venue?.address || '',
+      city: source.venue?.city || '',
+      state: source.venue?.state || '',
+      zip: source.venue?.zip || '',
+      country: source.venue?.country || 'United States',
+      phone: source.venue?.phone || '',
+      website: source.venue?.website || '',
+      notes: source.venue?.notes || '',
+    },
+    contact: {
+      email: source.contact?.email || '',
+      phone: source.contact?.phone || '',
+      address: source.contact?.address || '',
+      city: source.contact?.city || '',
+      state: source.contact?.state || '',
+      zip: source.contact?.zip || '',
+      emergencyContact: source.contact?.emergencyContact || '',
+      emergencyPhone: source.contact?.emergencyPhone || '',
+    },
+    social: source.social || {},
+    appearance: {
+      primaryColor: source.appearance?.primaryColor || source.colors?.primary || '#8B0000',
+      goldColor: source.appearance?.goldColor || source.colors?.secondary || '#D4AF37',
+      darkModeDefault: source.appearance?.darkModeDefault || 'auto',
+      logoUrl: source.appearance?.logoUrl || '',
+      faviconUrl: source.appearance?.faviconUrl || '',
+      mascotImage: source.appearance?.mascotImage || '',
+    },
+    system: {
+      timezone: source.system?.timezone || 'America/New_York',
+      dateFormat: source.system?.dateFormat || 'MM/DD/YYYY',
+      timeFormat: source.system?.timeFormat || '12h',
+      language: source.system?.language || 'en',
+      enableNotifications: source.system?.enableNotifications !== false,
+      enableOffline: source.system?.enableOffline !== false,
+      analyticsEnabled: source.system?.analyticsEnabled !== false,
+    },
+  });
+
+  const [config, setConfig] = useState(() => buildSettingsConfig(adminConfig));
   const [activeTab, setActiveTab] = useState('general');
   const [message, setMessage] = useState({ type: '', text: '' });
   const [confirmAction, setConfirmAction] = useState(null);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [appConfigDraft, setAppConfigDraft] = useState(appConfig);
+
+  useEffect(() => {
+    setAppConfigDraft(appConfig);
+  }, [appConfig]);
 
   const tabs = [
     { id: 'general', label: 'General', icon: Settings },
+    { id: 'yearly-theme', label: 'Yearly Theme', icon: Palette },
     { id: 'venue', label: 'Venue', icon: MapPin },
     { id: 'contact', label: 'Contact', icon: Mail },
     { id: 'social', label: 'Social Media', icon: Globe },
@@ -36,12 +95,31 @@ const AdminSettings = () => {
   ];
 
   const handleConfigChange = (section, field, value) => {
-    setConfig(prev => ({ ...prev, [section]: { ...prev[section], [field]: value } }));
+    setConfig(prev => ({ ...prev, [section]: { ...(prev[section] || {}), [field]: value } }));
   };
 
   const saveConfig = () => {
-    updateConventionConfig(config);
+    updateConfig(config);
     showMessage('success', 'Settings saved successfully!');
+  };
+
+  const handleAppConfigChange = (field, value) => {
+    setAppConfigDraft(prev => ({ ...prev, [field]: value }));
+  };
+
+  const saveYearlyTheme = async () => {
+    try {
+      const nextConfig = {
+        ...appConfigDraft,
+        numberOfDays: Number(appConfigDraft.numberOfDays) || 3,
+      };
+      await saveAppConfigToGoogleSheet(nextConfig);
+      setAppConfig(nextConfig);
+      showMessage('success', 'Yearly theme saved to Google Sheet.');
+    } catch (error) {
+      console.error(error);
+      showMessage('error', error.message || 'Could not save yearly theme.');
+    }
   };
 
   const showMessage = (type, text) => {
@@ -151,6 +229,42 @@ const AdminSettings = () => {
             </section>
           )}
 
+          {activeTab==='yearly-theme' && (
+            <section className="settings-section">
+              <div className="section-header">
+                <div>
+                  <h2 className="section-title">Reusable Yearly App Theme</h2>
+                  <p className="section-desc">These values save to the Google Sheet AppConfig tab so the app can be reused for future convention years.</p>
+                </div>
+                <button className="btn btn-primary" onClick={saveYearlyTheme}><Save size={18} /><span>Save Yearly Theme</span></button>
+              </div>
+              <div className="settings-grid">
+                <div className="form-field"><label htmlFor="appTitle">App Title</label><input type="text" id="appTitle" value={appConfigDraft.appTitle || ''} onChange={e=>handleAppConfigChange('appTitle', e.target.value)} /></div>
+                <div className="form-field"><label htmlFor="themeName">Theme Name</label><input type="text" id="themeName" value={appConfigDraft.themeName || ''} onChange={e=>handleAppConfigChange('themeName', e.target.value)} /></div>
+                <div className="form-field"><label htmlFor="numberOfDays">Number of Days</label><input type="number" id="numberOfDays" min="1" max="14" value={appConfigDraft.numberOfDays || 3} onChange={e=>handleAppConfigChange('numberOfDays', e.target.value)} /></div>
+                <div className="form-field"><label htmlFor="startDate">Start Date</label><input type="date" id="startDate" value={appConfigDraft.startDate || ''} onChange={e=>handleAppConfigChange('startDate', e.target.value)} /></div>
+                <div className="form-field"><label htmlFor="endDate">End Date</label><input type="date" id="endDate" value={appConfigDraft.endDate || ''} onChange={e=>handleAppConfigChange('endDate', e.target.value)} /></div>
+                <div className="form-field"><label htmlFor="iconUrl">App Icon / Logo URL</label><input type="url" id="iconUrl" value={appConfigDraft.iconUrl || ''} onChange={e=>handleAppConfigChange('iconUrl', e.target.value)} placeholder="https://..." /></div>
+                <div className="form-field"><label htmlFor="venueNameYear">Venue Name</label><input type="text" id="venueNameYear" value={appConfigDraft.venueName || ''} onChange={e=>handleAppConfigChange('venueName', e.target.value)} /></div>
+                <div className="form-field"><label htmlFor="venueAddressYear">Venue Address</label><input type="text" id="venueAddressYear" value={appConfigDraft.venueAddress || ''} onChange={e=>handleAppConfigChange('venueAddress', e.target.value)} /></div>
+                <div className="form-field"><label htmlFor="venueCityYear">Venue City</label><input type="text" id="venueCityYear" value={appConfigDraft.venueCity || ''} onChange={e=>handleAppConfigChange('venueCity', e.target.value)} /></div>
+                <div className="form-field"><label htmlFor="venueStateYear">Venue State</label><input type="text" id="venueStateYear" value={appConfigDraft.venueState || ''} onChange={e=>handleAppConfigChange('venueState', e.target.value)} /></div>
+                <div className="form-field"><label htmlFor="venueZipYear">Venue ZIP</label><input type="text" id="venueZipYear" value={appConfigDraft.venueZip || ''} onChange={e=>handleAppConfigChange('venueZip', e.target.value)} /></div>
+                <div className="form-field full-width"><label htmlFor="contactLine1">Contact Line 1</label><input type="text" id="contactLine1" value={appConfigDraft.contactLine1 || ''} onChange={e=>handleAppConfigChange('contactLine1', e.target.value)} placeholder="Convention Chair: Name • email@example.com" /></div>
+                <div className="form-field full-width"><label htmlFor="contactLine2">Contact Line 2</label><input type="text" id="contactLine2" value={appConfigDraft.contactLine2 || ''} onChange={e=>handleAppConfigChange('contactLine2', e.target.value)} placeholder="Hotel / emergency / registration contact" /></div>
+                <div className="form-field"><label htmlFor="facebookUrl">Facebook URL</label><input type="url" id="facebookUrl" value={appConfigDraft.facebookUrl || ''} onChange={e=>handleAppConfigChange('facebookUrl', e.target.value)} placeholder="https://facebook.com/..." /></div>
+                <div className="form-field"><label htmlFor="instagramUrl">Instagram URL</label><input type="url" id="instagramUrl" value={appConfigDraft.instagramUrl || ''} onChange={e=>handleAppConfigChange('instagramUrl', e.target.value)} placeholder="https://instagram.com/..." /></div>
+                <div className="form-field"><label htmlFor="tiktokUrl">TikTok URL</label><input type="url" id="tiktokUrl" value={appConfigDraft.tiktokUrl || ''} onChange={e=>handleAppConfigChange('tiktokUrl', e.target.value)} placeholder="https://www.tiktok.com/@..." /></div>
+                <div className="form-field"><label htmlFor="websiteUrl">Website URL</label><input type="url" id="websiteUrl" value={appConfigDraft.websiteUrl || ''} onChange={e=>handleAppConfigChange('websiteUrl', e.target.value)} placeholder="https://..." /></div>
+                <div className="form-field"><label htmlFor="hashtagYear">Hashtag</label><input type="text" id="hashtagYear" value={appConfigDraft.hashtag || ''} onChange={e=>handleAppConfigChange('hashtag', e.target.value)} placeholder="#IORG2026" /></div>
+                <div className="form-field"><label htmlFor="primaryColorYear">Primary Color</label><input type="color" id="primaryColorYear" value={appConfigDraft.primaryColor || '#8B0000'} onChange={e=>handleAppConfigChange('primaryColor', e.target.value)} /></div>
+                <div className="form-field"><label htmlFor="accentColorYear">Accent Color</label><input type="color" id="accentColorYear" value={appConfigDraft.accentColor || '#D4AF37'} onChange={e=>handleAppConfigChange('accentColor', e.target.value)} /></div>
+                <div className="form-field"><label htmlFor="textColorYear">Text Color</label><input type="color" id="textColorYear" value={appConfigDraft.textColor || '#1c1c1c'} onChange={e=>handleAppConfigChange('textColor', e.target.value)} /></div>
+                <div className="form-field"><label htmlFor="backgroundColorYear">Background Color</label><input type="color" id="backgroundColorYear" value={appConfigDraft.backgroundColor || '#fef9ef'} onChange={e=>handleAppConfigChange('backgroundColor', e.target.value)} /></div>
+              </div>
+            </section>
+          )}
+
           {/* Venue Tab */}
           {activeTab==='venue' && (
             <section className="settings-section">
@@ -195,7 +309,7 @@ const AdminSettings = () => {
                   const Icon = {twitter:Twitter,facebook:Facebook,instagram:Instagram,youtube:Youtube,linkedin:Linkedin}[platform];
                   return (
                     <div key={platform} className="form-field social-field">
-                      <label htmlFor={platform}><Icon size={18} /> {platform.charAt(0).toUpperCase()+platform.slice(1)}</label>
+                      <label htmlFor={platform}><Icon size={18} /> {String(platform || '').charAt(0).toUpperCase()+String(platform || '').slice(1)}</label>
                       <input type="url" id={platform} value={config.social?.[platform]||''} onChange={e=>handleConfigChange('social',platform,e.target.value)} placeholder={`https://${platform}.com/...`} />
                     </div>
                   );

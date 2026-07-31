@@ -364,20 +364,8 @@
   }
 }
 
-/* Sidebar Overlay for Mobile */
-.admin-sidebar::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: -1;
-  opacity: 0;
-  visibility: hidden;
-  transition: all var(--transition-normal);
-}
-
+/* Sidebar overlay disabled: it was covering the admin dashboard while open. */
+.admin-sidebar::before,
 .admin-sidebar.open::before {
-  opacity: 1;
-  visibility: visible;
-  z-index: 99;
+  display: none;
 }

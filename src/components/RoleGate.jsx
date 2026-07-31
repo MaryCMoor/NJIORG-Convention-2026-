@@ -27,7 +27,7 @@ const ROLE_OPTIONS = [
 ]
 
 const RoleGate = () => {
-  const { selectRole } = useApp()
+  const { selectRole, appConfig } = useApp()
   const [role, setRole] = useState('')
   const [adminPassword, setAdminPassword] = useState('')
   const [error, setError] = useState('')
@@ -65,7 +65,7 @@ const RoleGate = () => {
 
           <p className="role-gate-kicker">
             <Sparkles size={16} />
-            2026 Rainbow Grand Assembly Convention
+            {appConfig.appTitle}
           </p>
 
           <h1 id="role-gate-title">Welcome</h1>

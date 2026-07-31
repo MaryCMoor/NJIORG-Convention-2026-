@@ -174,7 +174,7 @@ const ManageSurveys = () => {
             <div className="filter-row">
               <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="filter-select">
                 <option value="all">All Statuses</option>
-                {statuses.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+                {statuses.map(s => <option key={s} value={s}>{String(s || '').charAt(0).toUpperCase() + String(s || '').slice(1)}</option>)}
               </select>
               <select value={filterType} onChange={e => setFilterType(e.target.value)} className="filter-select">
                 <option value="all">All Types</option>
@@ -248,7 +248,7 @@ const ManageSurveys = () => {
                     <td><span className="type-badge">{s.type}</span></td>
                     <td>
                       <span className={'status-badge ' + getStatusClass(s.status)}>
-                        {s.status.charAt(0).toUpperCase() + s.status.slice(1)}
+                        {String(s.status || 'draft').charAt(0).toUpperCase() + String(s.status || 'draft').slice(1)}
                       </span>
                     </td>
                     <td>{s.startDate ? new Date(s.startDate).toLocaleDateString() : '—'}</td>
@@ -318,7 +318,7 @@ const ManageSurveys = () => {
                     onChange={e => setFormData({...formData, status: e.target.value})} 
                     required
                   >
-                    {statuses.map(st => <option key={st} value={st}>{st.charAt(0).toUpperCase() + st.slice(1)}</option>)}
+                    {statuses.map(st => <option key={st} value={st}>{String(st || '').charAt(0).toUpperCase() + String(st || '').slice(1)}</option>)}
                   </select>
                 </div>
                 <div className="form-field">

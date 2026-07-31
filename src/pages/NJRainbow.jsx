@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Heart, Mail, Sparkles, UserRound, Users } from 'lucide-react'
+import { ArrowLeft, Heart, UserRound, Users } from 'lucide-react'
+import { useApp } from '../context/AppContext'
 import './AppArea.css'
 
-const peopleTabs = [
+const fallbackPeopleTabs = [
   {
     id: 'grand-officers',
     label: 'Grand Officers',
@@ -124,10 +125,41 @@ const peopleTabs = [
   },
 ]
 
-const allPeople = peopleTabs.flatMap(tab => tab.people.map(person => ({ ...person, group: tab.label })))
+const tabOrder = ['Grand Officers', 'Mother Advisors', 'Adult Grand Executive Committee', 'Majority Committee']
+
+const buildPeopleTabs = (members) => {
+  return tabOrder.map(label => {
+    const people = members
+      .filter(member => member.category === label)
+      .map(member => ({
+        ...member,
+        group: label,
+      }))
+
+    return {
+      id: label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+      label,
+      description: getTabDescription(label),
+      people,
+    }
+  }).filter(tab => tab.people.length > 0)
+}
+
+const getTabDescription = (label) => {
+  const descriptions = {
+    'Grand Officers': 'Meet the Grand Officers leading the 2026 Rainbow Grand Assembly Convention.',
+    'Mother Advisors': 'Adult leaders and advisors supporting assemblies and helping guide the convention experience.',
+    'Adult Grand Executive Committee': 'The adult executive team helping oversee planning, tradition, safety, and convention operations.',
+    'Majority Committee': 'Majority members staying connected, supporting current members, and celebrating lifelong Rainbow sisterhood.',
+  }
+  return descriptions[label] || 'Meet the Rainbow leaders supporting convention.'
+}
 
 const NJRainbow = () => {
   const { personId } = useParams()
+  const { sheetData } = useApp()
+  const peopleTabs = sheetData.members.length ? buildPeopleTabs(sheetData.members) : fallbackPeopleTabs
+  const allPeople = peopleTabs.flatMap(tab => tab.people.map(person => ({ ...person, group: person.group || tab.label })))
 
   if (personId) {
     const person = allPeople.find(item => item.id === personId)
@@ -143,20 +175,17 @@ const NJRainbow = () => {
         <p>Tap a person to learn more about their role, story, and convention leadership.</p>
       </section>
 
-      <PeopleTabs />
+      <PeopleTabs peopleTabs={peopleTabs} />
 
-      <section className="area-info-card compact">
-        <h2><Sparkles size={22} /> More information coming soon</h2>
-        <p>Names, photos, and full biographies can be updated as the official convention roster is finalized.</p>
-      </section>
     </div>
   )
 }
 
-const PeopleTabs = () => {
-  const defaultTab = peopleTabs[0].id
+const PeopleTabs = ({ peopleTabs }) => {
+  const safeTabs = peopleTabs.length ? peopleTabs : fallbackPeopleTabs
+  const defaultTab = safeTabs[0].id
   const [activeTab, setActiveTab] = useState(defaultTab)
-  const tab = peopleTabs.find(item => item.id === activeTab) || peopleTabs[0]
+  const tab = safeTabs.find(item => item.id === activeTab) || safeTabs[0]
 
   return (
     <section className="people-directory" aria-labelledby="people-directory-title">
@@ -166,7 +195,7 @@ const PeopleTabs = () => {
       </div>
 
       <div className="people-tabs" role="tablist" aria-label="NJ Rainbow leadership groups">
-        {peopleTabs.map(item => (
+        {safeTabs.map(item => (
           <button
             key={item.id}
             id={`${item.id}-tab`}
@@ -199,8 +228,14 @@ const PeopleTabs = () => {
 const PersonCard = ({ person }) => (
   <Link className="person-card" to={`/nj-rainbow/${person.id}`} aria-label={`Read bio for ${person.position}`}>
     <div className="person-photo" aria-hidden="true">
-      <UserRound size={42} />
-      <span>Photo</span>
+      {person.photo ? (
+        <img src={person.photo} alt="" loading="lazy" />
+      ) : (
+        <>
+          <UserRound size={42} />
+          <span>Photo</span>
+        </>
+      )}
     </div>
     <div className="person-card-copy">
       <h3>{person.name}</h3>
@@ -222,29 +257,79 @@ const PersonBio = ({ person }) => {
     )
   }
 
+  const embedVideoUrl = getEmbeddableVideoUrl(person.videoUrl)
+
   return (
     <div className="app-area-page nj-rainbow-page">
       <Link className="back-link" to="/nj-rainbow"><ArrowLeft size={18} /> Back to NJ Rainbow</Link>
 
       <article className="person-bio-card">
-        <div className="person-bio-photo" aria-hidden="true">
-          <UserRound size={68} />
-          <span>Photo coming soon</span>
+        <div className="person-bio-photo">
+          {person.photo ? (
+            <img src={person.photo} alt={person.name} />
+          ) : (
+            <>
+              <UserRound size={68} />
+              <span>Photo coming soon</span>
+            </>
+          )}
         </div>
 
         <div className="person-bio-content">
           <p className="area-kicker">{person.group}</p>
           <h1>{person.name}</h1>
           <p className="person-bio-position">{person.position}</p>
-          <p>{person.bio}</p>
-          <div className="bio-note">
-            <Mail size={18} aria-hidden="true" />
-            <span>Official photo, contact details, and full biography can be added here.</span>
-          </div>
+          {person.bio && person.bio !== 'Biography coming soon.' && <p>{person.bio}</p>}
+          {person.assembly && <p className="person-bio-assembly">Assembly: {person.assembly}</p>}
+          {person.videoUrl && (
+            <section className="person-video-card" aria-label={`Video for ${person.name}`}>
+              <h2>Video</h2>
+              {embedVideoUrl ? (
+                <div className="person-video-frame">
+                  <iframe
+                    src={embedVideoUrl}
+                    title={`${person.name} video`}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  />
+                </div>
+              ) : (
+                <a className="person-video-link" href={person.videoUrl} target="_blank" rel="noreferrer">Open video</a>
+              )}
+            </section>
+          )}
         </div>
       </article>
     </div>
   )
+}
+
+const getEmbeddableVideoUrl = (url) => {
+  if (!url) return ''
+  try {
+    const parsed = new URL(url)
+    if (parsed.hostname.includes('youtube.com')) {
+      const id = parsed.searchParams.get('v')
+      return id ? `https://www.youtube.com/embed/${id}` : ''
+    }
+    if (parsed.hostname.includes('youtu.be')) {
+      const id = parsed.pathname.replace('/', '')
+      return id ? `https://www.youtube.com/embed/${id}` : ''
+    }
+    if (parsed.hostname.includes('vimeo.com')) {
+      const id = parsed.pathname.split('/').filter(Boolean)[0]
+      return id ? `https://player.vimeo.com/video/${id}` : ''
+    }
+    if (parsed.hostname.includes('drive.google.com')) {
+      const parts = parsed.pathname.split('/').filter(Boolean)
+      const fileIndex = parts.indexOf('d')
+      const id = fileIndex >= 0 ? parts[fileIndex + 1] : ''
+      return id ? `https://drive.google.com/file/d/${id}/preview` : ''
+    }
+    return ''
+  } catch {
+    return ''
+  }
 }
 
 export default NJRainbow

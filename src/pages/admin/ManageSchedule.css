@@ -166,3 +166,41 @@
   .modal-actions { flex-direction: column-reverse; }
   .modal-actions .btn { width: 100%; justify-content: center; }
 }
+
+.sheet-save-message {
+  margin: var(--space-4) var(--space-5) 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.sheet-save-message.saving {
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  color: var(--gold);
+}
+
+.sheet-save-message.success {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: var(--success);
+}
+
+.sheet-save-message.error {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: var(--error);
+}
+
+
+.row-action-heading,
+.row-action-cell {
+  width: 56px;
+  text-align: center !important;
+  white-space: nowrap;
+}
+
+.row-action-cell .icon-btn {
+  margin: 0 auto;
+}

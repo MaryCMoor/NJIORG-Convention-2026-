@@ -1,14 +1,12 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useCallback } from 'react'
-import Header from './Header'
-import BottomNav from './BottomNav'
 import { useApp } from '../../context/AppContext'
 import './Layout.css'
 
 const Layout = () => {
   const location = useLocation()
   const navigate = useNavigate()
-  const { selectedRole, clearRole, currentUser, logout, sidebarOpen, setSidebarOpen } = useApp()
+  const { selectedRole, clearRole, currentUser, logout, sidebarOpen, setSidebarOpen, sheetData } = useApp()
   const [isAppMounted, setIsAppMounted] = useState(false)
   const [showRoleChange, setShowRoleChange] = useState(false)
   const [keyboardOpen, setKeyboardOpen] = useState(false)
@@ -30,12 +28,13 @@ const Layout = () => {
   }, [])
 
   useEffect(() => {
-    // Always start public users on the home dashboard. They can then open
-    // NJ Rainbow and other areas from the home screen tiles.
-    if (location.pathname !== '/') {
+    // Always start public users on the home dashboard on first app open, but
+    // allow in-app navigation after the home screen is visible.
+    if (!isAppMounted && location.pathname !== '/') {
       navigate('/', { replace: true })
     }
-  }, [])
+  }, [isAppMounted, location.pathname, navigate])
+
 
   // Navigation items based on role
   const getNavItems = useCallback(() => {
@@ -85,6 +84,12 @@ const Layout = () => {
 
   const activeIndex = getActiveIndex()
   const isHomeRoute = location.pathname === '/' || location.pathname === '/NJIORG-Convention-2026-/'
+  const activeAnnouncements = sheetData.notifications.filter(item => {
+    if ((item.status || 'active') !== 'active' || item.ticker === false) return false
+    if (!item.displayUntil) return true
+    const end = new Date(item.displayUntil)
+    return Number.isNaN(end.getTime()) || end >= new Date()
+  })
 
   const handleNavPress = (index, item) => {
     if (index === activeIndex) return
@@ -104,35 +109,29 @@ const Layout = () => {
   }
 
   return (
-    <div className={`app-layout ${keyboardOpen ? 'keyboard-open' : ''} ${isHomeRoute ? 'home-route' : ''}`} data-react-root="true">
+    <div className={`app-layout app-view ${keyboardOpen ? 'keyboard-open' : ''} ${isHomeRoute ? 'home-route' : ''}`} data-react-root="true">
       {/* Status bar spacer for PWA */}
       <div className="status-bar-spacer" aria-hidden="true" />
       
-      {/* Header */}
-      {!isHomeRoute && (
-        <Header 
-          onMenuPress={() => setSidebarOpen(!sidebarOpen)}
-          onRolePress={handleRoleChange}
-          showRoleSelector={!!selectedRole}
-        />
-      )}
-      
       {/* Main content with safe areas */}
-      <main className="main-content" role="main" style={{ paddingBottom: navItems.length > 0 ? 'var(--nav-height)' : 'var(--space-xl)' }}>
+      <main className="main-content" role="main">
         <div className="page-content">
+          {activeAnnouncements.length > 0 && (
+            <button type="button" className="app-announcement-ticker" onClick={() => navigate('/announcements')}>
+              <span className="ticker-count">{activeAnnouncements.length}</span>
+              <span className="ticker-label">Announcements</span>
+              <span className="ticker-track">{activeAnnouncements.map(item => item.title).join(' • ')}</span>
+            </button>
+          )}
+          {!isHomeRoute && (
+            <button type="button" className="app-back-home" onClick={() => navigate('/')}>
+              <span aria-hidden="true">←</span>
+              <span>Back to Home</span>
+            </button>
+          )}
           <Outlet />
         </div>
       </main>
-      
-      {/* Bottom Navigation - Mobile App Style */}
-      {navItems.length > 0 && (
-        <BottomNav
-          items={navItems}
-          activeIndex={activeIndex}
-          onPress={handleNavPress}
-          keyboardOpen={keyboardOpen}
-        />
-      )}
       
       {/* Sidebar / Drawer */}
       {sidebarOpen && (

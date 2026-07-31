@@ -3,13 +3,25 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Calendar, Clock, MapPin, Shirt, User, X } from 'lucide-react'
 import { useApp } from '../context/AppContext.jsx'
 import { getEventSpeakerTags } from '../data/speakerSchedule'
+import { normalizeAdminEventForSchedule } from '../utils/googleSheetData'
 import './Schedule.css'
 
-const CONVENTION_DAYS = [
-  { date: '2026-08-14', label: 'Friday', short: 'Fri', dayNum: 'Aug 14' },
-  { date: '2026-08-15', label: 'Saturday', short: 'Sat', dayNum: 'Aug 15' },
-  { date: '2026-08-16', label: 'Sunday', short: 'Sun', dayNum: 'Aug 16' },
-]
+const buildConventionDays = (startDate, numberOfDays) => {
+  const start = new Date(`${startDate || '2026-08-14'}T00:00:00`)
+  const count = Number(numberOfDays) || 3
+
+  return Array.from({ length: count }, (_, index) => {
+    const date = new Date(start)
+    date.setDate(start.getDate() + index)
+    const iso = date.toISOString().slice(0, 10)
+    return {
+      date: iso,
+      label: date.toLocaleDateString('en-US', { weekday: 'long' }),
+      short: date.toLocaleDateString('en-US', { weekday: 'short' }),
+      dayNum: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    }
+  })
+}
 
 const formatTime = (iso) => {
   const d = new Date(iso)
@@ -24,11 +36,19 @@ const formatDay = (iso) => {
 const Schedule = () => {
   const { eventId } = useParams()
   const navigate = useNavigate()
-  const { getEventsForDay, state } = useApp()
-  const selectedEvent = useMemo(() => state.events.find(event => event.id === eventId), [state.events, eventId])
-  const [selectedDay, setSelectedDay] = useState(() => selectedEvent?.startTime.slice(0, 10) || CONVENTION_DAYS[0].date)
+  const { getEventsForDay, state, sheetData, appConfig } = useApp()
+  const conventionDays = useMemo(() => buildConventionDays(appConfig.startDate, appConfig.numberOfDays), [appConfig.startDate, appConfig.numberOfDays])
+  const localEvents = useMemo(() => state.events.map(normalizeAdminEventForSchedule), [state.events])
+  const sourceEvents = useMemo(() => {
+    if (!sheetData.events.length) return localEvents
+    const sheetIds = new Set(sheetData.events.map(event => event.id))
+    return [...sheetData.events, ...localEvents.filter(event => !sheetIds.has(event.id))]
+  }, [sheetData.events, localEvents])
+  const speakers = sheetData.speakers.length ? sheetData.speakers : undefined
+  const selectedEvent = useMemo(() => sourceEvents.find(event => event.id === eventId), [sourceEvents, eventId])
+  const [selectedDay, setSelectedDay] = useState(() => selectedEvent?.startTime.slice(0, 10) || conventionDays[0].date)
   const events = useMemo(() => getEventsForDay(selectedDay), [getEventsForDay, selectedDay])
-  const activeDay = CONVENTION_DAYS.find(d => d.date === selectedDay)
+  const activeDay = conventionDays.find(d => d.date === selectedDay)
 
   useEffect(() => {
     if (selectedEvent) {
@@ -43,11 +63,11 @@ const Schedule = () => {
           <Calendar className="page-title-icon" size={32} />
           Master Schedule
         </h1>
-        <p className="page-subtitle">The Greatest Showman — 2026 Rainbow Grand Assembly Convention</p>
+        <p className="page-subtitle">{appConfig.themeName} — {appConfig.appTitle}</p>
       </div>
 
       <div className="schedule-day-tabs" role="tablist" aria-label="Convention days">
-        {CONVENTION_DAYS.map(day => (
+        {conventionDays.map(day => (
           <button
             key={day.date}
             role="tab"
@@ -82,7 +102,7 @@ const Schedule = () => {
                   onClick={() => navigate(`/schedule/${event.id}`)}
                   aria-label={`Open details for ${event.name}`}
                 >
-                  <EventCardContent event={event} />
+                  <EventCardContent event={event} speakers={speakers} />
                 </button>
               </li>
             ))}
@@ -90,13 +110,13 @@ const Schedule = () => {
         )}
       </div>
 
-      {selectedEvent && <EventDetail event={selectedEvent} onClose={() => navigate('/schedule')} />}
+      {selectedEvent && <EventDetail event={selectedEvent} speakers={speakers} onClose={() => navigate('/schedule')} />}
     </div>
   )
 }
 
-const EventCardContent = ({ event }) => {
-  const speakers = getEventSpeakerTags(event)
+const EventCardContent = ({ event, speakers }) => {
+  const eventSpeakers = getEventSpeakerTags(event, speakers)
 
   return (
     <>
@@ -118,7 +138,7 @@ const EventCardContent = ({ event }) => {
           {event.presenter && (
             <span className="event-meta-item"><User size={13} aria-hidden="true" /> {event.presenter}</span>
           )}
-          {speakers.map(speaker => (
+          {eventSpeakers.map(speaker => (
             <span key={speaker.id} className="event-meta-item speaker-tag"><User size={13} aria-hidden="true" /> Speaker: {speaker.name}</span>
           ))}
         </div>
@@ -127,8 +147,8 @@ const EventCardContent = ({ event }) => {
   )
 }
 
-const EventDetail = ({ event, onClose }) => {
-  const speakers = getEventSpeakerTags(event)
+const EventDetail = ({ event, speakers, onClose }) => {
+  const eventSpeakers = getEventSpeakerTags(event, speakers)
 
   return (
     <div className="event-detail-overlay" role="dialog" aria-modal="true" aria-labelledby="event-detail-title" onClick={onClose}>
@@ -148,11 +168,11 @@ const EventDetail = ({ event, onClose }) => {
           {event.presenter && <span><User size={16} aria-hidden="true" /> {event.presenter}</span>}
         </div>
 
-        {speakers.length > 0 && (
+        {eventSpeakers.length > 0 && (
           <section className="event-detail-speakers" aria-label="Tagged speakers">
             <h3>Speaker Tags</h3>
             <div className="speaker-tag-list">
-              {speakers.map(speaker => (
+              {eventSpeakers.map(speaker => (
                 <Link key={speaker.id} className="speaker-detail-tag" to="/speakers">
                   {speaker.name}
                 </Link>

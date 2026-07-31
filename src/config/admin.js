@@ -38,6 +38,7 @@ export const ADMIN_CONFIG = {
     { id: 'attendees', label: 'Manage Attendees', icon: 'Users' },
     { id: 'schedule', label: 'Manage Schedule', icon: 'Calendar' },
     { id: 'announcements', label: 'Announcements', icon: 'Megaphone' },
+    { id: 'members', label: 'Members', icon: 'Users' },
     { id: 'meals', label: 'Meals', icon: 'Utensils' },
     { id: 'awards', label: 'Awards', icon: 'Award' },
     { id: 'documents', label: 'Documents', icon: 'FileText' },

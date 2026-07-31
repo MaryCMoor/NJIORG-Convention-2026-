@@ -112,6 +112,19 @@
   .bottom-nav {
     display: none;
   }
+
+  .home-route .bottom-nav {
+    left: 50%;
+    right: auto;
+    width: min(100% - 2rem, 720px);
+    transform: translateX(-50%);
+    border-inline: 1px solid var(--color-border);
+    border-radius: 24px 24px 0 0;
+  }
+
+  .home-route.keyboard-open .bottom-nav {
+    transform: translateX(-50%) translateY(100%);
+  }
 }
 
 /* Reduce motion */
@@ -128,4 +141,32 @@
 /* Keyboard open state handled by JS */
 .keyboard-open .bottom-nav {
   transform: translateY(100%);
+}
+
+.app-phone .bottom-nav {
+  display: flex;
+}
+
+.app-desktop .bottom-nav {
+  display: none;
+}
+
+/* Unified app view keeps bottom navigation on every device */
+.app-view .bottom-nav {
+  display: flex;
+}
+
+@media (min-width: 769px) {
+  .app-view .bottom-nav {
+    left: 50%;
+    right: auto;
+    width: min(100% - 2rem, 760px);
+    transform: translateX(-50%);
+    border-inline: 1px solid var(--color-border);
+    border-radius: 24px 24px 0 0;
+  }
+
+  .app-view.keyboard-open .bottom-nav {
+    transform: translateX(-50%) translateY(100%);
+  }
 }
