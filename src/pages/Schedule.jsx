@@ -214,43 +214,20 @@ const EventCardContent = ({ event, speakers, selectedRole, isSubEvent = false })
         {isSubEvent && <span className="sub-event-label">Part of larger event</span>}
         <h3 className="event-name">{event.name}</h3>
         {requiredForUser && <span className="required-user-badge">Required for you</span>}
-        <p className="event-description">{event.description}</p>
-        <EventRequirements event={event} />
-        <div className="event-meta">
+        {event.description && <p className="event-description concise">{event.description}</p>}
+        <div className="event-quick-row" aria-label="Quick event details">
           {event.room && (
-            <span className="event-meta-item"><MapPin size={13} aria-hidden="true" /> {event.room}</span>
+            <span><MapPin size={13} aria-hidden="true" /> {event.room}</span>
           )}
-          {event.dressCode && (
-            <span className="event-meta-item"><Shirt size={13} aria-hidden="true" /> {event.dressCode}</span>
+          {eventSpeakers.length > 0 && (
+            <span><User size={13} aria-hidden="true" /> {eventSpeakers.length} speaker{eventSpeakers.length === 1 ? '' : 's'}</span>
           )}
-          {event.mensDressCode && (
-            <span className="event-meta-item"><Shirt size={13} aria-hidden="true" /> Men: {event.mensDressCode}</span>
+          {(event.requiredRole || event.dressCode || event.mensDressCode || event.presenter || eventSpeakers.length > 0) && (
+            <span className="tap-for-details">Tap for details</span>
           )}
-          {event.requiredRole && (
-            <span className={`event-meta-item ${requiredForUser ? 'required-for-user' : ''}`}><User size={13} aria-hidden="true" /> Required: {event.requiredRole}</span>
-          )}
-          {event.presenter && (
-            <span className="event-meta-item"><User size={13} aria-hidden="true" /> {event.presenter}</span>
-          )}
-          {eventSpeakers.map(speaker => (
-            <span key={speaker.id} className="event-meta-item speaker-tag"><User size={13} aria-hidden="true" /> Speaker: {speaker.name}</span>
-          ))}
         </div>
       </div>
     </>
-  )
-}
-
-const EventRequirements = ({ event }) => {
-  const hasRequirements = event.requiredRole || event.dressCode || event.mensDressCode
-  if (!hasRequirements) return null
-
-  return (
-    <div className="event-requirements" aria-label="Event requirements">
-      {event.requiredRole && <span><strong>Required:</strong> {event.requiredRole}</span>}
-      {event.dressCode && <span><strong>Dress code:</strong> {event.dressCode}</span>}
-      {event.mensDressCode && <span><strong>Men:</strong> {event.mensDressCode}</span>}
-    </div>
   )
 }
 
