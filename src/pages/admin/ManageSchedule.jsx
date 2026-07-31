@@ -24,7 +24,22 @@ const blankForm = () => ({
 
 const dayOptions = ['Friday', 'Saturday', 'Sunday'];
 const typeOptions = ['General', 'Ceremony', 'Workshop', 'Meal', 'Entertainment', 'Meeting', 'Competition', 'Social'];
-const requiredRoleOptions = ['All Roles', 'Rainbow Girl', 'Grand Officer', 'Advisor', 'Administrator'];
+const requiredRoleOptions = [
+  'All Roles',
+  'Rainbow Girl',
+  'Grand Officer',
+  'DeMolay',
+  'Mason',
+  'Eastern Star',
+  'Out of State',
+  'Advisor',
+  'Mother Advisor',
+  'Adult Grand Executive Committee',
+  'Grand Majority Committee',
+  'Parent/ Guardian',
+  'Pledge',
+  'Other',
+];
 const dressCodeOptions = ['Casual', 'Business Casual', 'Formal', 'Rainbow Dress', 'Grand Officer Attire', 'Comfortable Shoes', 'Theme Attire'];
 
 const splitList = (value, fallback = []) => {

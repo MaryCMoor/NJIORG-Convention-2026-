@@ -12,12 +12,62 @@ const ROLE_OPTIONS = [
   {
     value: 'grand_officer',
     label: 'Grand Officer',
-    description: 'Access officer-focused convention tools, committees, and announcements.',
+    description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
+  },
+  {
+    value: 'demolay',
+    label: 'DeMolay',
+    description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
+  },
+  {
+    value: 'mason',
+    label: 'Mason',
+    description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
+  },
+  {
+    value: 'eastern_star',
+    label: 'Eastern Star',
+    description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
+  },
+  {
+    value: 'out_of_state',
+    label: 'Out of State',
+    description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
   },
   {
     value: 'advisor',
     label: 'Advisor',
-    description: 'View advisor tools for meals, housing, safety, and convention coordination.',
+    description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
+  },
+  {
+    value: 'mother_advisor',
+    label: 'Mother Advisor',
+    description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
+  },
+  {
+    value: 'adult_grand_executive_committee',
+    label: 'Adult Grand Executive Committee',
+    description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
+  },
+  {
+    value: 'grand_majority_committee',
+    label: 'Grand Majority Committee',
+    description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
+  },
+  {
+    value: 'parent_guardian',
+    label: 'Parent/ Guardian',
+    description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
+  },
+  {
+    value: 'pledge',
+    label: 'Pledge',
+    description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
+  },
+  {
+    value: 'other',
+    label: 'Other',
+    description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
   },
   {
     value: 'administrator',

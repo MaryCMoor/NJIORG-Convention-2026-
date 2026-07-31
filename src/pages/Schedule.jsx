@@ -32,10 +32,40 @@ const formatDay = (iso) => {
   return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
 }
 
+const roleLabels = {
+  attendee: 'Rainbow Girl',
+  grand_officer: 'Grand Officer',
+  demolay: 'DeMolay',
+  mason: 'Mason',
+  eastern_star: 'Eastern Star',
+  out_of_state: 'Out of State',
+  advisor: 'Advisor',
+  mother_advisor: 'Mother Advisor',
+  adult_grand_executive_committee: 'Adult Grand Executive Committee',
+  grand_majority_committee: 'Grand Majority Committee',
+  parent_guardian: 'Parent/ Guardian',
+  pledge: 'Pledge',
+  other: 'Other',
+  administrator: 'Administrator',
+}
+
+const splitRequiredRoles = (requiredRole) => String(requiredRole || '')
+  .split(',')
+  .map(role => role.trim())
+  .filter(Boolean)
+
+const isRequiredForSelectedRole = (event, selectedRole) => {
+  const selectedRoleLabel = roleLabels[selectedRole] || selectedRole
+  const requiredRoles = splitRequiredRoles(event.requiredRole)
+
+  if (!requiredRoles.length || !selectedRoleLabel) return false
+  return requiredRoles.includes('All Roles') || requiredRoles.includes(selectedRoleLabel)
+}
+
 const Schedule = () => {
   const { eventId } = useParams()
   const navigate = useNavigate()
-  const { getEventsForDay, sheetData, appConfig } = useApp()
+  const { getEventsForDay, sheetData, appConfig, selectedRole } = useApp()
   const conventionDays = useMemo(() => buildConventionDays(appConfig.startDate, appConfig.numberOfDays), [appConfig.startDate, appConfig.numberOfDays])
   const sourceEvents = useMemo(() => sheetData.events, [sheetData.events])
   const speakers = sheetData.speakers.length ? sheetData.speakers : undefined
@@ -88,29 +118,33 @@ const Schedule = () => {
           </div>
         ) : (
           <ol className="schedule-timeline">
-            {events.map(event => (
-              <li key={event.id} className="event-card">
+            {events.map(event => {
+              const requiredForUser = isRequiredForSelectedRole(event, selectedRole)
+
+              return (
+              <li key={event.id} className={`event-card ${requiredForUser ? 'required-event-card' : ''}`}>
                 <button
                   type="button"
                   className="event-card-open"
                   onClick={() => navigate(`/schedule/${event.id}`)}
                   aria-label={`Open details for ${event.name}`}
                 >
-                  <EventCardContent event={event} speakers={speakers} />
+                  <EventCardContent event={event} speakers={speakers} selectedRole={selectedRole} />
                 </button>
               </li>
-            ))}
+            )})}
           </ol>
         )}
       </div>
 
-      {selectedEvent && <EventDetail event={selectedEvent} speakers={speakers} onClose={() => navigate('/schedule')} />}
+      {selectedEvent && <EventDetail event={selectedEvent} speakers={speakers} selectedRole={selectedRole} onClose={() => navigate('/schedule')} />}
     </div>
   )
 }
 
-const EventCardContent = ({ event, speakers }) => {
+const EventCardContent = ({ event, speakers, selectedRole }) => {
   const eventSpeakers = getEventSpeakerTags(event, speakers)
+  const requiredForUser = isRequiredForSelectedRole(event, selectedRole)
 
   return (
     <>
@@ -121,7 +155,9 @@ const EventCardContent = ({ event, speakers }) => {
       </div>
       <div className="event-body">
         <h3 className="event-name">{event.name}</h3>
+        {requiredForUser && <span className="required-user-badge">Required for you</span>}
         <p className="event-description">{event.description}</p>
+        <EventRequirements event={event} />
         <div className="event-meta">
           {event.room && (
             <span className="event-meta-item"><MapPin size={13} aria-hidden="true" /> {event.room}</span>
@@ -133,7 +169,7 @@ const EventCardContent = ({ event, speakers }) => {
             <span className="event-meta-item"><Shirt size={13} aria-hidden="true" /> Men: {event.mensDressCode}</span>
           )}
           {event.requiredRole && (
-            <span className="event-meta-item"><User size={13} aria-hidden="true" /> Required: {event.requiredRole}</span>
+            <span className={`event-meta-item ${requiredForUser ? 'required-for-user' : ''}`}><User size={13} aria-hidden="true" /> Required: {event.requiredRole}</span>
           )}
           {event.presenter && (
             <span className="event-meta-item"><User size={13} aria-hidden="true" /> {event.presenter}</span>
@@ -147,8 +183,22 @@ const EventCardContent = ({ event, speakers }) => {
   )
 }
 
-const EventDetail = ({ event, speakers, onClose }) => {
+const EventRequirements = ({ event }) => {
+  const hasRequirements = event.requiredRole || event.dressCode || event.mensDressCode
+  if (!hasRequirements) return null
+
+  return (
+    <div className="event-requirements" aria-label="Event requirements">
+      {event.requiredRole && <span><strong>Required:</strong> {event.requiredRole}</span>}
+      {event.dressCode && <span><strong>Dress code:</strong> {event.dressCode}</span>}
+      {event.mensDressCode && <span><strong>Men:</strong> {event.mensDressCode}</span>}
+    </div>
+  )
+}
+
+const EventDetail = ({ event, speakers, selectedRole, onClose }) => {
   const eventSpeakers = getEventSpeakerTags(event, speakers)
+  const requiredForUser = isRequiredForSelectedRole(event, selectedRole)
 
   return (
     <div className="event-detail-overlay" role="dialog" aria-modal="true" aria-labelledby="event-detail-title" onClick={onClose}>
@@ -159,6 +209,7 @@ const EventDetail = ({ event, speakers, onClose }) => {
 
         <p className="area-kicker">{formatDay(event.startTime)}</p>
         <h2 id="event-detail-title">{event.name}</h2>
+        {requiredForUser && <span className="required-user-badge detail">Required for you</span>}
         <p className="event-detail-time">{formatTime(event.startTime)} – {formatTime(event.endTime)}</p>
         <p className="event-detail-description">{event.description}</p>
 
@@ -166,7 +217,7 @@ const EventDetail = ({ event, speakers, onClose }) => {
           {event.room && <span><MapPin size={16} aria-hidden="true" /> {event.room}</span>}
           {event.dressCode && <span><Shirt size={16} aria-hidden="true" /> {event.dressCode}</span>}
           {event.mensDressCode && <span><Shirt size={16} aria-hidden="true" /> Men: {event.mensDressCode}</span>}
-          {event.requiredRole && <span><User size={16} aria-hidden="true" /> Required: {event.requiredRole}</span>}
+          {event.requiredRole && <span className={requiredForUser ? 'required-for-user' : ''}><User size={16} aria-hidden="true" /> Required: {event.requiredRole}</span>}
           {event.presenter && <span><User size={16} aria-hidden="true" /> {event.presenter}</span>}
         </div>
 
