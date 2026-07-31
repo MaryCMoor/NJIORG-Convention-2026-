@@ -1089,3 +1089,63 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+
+.social-wall-frame {
+  overflow: hidden;
+  border-radius: 24px;
+}
+
+.social-waterfall-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  animation: socialWaterfallUp 520ms ease both;
+}
+
+.social-waterfall-grid .social-post-card {
+  min-height: 11.5rem;
+  max-height: none;
+  overflow: hidden;
+}
+
+.social-waterfall-grid .social-caption {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.social-waterfall-grid .social-media-preview img,
+.social-waterfall-grid .social-media-preview video {
+  height: clamp(11rem, 24vw, 18rem);
+  max-height: none;
+  object-fit: contain;
+  background: var(--color-surface-elevated);
+}
+
+@keyframes socialWaterfallUp {
+  from {
+    opacity: 0;
+    transform: translateY(2.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 900px) {
+  .social-waterfall-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .social-waterfall-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .social-waterfall-grid .social-post-card {
+    max-height: none;
+  }
+}

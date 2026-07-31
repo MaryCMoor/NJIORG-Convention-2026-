@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react'
 import { ExternalLink, Hash, Heart, MessageCircle, UserRound } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import './AppArea.css'
@@ -29,6 +30,22 @@ const SocialWall = () => {
   const posts = (sheetData.socialPosts || [])
     .filter(post => String(post.status || 'active').toLowerCase() !== 'inactive')
     .sort((a, b) => new Date(b.postedAt || 0) - new Date(a.postedAt || 0))
+  const [startIndex, setStartIndex] = useState(0)
+  const [cycle, setCycle] = useState(0)
+
+  useEffect(() => {
+    if (posts.length <= 9) return undefined
+    const timer = window.setInterval(() => {
+      setStartIndex(index => (index + 3) % posts.length)
+      setCycle(value => value + 1)
+    }, 3000)
+    return () => window.clearInterval(timer)
+  }, [posts.length])
+
+  const visiblePosts = useMemo(() => {
+    if (posts.length <= 12) return posts
+    return Array.from({ length: 12 }, (_, offset) => posts[(startIndex + offset) % posts.length])
+  }, [posts, startIndex])
 
   return (
     <div className="app-area-page social-wall-page">
@@ -45,10 +62,11 @@ const SocialWall = () => {
           <p>No social posts have been added yet.</p>
         </section>
       ) : (
-        <section className="social-post-list" aria-label="Social media posts">
-          {posts.map(post => (
+        <section className="social-wall-frame" aria-label="Social media posts">
+          <div className="social-post-list social-waterfall-grid" key={cycle}>
+          {visiblePosts.map((post, index) => (
             <a
-              key={post.postId || post.id || post.postUrl}
+              key={`${post.postId || post.id || post.postUrl}-${index}`}
               className="social-post-card"
               href={post.postUrl || '#'}
               target={post.postUrl ? '_blank' : undefined}
@@ -89,6 +107,7 @@ const SocialWall = () => {
               </div>
             </a>
           ))}
+          </div>
         </section>
       )}
     </div>
