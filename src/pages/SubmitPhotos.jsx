@@ -12,33 +12,35 @@ const fileToBase64 = (file) => new Promise((resolve, reject) => {
 
 const SubmitPhotos = () => {
   const [formData, setFormData] = useState({ uploaderName: '', uploaderEmail: '', caption: '', assembly: '' })
-  const [file, setFile] = useState(null)
+  const [files, setFiles] = useState([])
   const [status, setStatus] = useState('idle')
   const [message, setMessage] = useState('')
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    if (!file) {
+    if (files.length === 0) {
       setStatus('error')
-      setMessage('Please choose a photo or video to upload.')
+      setMessage('Please choose at least one photo or video to upload.')
       return
     }
 
     setStatus('saving')
-    setMessage('Uploading your submission...')
+    setMessage(`Uploading ${files.length} submission${files.length === 1 ? '' : 's'}...`)
     try {
-      const fileData = await fileToBase64(file)
-      await submitGalleryMediaToGoogleSheet({
-        ...formData,
-        fileName: file.name,
-        mimeType: file.type || 'application/octet-stream',
-        fileData,
-        mediaType: file.type?.startsWith('video/') ? 'video' : 'image',
-      })
+      for (const selectedFile of files) {
+        const fileData = await fileToBase64(selectedFile)
+        await submitGalleryMediaToGoogleSheet({
+          ...formData,
+          fileName: selectedFile.name,
+          mimeType: selectedFile.type || 'application/octet-stream',
+          fileData,
+          mediaType: selectedFile.type?.startsWith('video/') ? 'video' : 'image',
+        })
+      }
       setStatus('success')
-      setMessage('Thank you! Your photo/video was submitted for approval.')
+      setMessage(`Thank you! ${files.length} photo/video submission${files.length === 1 ? ' was' : 's were'} sent for approval.`)
       setFormData({ uploaderName: '', uploaderEmail: '', caption: '', assembly: '' })
-      setFile(null)
+      setFiles([])
       event.currentTarget.reset()
     } catch (error) {
       console.error(error)
@@ -57,28 +59,31 @@ const SubmitPhotos = () => {
       </section>
 
       <section className="area-info-card submission-card">
-        <h2><Upload size={22} /> Upload a photo or video</h2>
+        <h2><Upload size={22} /> Upload photos or videos</h2>
         <form className="submission-form" onSubmit={handleSubmit}>
           <label>
-            Your name
-            <input type="text" value={formData.uploaderName} onChange={event => setFormData(prev => ({ ...prev, uploaderName: event.target.value }))} placeholder="Optional" />
+            Your name *
+            <input type="text" value={formData.uploaderName} onChange={event => setFormData(prev => ({ ...prev, uploaderName: event.target.value }))} placeholder="Required" required />
           </label>
           <label>
             Email
             <input type="email" value={formData.uploaderEmail} onChange={event => setFormData(prev => ({ ...prev, uploaderEmail: event.target.value }))} placeholder="Optional, for follow-up only" />
           </label>
           <label>
-            Assembly / group
-            <input type="text" value={formData.assembly} onChange={event => setFormData(prev => ({ ...prev, assembly: event.target.value }))} placeholder="Optional" />
+            Assembly / group *
+            <input type="text" value={formData.assembly} onChange={event => setFormData(prev => ({ ...prev, assembly: event.target.value }))} placeholder="Required" required />
           </label>
           <label>
             Caption
             <textarea value={formData.caption} onChange={event => setFormData(prev => ({ ...prev, caption: event.target.value }))} rows={4} placeholder="Tell us about this moment" />
           </label>
           <label>
-            Photo or video
-            <input type="file" accept="image/*,video/*" onChange={event => setFile(event.target.files?.[0] || null)} required />
+            Photos or videos
+            <input type="file" accept="image/*,video/*" multiple onChange={event => setFiles(Array.from(event.target.files || []))} required />
           </label>
+          {files.length > 0 && (
+            <p className="submission-file-count">{files.length} file{files.length === 1 ? '' : 's'} selected</p>
+          )}
           <label className="submission-consent">
             <input type="checkbox" required />
             I understand this may be shown in the convention app after admin approval.

@@ -1267,3 +1267,11 @@
   gap: 0.5rem;
   flex-wrap: wrap;
 }
+
+
+.submission-file-count {
+  margin: -0.35rem 0 0;
+  color: var(--color-primary);
+  font-size: 0.9rem;
+  font-weight: 900;
+}

@@ -1,4 +1,5 @@
 const ADMIN_TOKEN = '2026RainboW_Convention-SerVice!';
+const GALLERY_UPLOAD_FOLDER_ID = '1BsWuchkBe72ItymdFD2uuuqIRRU46rPp';
 
 function doGet(e) {
   const action = e && e.parameter && e.parameter.action;
@@ -433,11 +434,7 @@ function getGallerySubmissionsSheet() {
 }
 
 function getGalleryUploadFolder() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const folderName = 'Convention Gallery Submissions';
-  const folders = DriveApp.getFoldersByName(folderName);
-  if (folders.hasNext()) return folders.next();
-  return DriveApp.createFolder(folderName + ' - ' + ss.getId());
+  return DriveApp.getFolderById(GALLERY_UPLOAD_FOLDER_ID);
 }
 
 function buildGallerySubmissionData(body, submissionId, mediaUrl) {
@@ -515,7 +512,12 @@ function reviewGallerySubmission(body) {
 }
 
 function authorizeDriveAccess() {
-  const folder = DriveApp.getRootFolder();
+  const folder = DriveApp.getFolderById(GALLERY_UPLOAD_FOLDER_ID);
+  Logger.log(folder.getName());
+}
+
+function authorizeUploadFolderAccess() {
+  const folder = DriveApp.getFolderById(GALLERY_UPLOAD_FOLDER_ID);
   Logger.log(folder.getName());
 }
 
