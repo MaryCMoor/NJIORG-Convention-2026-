@@ -478,16 +478,25 @@ function submitGalleryMedia(body) {
   const headers = ensureHeaders(sheet, ['submissionId', 'status', 'uploaderName', 'uploaderEmail', 'assembly', 'caption', 'mediaUrl', 'thumbnailUrl', 'mediaType', 'fileName', 'mimeType', 'submittedAt', 'reviewedAt', 'reviewedBy', 'reviewNotes']);
   const submissionId = body.submissionId || 'submission_' + Date.now();
   let mediaUrl = body.mediaUrl || '';
+  let reviewNotes = body.reviewNotes || '';
 
   if (body.fileData && body.fileName) {
     const bytes = Utilities.base64Decode(body.fileData);
     const blob = Utilities.newBlob(bytes, body.mimeType || 'application/octet-stream', body.fileName);
     const file = getGalleryUploadFolder().createFile(blob);
-    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     mediaUrl = 'https://drive.google.com/uc?export=view&id=' + file.getId();
+
+    // Some Workspace/Drive configurations allow creating the file but block
+    // changing its sharing settings. Do not let that prevent the submission
+    // row from being written; admins can adjust folder/file sharing separately.
+    try {
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    } catch (shareError) {
+      reviewNotes = 'Uploaded, but automatic link sharing failed: ' + String(shareError);
+    }
   }
 
-  writeObjectRow(sheet, sheet.getLastRow() + 1, headers, buildGallerySubmissionData(Object.assign({}, body, { status: 'pending' }), submissionId, mediaUrl));
+  writeObjectRow(sheet, sheet.getLastRow() + 1, headers, buildGallerySubmissionData(Object.assign({}, body, { status: 'pending', reviewNotes: reviewNotes }), submissionId, mediaUrl));
   return jsonResponse({ ok: true, success: true, action: 'submitGalleryMedia', submissionId: submissionId, mediaUrl: mediaUrl });
 }
 
