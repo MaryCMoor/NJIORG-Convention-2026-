@@ -521,6 +521,13 @@ function authorizeUploadFolderAccess() {
   Logger.log(folder.getName());
 }
 
+function authorizeUploadWriteAccess() {
+  const folder = DriveApp.getFolderById(GALLERY_UPLOAD_FOLDER_ID);
+  const file = folder.createFile('drive-write-permission-test.txt', 'This temporary file confirms upload permission.');
+  Logger.log(file.getName());
+  file.setTrashed(true);
+}
+
 function getNotificationsSheet() {
   return getSheetByName('Notifications');
 }
