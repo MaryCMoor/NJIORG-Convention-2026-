@@ -130,6 +130,31 @@ export const AppProvider = ({ children }) => {
     return () => { cancelled = true }
   }, [])
 
+  const refreshSheetData = useCallback(async () => {
+    try {
+      const data = await loadPublishedSheetData()
+      let assemblies = []
+      let socialPosts = []
+      try {
+        assemblies = await loadAssembliesFromGoogleSheet()
+      } catch (assemblyError) {
+        console.warn('Failed to refresh Assemblies from Apps Script:', assemblyError)
+      }
+      try {
+        socialPosts = await loadSocialPostsFromGoogleSheet()
+      } catch (socialError) {
+        console.warn('Failed to refresh SocialPosts from Apps Script:', socialError)
+      }
+      setSheetData({ ...data, assemblies, socialPosts })
+      setSheetStatus('loaded')
+      return true
+    } catch (error) {
+      console.warn('Failed to refresh Google Sheet data:', error)
+      setSheetStatus('error')
+      return false
+    }
+  }, [])
+
   useEffect(() => {
     let cancelled = false
 
@@ -603,6 +628,7 @@ export const AppProvider = ({ children }) => {
     getTodaysEvents,
     getConventionCountdown,
     getStats,
+    refreshSheetData,
     exportData,
     updateState,
   }

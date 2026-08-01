@@ -51,7 +51,7 @@ const repoGalleryItems = Object.entries(repoGalleryFiles).map(([path, url], inde
 })
 
 const Gallery = () => {
-  const { sheetData, appConfig, currentUser } = useApp()
+  const { sheetData, appConfig, currentUser, refreshSheetData } = useApp()
   
   const [filterCategory, setFilterCategory] = useState('all')
   const [filterDay, setFilterDay] = useState('all')
@@ -60,6 +60,7 @@ const Gallery = () => {
   const [selectedPhoto, setSelectedPhoto] = useState(null)
   const [lightboxIndex, setLightboxIndex] = useState(0)
   const [rotationIndex, setRotationIndex] = useState(0)
+  const [slideTransition, setSlideTransition] = useState(true)
   const [showFullGallery, setShowFullGallery] = useState(false)
 
   const photos = useMemo(() => [...sheetData.gallery, ...repoGalleryItems], [sheetData.gallery])
@@ -97,15 +98,27 @@ const Gallery = () => {
   useEffect(() => {
     if (filteredPhotos.length <= 3) return undefined
     const timer = window.setInterval(() => {
-      setRotationIndex(index => (index + 3) % filteredPhotos.length)
+      setRotationIndex(index => {
+        const nextIndex = index + 1
+        if (nextIndex === filteredPhotos.length) refreshSheetData?.()
+        return nextIndex
+      })
     }, 3000)
     return () => window.clearInterval(timer)
-  }, [filteredPhotos.length])
+  }, [filteredPhotos.length, refreshSheetData])
 
-  const spotlightPhotos = useMemo(() => {
-    if (filteredPhotos.length <= 3) return filteredPhotos
-    return [0, 1, 2].map(offset => filteredPhotos[(rotationIndex + offset) % filteredPhotos.length])
-  }, [filteredPhotos, rotationIndex])
+  const spotlightPhotos = useMemo(() => (
+    filteredPhotos.length <= 3 ? filteredPhotos : [...filteredPhotos, ...filteredPhotos.slice(0, 3)]
+  ), [filteredPhotos])
+
+  const handleSpotlightTransitionEnd = () => {
+    if (filteredPhotos.length <= 3 || rotationIndex < filteredPhotos.length) return
+    setSlideTransition(false)
+    setRotationIndex(0)
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => setSlideTransition(true))
+    })
+  }
 
   const handlePhotoClick = (photo, index) => {
     setSelectedPhoto(photo)
@@ -170,23 +183,29 @@ const Gallery = () => {
             </button>
           </div>
 
-          <div className="gallery-spotlight-grid" key={rotationIndex}>
-            {spotlightPhotos.map((photo, index) => (
-              <button
-                key={`${photo.id}-${index}`}
-                type="button"
-                className="gallery-spotlight-card"
-                onClick={() => handlePhotoClick(photo, index)}
-                aria-label={`Open ${photo.title || 'gallery photo'}`}
-              >
-                {isVideoMedia(photo) ? (
-                  <video src={mediaSrc(photo)} muted playsInline autoPlay loop preload="metadata" />
-                ) : (
-                  <img src={imageSrc(photo)} alt={photo.title || 'Convention photo'} loading="eager" />
-                )}
-                <span className="gallery-spotlight-title">{photo.title}</span>
-              </button>
-            ))}
+          <div className="gallery-spotlight-viewport">
+            <div
+              className={`gallery-spotlight-track ${slideTransition ? '' : 'no-transition'}`}
+              style={{ transform: `translateX(-${rotationIndex * (100 / 3)}%)` }}
+              onTransitionEnd={handleSpotlightTransitionEnd}
+            >
+              {spotlightPhotos.map((photo, index) => (
+                <button
+                  key={`${photo.id}-${index}`}
+                  type="button"
+                  className="gallery-spotlight-card"
+                  onClick={() => handlePhotoClick(photo, index)}
+                  aria-label={`Open ${photo.title || 'gallery photo'}`}
+                >
+                  {isVideoMedia(photo) ? (
+                    <video src={mediaSrc(photo)} muted playsInline autoPlay loop preload="metadata" />
+                  ) : (
+                    <img src={imageSrc(photo)} alt={photo.title || 'Convention photo'} loading="eager" />
+                  )}
+                  <span className="gallery-spotlight-title">{photo.title}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </section>
       )}
