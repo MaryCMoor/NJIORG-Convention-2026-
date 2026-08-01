@@ -11,6 +11,9 @@ function doGet(e) {
   if (action === 'getSocialPosts') {
     return getSocialPosts();
   }
+  if (action === 'getGallerySubmissions') {
+    return getGallerySubmissions();
+  }
 
   return jsonResponse({
     ok: true,
@@ -26,11 +29,15 @@ function doPost(e) {
   try {
     const body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
 
+    const action = body.action || 'createEvent';
+
+    // Public attendee upload endpoint. Submissions are saved as pending and
+    // must be approved by an admin before they appear in the public gallery.
+    if (action === 'submitGalleryMedia') return submitGalleryMedia(body);
+
     if (body.token !== ADMIN_TOKEN) {
       return jsonResponse({ ok: false, success: false, error: 'Unauthorized' });
     }
-
-    const action = body.action || 'createEvent';
 
     if (action === 'createEvent' || action === 'addEvent' || action === 'saveEvent') return createEvent(body);
     if (action === 'updateEvent') return updateEvent(body);
@@ -42,6 +49,7 @@ function doPost(e) {
     if (action === 'updateAssembly') return updateAssembly(body);
     if (action === 'createSocialPost' || action === 'addSocialPost' || action === 'saveSocialPost') return createSocialPost(body);
     if (action === 'updateSocialPost') return updateSocialPost(body);
+    if (action === 'reviewGallerySubmission') return reviewGallerySubmission(body);
     if (action === 'createNotification' || action === 'addNotification' || action === 'saveNotification') return createNotification(body);
     if (action === 'updateNotification') return updateNotification(body);
     if (action === 'saveAppConfig') return saveAppConfig(body);
@@ -414,6 +422,101 @@ function updateSocialPost(body) {
   if (rowNumber === -1) return createSocialPost(Object.assign({}, body, { postId: postId }));
   writeObjectRow(sheet, rowNumber, headers, buildSocialPostData(body, postId));
   return jsonResponse({ ok: true, success: true, action: 'updateSocialPost', postId: postId, updatedAt: new Date().toISOString() });
+}
+
+function getGallerySubmissionsSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName('GallerySubmissions');
+  if (!sheet) sheet = ss.insertSheet('GallerySubmissions');
+  ensureHeaders(sheet, ['submissionId', 'status', 'uploaderName', 'uploaderEmail', 'assembly', 'caption', 'mediaUrl', 'thumbnailUrl', 'mediaType', 'fileName', 'mimeType', 'submittedAt', 'reviewedAt', 'reviewedBy', 'reviewNotes']);
+  return sheet;
+}
+
+function getGalleryUploadFolder() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const folderName = 'Convention Gallery Submissions';
+  const folders = DriveApp.getFoldersByName(folderName);
+  if (folders.hasNext()) return folders.next();
+  return DriveApp.createFolder(folderName + ' - ' + ss.getId());
+}
+
+function buildGallerySubmissionData(body, submissionId, mediaUrl) {
+  return {
+    submissionId: submissionId,
+    status: body.status || 'pending',
+    uploaderName: body.uploaderName || '',
+    uploaderEmail: body.uploaderEmail || '',
+    assembly: body.assembly || '',
+    caption: body.caption || '',
+    mediaUrl: mediaUrl || body.mediaUrl || '',
+    thumbnailUrl: body.thumbnailUrl || '',
+    mediaType: body.mediaType || '',
+    fileName: body.fileName || '',
+    mimeType: body.mimeType || '',
+    submittedAt: body.submittedAt || new Date().toISOString(),
+    reviewedAt: body.reviewedAt || '',
+    reviewedBy: body.reviewedBy || '',
+    reviewNotes: body.reviewNotes || ''
+  };
+}
+
+function getGallerySubmissions() {
+  const sheet = getGallerySubmissionsSheet();
+  const headers = ensureHeaders(sheet, ['submissionId', 'status', 'uploaderName', 'uploaderEmail', 'assembly', 'caption', 'mediaUrl', 'thumbnailUrl', 'mediaType', 'fileName', 'mimeType', 'submittedAt', 'reviewedAt', 'reviewedBy', 'reviewNotes']);
+  const lastRow = sheet.getLastRow();
+  const submissions = [];
+  if (lastRow >= 2) {
+    const values = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
+    values.forEach(function(row) {
+      const record = {};
+      headers.forEach(function(header, index) { record[header] = row[index] || ''; });
+      if (Object.keys(record).some(function(key) { return record[key]; })) submissions.push(record);
+    });
+  }
+  return jsonResponse({ ok: true, success: true, action: 'getGallerySubmissions', submissions: submissions });
+}
+
+function submitGalleryMedia(body) {
+  const sheet = getGallerySubmissionsSheet();
+  const headers = ensureHeaders(sheet, ['submissionId', 'status', 'uploaderName', 'uploaderEmail', 'assembly', 'caption', 'mediaUrl', 'thumbnailUrl', 'mediaType', 'fileName', 'mimeType', 'submittedAt', 'reviewedAt', 'reviewedBy', 'reviewNotes']);
+  const submissionId = body.submissionId || 'submission_' + Date.now();
+  let mediaUrl = body.mediaUrl || '';
+
+  if (body.fileData && body.fileName) {
+    const bytes = Utilities.base64Decode(body.fileData);
+    const blob = Utilities.newBlob(bytes, body.mimeType || 'application/octet-stream', body.fileName);
+    const file = getGalleryUploadFolder().createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    mediaUrl = 'https://drive.google.com/uc?export=view&id=' + file.getId();
+  }
+
+  writeObjectRow(sheet, sheet.getLastRow() + 1, headers, buildGallerySubmissionData(Object.assign({}, body, { status: 'pending' }), submissionId, mediaUrl));
+  return jsonResponse({ ok: true, success: true, action: 'submitGalleryMedia', submissionId: submissionId, mediaUrl: mediaUrl });
+}
+
+function reviewGallerySubmission(body) {
+  const sheet = getGallerySubmissionsSheet();
+  const headers = ensureHeaders(sheet, ['submissionId', 'status', 'uploaderName', 'uploaderEmail', 'assembly', 'caption', 'mediaUrl', 'thumbnailUrl', 'mediaType', 'fileName', 'mimeType', 'submittedAt', 'reviewedAt', 'reviewedBy', 'reviewNotes']);
+  const submissionId = body.submissionId || body.id;
+  if (!submissionId) return jsonResponse({ ok: false, success: false, error: 'Missing submissionId' });
+  const rowNumber = findRowById(sheet, headers, 'submissionId', submissionId);
+  if (rowNumber === -1) return jsonResponse({ ok: false, success: false, error: 'Submission not found' });
+  const existingRow = sheet.getRange(rowNumber, 1, 1, headers.length).getValues()[0];
+  const existing = {};
+  headers.forEach(function(header, index) { existing[header] = existingRow[index] || ''; });
+  const nextData = Object.assign({}, existing, {
+    status: body.status || existing.status || 'pending',
+    reviewedAt: new Date().toISOString(),
+    reviewedBy: body.reviewedBy || 'Administrator',
+    reviewNotes: body.reviewNotes || existing.reviewNotes || ''
+  });
+  writeObjectRow(sheet, rowNumber, headers, nextData);
+  return jsonResponse({ ok: true, success: true, action: 'reviewGallerySubmission', submissionId: submissionId, status: nextData.status });
+}
+
+function authorizeDriveAccess() {
+  const folder = DriveApp.getRootFolder();
+  Logger.log(folder.getName());
 }
 
 function getNotificationsSheet() {

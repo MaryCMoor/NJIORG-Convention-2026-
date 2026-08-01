@@ -37,6 +37,7 @@ const AdminDashboard = () => {
     { label: 'Speakers', description: 'Edit speaker-specific details and event tags.', to: `${ADMIN_CONFIG.routePrefix}/speakers`, icon: Mic, primary: false },
     { label: 'Awards', description: 'Manage awards and recognitions.', to: `${ADMIN_CONFIG.routePrefix}/awards`, icon: Award, primary: false },
     { label: 'Gallery', description: 'Manage photos from the Gallery sheet.', to: `${ADMIN_CONFIG.routePrefix}/gallery`, icon: Images, primary: false },
+    { label: 'Photo Submissions', description: 'Approve or reject guest photo/video uploads.', to: `${ADMIN_CONFIG.routePrefix}/gallery-submissions`, icon: Images, primary: false },
     { label: 'Appearance & Settings', description: 'Update yearly theme, colors, venue, contacts, and social links.', to: `${ADMIN_CONFIG.routePrefix}/settings`, icon: Settings, primary: false },
   ];
 

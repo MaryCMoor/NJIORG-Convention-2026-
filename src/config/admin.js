@@ -44,6 +44,7 @@ export const ADMIN_CONFIG = {
     { id: 'speakers', label: 'Speakers', icon: 'Mic' },
     { id: 'awards', label: 'Awards', icon: 'Award' },
     { id: 'gallery', label: 'Gallery', icon: 'Images' },
+    { id: 'gallery-submissions', label: 'Photo Submissions', icon: 'Images' },
     { id: 'settings', label: 'Settings', icon: 'Settings' },
   ],
 };

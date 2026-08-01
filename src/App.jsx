@@ -23,6 +23,7 @@ import Speakers from './pages/Speakers'
 import NJAssemblies from './pages/NJAssemblies'
 import SocialWall from './pages/SocialWall'
 import Gallery from './pages/Gallery'
+import SubmitPhotos from './pages/SubmitPhotos'
 import Awards from './pages/Awards'
 import Documents from './pages/Documents'
 import Surveys from './pages/Surveys'
@@ -39,6 +40,7 @@ import ManageMeals from './pages/admin/ManageMeals'
 import ManageAwards from './pages/admin/ManageAwards'
 import ManageDocuments from './pages/admin/ManageDocuments'
 import ManageGallery from './pages/admin/ManageGallery'
+import ManageGallerySubmissions from './pages/admin/ManageGallerySubmissions'
 import ManageSurveys from './pages/admin/ManageSurveys'
 import AdminSettings from './pages/admin/AdminSettings'
 import './styles/global.css'
@@ -85,6 +87,7 @@ const AppRoutes = () => {
             <Route path="assemblies" element={<NJAssemblies />} />
             <Route path="social-wall" element={<SocialWall />} />
             <Route path="gallery" element={<Gallery />} />
+            <Route path="submit-photos" element={<SubmitPhotos />} />
             <Route path="awards" element={<Awards />} />
             <Route path="documents" element={<Documents />} />
             <Route path="surveys" element={<Surveys />} />
@@ -107,6 +110,7 @@ const AppRoutes = () => {
             <Route path="awards" element={<ManageAwards />} />
             <Route path="documents" element={<ManageDocuments />} />
             <Route path="gallery" element={<ManageGallery />} />
+            <Route path="gallery-submissions" element={<ManageGallerySubmissions />} />
             <Route path="surveys" element={<ManageSurveys />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>

@@ -63,7 +63,37 @@ const Gallery = () => {
   const [slideTransition, setSlideTransition] = useState(true)
   const [showFullGallery, setShowFullGallery] = useState(false)
 
-  const photos = useMemo(() => [...sheetData.gallery, ...repoGalleryItems], [sheetData.gallery])
+  const approvedSubmissions = useMemo(() => (sheetData.gallerySubmissions || [])
+    .filter(item => String(item.status || '').toLowerCase() === 'approved')
+    .map((item, index) => {
+      const mediaUrl = item.mediaUrl || item.videoUrl || item.imageUrl || ''
+      const mediaType = item.mediaType || (/\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(mediaUrl) ? 'video' : 'image')
+      return {
+        id: `approved-submission-${item.submissionId || item.id || index}`,
+        url: mediaUrl,
+        imageUrl: mediaType === 'image' ? mediaUrl : '',
+        videoUrl: mediaType === 'video' ? mediaUrl : '',
+        mediaType,
+        title: item.caption || 'Submitted memory',
+        description: item.caption || '',
+        caption: item.caption || '',
+        category: 'Submissions',
+        day: '',
+        photographer: item.uploaderName || 'Convention Guest',
+        tags: [],
+        thumbnail: item.thumbnailUrl || (mediaType === 'image' ? mediaUrl : ''),
+        featured: false,
+        likes: 0,
+        comments: 0,
+        liked: false,
+        uploadedBy: item.uploaderName || 'Convention Guest',
+        uploadDate: item.submittedAt || '',
+        source: 'approved-submission',
+      }
+    })
+    .filter(item => item.url), [sheetData.gallerySubmissions])
+
+  const photos = useMemo(() => [...sheetData.gallery, ...approvedSubmissions, ...repoGalleryItems], [sheetData.gallery, approvedSubmissions])
   const categories = [...new Set(photos.map(p => p.category))].sort()
   const days = [...new Set(photos.map(p => p.day))].sort()
 

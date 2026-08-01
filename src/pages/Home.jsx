@@ -49,6 +49,7 @@ const baseTiles = [
     icon: Images,
     tone: 'blue',
   },
+  { title: 'Submit Photos', subtitle: 'Share photos for approval', to: '/submit-photos', icon: Images, tone: 'gold' },
   { title: 'Social Wall', subtitle: 'Posts, hashtags, likes', to: '/social-wall', icon: Hash, tone: 'purple' },
   { title: 'Announcements', subtitle: 'Important updates', to: '/announcements', icon: Megaphone, tone: 'red' },
   { title: 'Event Info', subtitle: 'Venue, contacts, links', to: '/event-info', icon: Info, tone: 'gold' },

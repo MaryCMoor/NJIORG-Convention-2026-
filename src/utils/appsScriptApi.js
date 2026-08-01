@@ -278,6 +278,66 @@ export const saveSocialPostToGoogleSheet = async (post) => sendSocialPostToGoogl
 
 export const updateSocialPostInGoogleSheet = async (post) => sendSocialPostToGoogleSheet(post, 'updateSocialPost')
 
+export const loadGallerySubmissionsFromGoogleSheet = async () => {
+  const response = await fetch(`${APPS_SCRIPT_URL}?action=getGallerySubmissions&cacheBust=${Date.now()}`)
+  const text = await response.text()
+  let data = null
+  try {
+    data = JSON.parse(text)
+  } catch {
+    throw new Error('Gallery submissions endpoint did not return JSON')
+  }
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.error || `Gallery submissions fetch failed (${response.status})`)
+  }
+  return data.submissions || []
+}
+
+export const submitGalleryMediaToGoogleSheet = async (submission) => {
+  const response = await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'submitGalleryMedia', ...submission }),
+  })
+  const text = await response.text()
+  let data = null
+  try {
+    data = JSON.parse(text)
+  } catch {
+    data = { ok: response.ok, raw: text }
+  }
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.error || `Photo submission failed (${response.status})`)
+  }
+  return data
+}
+
+export const reviewGallerySubmissionInGoogleSheet = async (submission) => {
+  const response = await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({
+      action: 'reviewGallerySubmission',
+      token: ADMIN_TOKEN,
+      submissionId: submission.submissionId || submission.id,
+      status: submission.status,
+      reviewNotes: submission.reviewNotes || '',
+      reviewedBy: submission.reviewedBy || 'Administrator',
+    }),
+  })
+  const text = await response.text()
+  let data = null
+  try {
+    data = JSON.parse(text)
+  } catch {
+    data = { ok: response.ok, raw: text }
+  }
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.error || `Gallery review failed (${response.status})`)
+  }
+  return data
+}
+
 const sendNotificationToGoogleSheet = async (notification, action = 'createNotification') => {
   const payload = {
     action,
