@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { 
   Images, Camera, Heart, Star, Download, Share2, 
   Filter, Search, ChevronLeft, ChevronRight, X,
@@ -211,6 +212,7 @@ const Gallery = () => {
             <button type="button" className="gallery-view-all-btn" onClick={() => setShowFullGallery(value => !value)}>
               {showFullGallery ? 'Hide Full Gallery' : 'View Full Gallery'}
             </button>
+            <Link className="gallery-submit-btn" to="/submit-photos">Submit Photos</Link>
           </div>
 
           <div className="gallery-spotlight-viewport">
