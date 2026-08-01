@@ -250,28 +250,40 @@ export const normalizeNotificationRow = (row, index) => ({
   source: 'google-sheet',
 })
 
-const normalizeGalleryPhoto = (row, index) => ({
-  id: row.id || `sheet-photo-${index + 1}`,
-  url: row.url || '',
-  title: row.title || row.caption || 'Photo',
-  description: row.description || row.caption || '',
-  caption: row.caption || row.description || '',
-  category: row.category || 'Convention',
-  day: row.day || '',
-  photographer: row.photographer || row.uploadedBy || 'Convention Team',
-  tags: String(row.tags || row.tag || '')
-    .split(',')
-    .map(value => value.trim())
-    .filter(Boolean),
-  thumbnail: row.thumbnail || row.thumbnailUrl || '',
-  featured: String(row.featured || '').toLowerCase() === 'true',
-  likes: 0,
-  comments: 0,
-  liked: false,
-  uploadedBy: row.uploadedBy || 'Convention Team',
-  uploadDate: row.date || new Date().toISOString(),
-  source: 'google-sheet',
-})
+const isVideoMediaUrl = (url) => /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(String(url || ''))
+
+const normalizeGalleryPhoto = (row, index) => {
+  const imageUrl = row.url || row.imageUrl || row.photoUrl || ''
+  const videoUrl = row.videoUrl || row.video || row.videoLink || ''
+  const mediaUrl = videoUrl || imageUrl
+  const mediaType = String(row.mediaType || row.type || '').toLowerCase() || (isVideoMediaUrl(mediaUrl) ? 'video' : 'image')
+
+  return {
+    id: row.id || `sheet-photo-${index + 1}`,
+    url: mediaUrl,
+    imageUrl,
+    videoUrl,
+    mediaType,
+    title: row.title || row.caption || (mediaType === 'video' ? 'Video' : 'Photo'),
+    description: row.description || row.caption || '',
+    caption: row.caption || row.description || '',
+    category: row.category || 'Convention',
+    day: row.day || '',
+    photographer: row.photographer || row.uploadedBy || 'Convention Team',
+    tags: String(row.tags || row.tag || '')
+      .split(',')
+      .map(value => value.trim())
+      .filter(Boolean),
+    thumbnail: row.thumbnail || row.thumbnailUrl || imageUrl,
+    featured: String(row.featured || '').toLowerCase() === 'true',
+    likes: 0,
+    comments: 0,
+    liked: false,
+    uploadedBy: row.uploadedBy || 'Convention Team',
+    uploadDate: row.date || new Date().toISOString(),
+    source: 'google-sheet',
+  }
+}
 
 export const loadPublishedSheetData = async () => {
   const [eventRows, memberRows, speakerRows, notificationRows, galleryRows] = await Promise.all([

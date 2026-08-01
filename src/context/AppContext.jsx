@@ -241,12 +241,14 @@ export const AppProvider = ({ children }) => {
       setHeadLink('icon', iconUrl)
       setHeadLink('apple-touch-icon', iconUrl)
 
+      const manifestBase = new URL(import.meta.env.BASE_URL || './', window.location.origin).href
+
       const manifest = {
         name: appTitle,
         short_name: appTitle.length > 24 ? 'Rainbow Convention' : appTitle,
         description: '2026 Rainbow Grand Assembly Convention',
-        start_url: './',
-        scope: './',
+        start_url: `${manifestBase}#/`,
+        scope: manifestBase,
         display: 'standalone',
         display_override: ['standalone', 'minimal-ui', 'browser'],
         background_color: backgroundColor,

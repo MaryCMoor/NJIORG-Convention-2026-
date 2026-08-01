@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { 
   Images, Camera, Heart, Star, Download, Share2, 
   Filter, Search, ChevronLeft, ChevronRight, X,
@@ -7,6 +7,48 @@ import {
 import { useApp } from '../context/AppContext'
 import '../components/ui/UIComponents.css'
 import './Gallery.css'
+
+const repoGalleryFiles = import.meta.glob('../assets/gallery/**/*.{jpg,jpeg,png,webp,gif,mp4,webm,ogg,mov}', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+})
+
+const titleFromPath = (path) => {
+  const fileName = path.split('/').pop() || 'Gallery item'
+  return fileName
+    .replace(/\.[^.]+$/, '')
+    .replace(/[-_]+/g, ' ')
+    .replace(/\b\w/g, letter => letter.toUpperCase())
+}
+
+const isVideoPath = (path) => /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(String(path || ''))
+
+const repoGalleryItems = Object.entries(repoGalleryFiles).map(([path, url], index) => {
+  const mediaType = isVideoPath(path) ? 'video' : 'image'
+  return {
+    id: `repo-gallery-${index + 1}`,
+    url,
+    imageUrl: mediaType === 'image' ? url : '',
+    videoUrl: mediaType === 'video' ? url : '',
+    mediaType,
+    title: titleFromPath(path),
+    description: '',
+    caption: '',
+    category: 'Convention',
+    day: '',
+    photographer: 'Convention Team',
+    tags: [],
+    thumbnail: mediaType === 'image' ? url : '',
+    featured: false,
+    likes: 0,
+    comments: 0,
+    liked: false,
+    uploadedBy: 'GitHub gallery folder',
+    uploadDate: '',
+    source: 'github-folder',
+  }
+})
 
 const Gallery = () => {
   const { sheetData, appConfig, currentUser } = useApp()
@@ -17,10 +59,16 @@ const Gallery = () => {
   const [viewMode, setViewMode] = useState('grid')
   const [selectedPhoto, setSelectedPhoto] = useState(null)
   const [lightboxIndex, setLightboxIndex] = useState(0)
+  const [rotationIndex, setRotationIndex] = useState(0)
+  const [showFullGallery, setShowFullGallery] = useState(false)
 
-  const photos = sheetData.gallery
+  const photos = useMemo(() => [...sheetData.gallery, ...repoGalleryItems], [sheetData.gallery])
   const categories = [...new Set(photos.map(p => p.category))].sort()
   const days = [...new Set(photos.map(p => p.day))].sort()
+
+  const isVideoMedia = (photo) => photo.mediaType === 'video' || /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(String(photo.videoUrl || photo.url || ''))
+  const mediaSrc = (photo) => photo.videoUrl || photo.url
+  const imageSrc = (photo) => photo.thumbnail || photo.imageUrl || photo.url
 
   const filteredPhotos = useMemo(() => {
     let result = photos
@@ -45,6 +93,19 @@ const Gallery = () => {
     
     return result.sort((a, b) => new Date(b.date) - new Date(a.date))
   }, [photos, filterCategory, filterDay, searchQuery])
+
+  useEffect(() => {
+    if (filteredPhotos.length <= 3) return undefined
+    const timer = window.setInterval(() => {
+      setRotationIndex(index => (index + 3) % filteredPhotos.length)
+    }, 3000)
+    return () => window.clearInterval(timer)
+  }, [filteredPhotos.length])
+
+  const spotlightPhotos = useMemo(() => {
+    if (filteredPhotos.length <= 3) return filteredPhotos
+    return [0, 1, 2].map(offset => filteredPhotos[(rotationIndex + offset) % filteredPhotos.length])
+  }, [filteredPhotos, rotationIndex])
 
   const handlePhotoClick = (photo, index) => {
     setSelectedPhoto(photo)
@@ -96,26 +157,39 @@ const Gallery = () => {
         <p className="page-subtitle">Photos from {appConfig.appTitle}</p>
       </div>
 
-      {/* Stats */}
-      <div className="gallery-stats">
-        <div className="stat-item">
-          <strong>{photos.length}</strong>
-          <span>Total Photos</span>
-        </div>
-        <div className="stat-item">
-          <strong>{photos.filter(p => p.featured).length}</strong>
-          <span>Featured</span>
-        </div>
-        <div className="stat-item">
-          <strong>{categories.length}</strong>
-          <span>Categories</span>
-        </div>
-        <div className="stat-item">
-          <strong>{photos.reduce((sum, p) => sum + p.likes, 0)}</strong>
-          <span>Total Likes</span>
-        </div>
-      </div>
+      {filteredPhotos.length > 0 && (
+        <section className="gallery-spotlight" aria-label="Featured rotating photos">
+          <div className="gallery-spotlight-header">
+            <div>
+              <p className="area-kicker">Photo Gallery</p>
+              <h2>Convention Memories</h2>
+            </div>
+            <button type="button" className="gallery-view-all-btn" onClick={() => setShowFullGallery(value => !value)}>
+              {showFullGallery ? 'Hide Full Gallery' : 'View Full Gallery'}
+            </button>
+          </div>
 
+          <div className="gallery-spotlight-grid" key={rotationIndex}>
+            {spotlightPhotos.map((photo, index) => (
+              <button
+                key={`${photo.id}-${index}`}
+                type="button"
+                className="gallery-spotlight-card"
+                onClick={() => handlePhotoClick(photo, index)}
+                aria-label={`Open ${photo.title || 'gallery photo'}`}
+              >
+                {isVideoMedia(photo) ? (
+                  <video src={mediaSrc(photo)} muted playsInline preload="metadata" />
+                ) : (
+                  <img src={imageSrc(photo)} alt={photo.title || 'Convention photo'} loading="eager" />
+                )}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {showFullGallery && <>
       {/* Filter Bar */}
       <div className="filter-bar">
         <div className="filter-group">
@@ -155,7 +229,7 @@ const Gallery = () => {
       {/* Gallery Grid */}
       <div className="gallery-container">
         {viewMode === 'grid' ? (
-          <div className="gallery-grid">
+          <div className="gallery-grid simple-gallery-grid">
             {filteredPhotos.map((photo, index) => (
               <PhotoCard 
                 key={photo.id} 
@@ -191,6 +265,7 @@ const Gallery = () => {
           </div>
         )}
       </div>
+      </>}
 
       {/* Photo of the Day */}
       {photos.find(p => p.featured) && (
@@ -199,6 +274,10 @@ const Gallery = () => {
     </div>
   )
 }
+
+const isVideoPhoto = (photo) => photo.mediaType === 'video' || /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(String(photo.videoUrl || photo.url || ''))
+const getGalleryMediaSrc = (photo) => photo.videoUrl || photo.url
+const getGalleryImageSrc = (photo) => photo.thumbnail || photo.imageUrl || photo.url
 
 const PhotoCard = ({ photo, index, onClick, currentUser, onLike, masonry = false }) => {
   const [loaded, setLoaded] = useState(false)
@@ -213,15 +292,28 @@ const PhotoCard = ({ photo, index, onClick, currentUser, onLike, masonry = false
             <span>Failed to load</span>
           </div>
         ) : (
-          <img
-            src={photo.thumbnail || photo.url}
-            alt={photo.title}
-            onLoad={() => setLoaded(true)}
-            onError={() => { setError(true); setLoaded(true); }}
-            loading="lazy"
-            className={loaded ? 'loaded' : ''}
-          />
+          isVideoPhoto(photo) ? (
+            <video
+              src={getGalleryMediaSrc(photo)}
+              muted
+              playsInline
+              preload="metadata"
+              onLoadedData={() => setLoaded(true)}
+              onError={() => { setError(true); setLoaded(true); }}
+              className={loaded ? 'loaded' : ''}
+            />
+          ) : (
+            <img
+              src={getGalleryImageSrc(photo)}
+              alt={photo.title}
+              onLoad={() => setLoaded(true)}
+              onError={() => { setError(true); setLoaded(true); }}
+              loading="lazy"
+              className={loaded ? 'loaded' : ''}
+            />
+          )
         )}
+        {isVideoPhoto(photo) && <span className="media-type-badge">Video</span>}
         {photo.featured && <span className="featured-badge">★ Featured</span>}
         {!loaded && !error && <div className="photo-skeleton" />}
       </div>
@@ -302,12 +394,22 @@ const Lightbox = ({ photo, photos, index, onClose, onPrev, onNext, onLike, curre
       <div className="lightbox-content">
         <div className="lightbox-image-wrapper">
           {!loaded && <div className="lightbox-skeleton" />}
-          <img
-            src={photo.url}
-            alt={photo.title}
-            onLoad={() => setLoaded(true)}
-            className={loaded ? 'loaded' : ''}
-          />
+          {isVideoPhoto(photo) ? (
+            <video
+              src={getGalleryMediaSrc(photo)}
+              controls
+              playsInline
+              onLoadedData={() => setLoaded(true)}
+              className={loaded ? 'loaded' : ''}
+            />
+          ) : (
+            <img
+              src={getGalleryImageSrc(photo)}
+              alt={photo.title}
+              onLoad={() => setLoaded(true)}
+              className={loaded ? 'loaded' : ''}
+            />
+          )}
         </div>
         
         <div className="lightbox-info">
@@ -358,7 +460,7 @@ const PhotoOfTheDay = ({ photo }) => (
       <span className="pod-badge">✨ Photo of the Day</span>
     </div>
     <div className="pod-content">
-      <img src={photo.url} alt={photo.title} />
+      {isVideoPhoto(photo) ? <video src={getGalleryMediaSrc(photo)} controls playsInline /> : <img src={getGalleryImageSrc(photo)} alt={photo.title} />}
       <div className="pod-info">
         <h3>{photo.title}</h3>
         <p>{photo.description}</p>
