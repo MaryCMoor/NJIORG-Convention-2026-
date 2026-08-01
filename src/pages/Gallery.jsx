@@ -8,7 +8,7 @@ import { useApp } from '../context/AppContext'
 import '../components/ui/UIComponents.css'
 import './Gallery.css'
 
-const repoGalleryFiles = import.meta.glob('../assets/gallery/**/*.{jpg,jpeg,png,webp,gif,mp4,webm,ogg,mov}', {
+const repoGalleryFiles = import.meta.glob('../assets/gallery/**/*.{jpg,jpeg,png,webp,gif,JPG,JPEG,PNG,WEBP,GIF,mp4,webm,ogg,mov,MP4,WEBM,OGG,MOV}', {
   eager: true,
   query: '?url',
   import: 'default',
@@ -149,7 +149,7 @@ const Gallery = () => {
 
   return (
     <div className="gallery-page">
-      <div className="page-header">
+      <div className="page-header gallery-screen-header">
         <h1 className="page-title">
           <Images className="page-title-icon" size={32} />
           Photo Gallery
@@ -158,11 +158,12 @@ const Gallery = () => {
       </div>
 
       {filteredPhotos.length > 0 && (
-        <section className="gallery-spotlight" aria-label="Featured rotating photos">
+        <section className="gallery-spotlight event-screen-gallery" aria-label="Featured rotating photos and videos">
           <div className="gallery-spotlight-header">
             <div>
-              <p className="area-kicker">Photo Gallery</p>
+              <p className="area-kicker">Live Gallery</p>
               <h2>Convention Memories</h2>
+              <p className="gallery-screen-note">Photos and videos rotate automatically throughout the event.</p>
             </div>
             <button type="button" className="gallery-view-all-btn" onClick={() => setShowFullGallery(value => !value)}>
               {showFullGallery ? 'Hide Full Gallery' : 'View Full Gallery'}
@@ -179,10 +180,11 @@ const Gallery = () => {
                 aria-label={`Open ${photo.title || 'gallery photo'}`}
               >
                 {isVideoMedia(photo) ? (
-                  <video src={mediaSrc(photo)} muted playsInline preload="metadata" />
+                  <video src={mediaSrc(photo)} muted playsInline autoPlay loop preload="metadata" />
                 ) : (
                   <img src={imageSrc(photo)} alt={photo.title || 'Convention photo'} loading="eager" />
                 )}
+                <span className="gallery-spotlight-title">{photo.title}</span>
               </button>
             ))}
           </div>
