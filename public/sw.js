@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'rainbow-convention-pwa';
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = `${CACHE_PREFIX}-${CACHE_VERSION}`;
 
 const scopeUrl = new URL(self.registration.scope);
@@ -43,6 +43,13 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (!isSameOriginGet(request)) return;
 
+  // Media elements request videos with Range headers. Those responses are
+  // HTTP 206 Partial Content, which Cache.put() cannot store. Let the browser
+  // handle range/video requests directly so playback does not fail.
+  if (request.headers.has('range') || request.destination === 'video' || request.destination === 'audio') {
+    return;
+  }
+
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
@@ -59,7 +66,7 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(request).then((cached) => {
       const networkFetch = fetch(request).then((response) => {
-        if (response && response.ok) {
+        if (response && response.status === 200 && response.type === 'basic') {
           const copy = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
         }
