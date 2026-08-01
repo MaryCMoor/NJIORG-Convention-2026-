@@ -18,6 +18,7 @@ const SubmitPhotos = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    const form = event.currentTarget
     if (files.length === 0) {
       setStatus('error')
       setMessage('Please choose at least one photo or video to upload.')
@@ -41,7 +42,7 @@ const SubmitPhotos = () => {
       setMessage(`Thank you! ${files.length} photo/video submission${files.length === 1 ? ' was' : 's were'} sent for approval.`)
       setFormData({ uploaderName: '', uploaderEmail: '', caption: '', assembly: '' })
       setFiles([])
-      event.currentTarget.reset()
+      form?.reset()
     } catch (error) {
       console.error(error)
       setStatus('error')

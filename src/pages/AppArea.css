@@ -1275,3 +1275,67 @@
   font-size: 0.9rem;
   font-weight: 900;
 }
+
+
+.submission-status-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin: 0 0 1rem;
+}
+
+.submission-status-tab {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.submission-status-tab.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.submission-status-tab strong {
+  min-width: 1.55rem;
+  min-height: 1.55rem;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--color-surface-elevated);
+  color: var(--color-primary);
+  font-size: 0.78rem;
+}
+
+.submission-review-media.profile-style-preview {
+  aspect-ratio: 1 / 1;
+  background: #111;
+}
+
+.submission-review-media.profile-style-preview img,
+.submission-review-media.profile-style-preview video {
+  object-fit: contain;
+  background: #111;
+}
+
+.submission-review-note {
+  padding: 0.55rem 0.65rem;
+  border-radius: var(--radius-md);
+  background: rgba(234, 179, 8, 0.14);
+  color: #854d0e !important;
+}
+
+@media (max-width: 560px) {
+  .submission-status-tabs {
+    grid-template-columns: 1fr;
+  }
+}

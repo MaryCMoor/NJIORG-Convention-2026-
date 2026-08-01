@@ -25,6 +25,24 @@ const titleFromPath = (path) => {
 
 const isVideoPath = (path) => /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(String(path || ''))
 
+const extractDriveFileId = (url) => {
+  const text = String(url || '')
+  const patterns = [
+    /\/file\/d\/([a-zA-Z0-9_-]+)/,
+    /[?&]id=([a-zA-Z0-9_-]+)/,
+    /\/open\?id=([a-zA-Z0-9_-]+)/,
+    /\/thumbnail\?id=([a-zA-Z0-9_-]+)/,
+    /\/uc\?export=view&id=([a-zA-Z0-9_-]+)/,
+  ]
+  const match = patterns.map(pattern => text.match(pattern)).find(Boolean)
+  return match?.[1] || ''
+}
+
+const getDriveThumbnailUrl = (url, size = 'w1600') => {
+  const id = extractDriveFileId(url)
+  return id ? `https://drive.google.com/thumbnail?id=${id}&sz=${size}` : url
+}
+
 const repoGalleryItems = Object.entries(repoGalleryFiles).map(([path, url], index) => {
   const mediaType = isVideoPath(path) ? 'video' : 'image'
   return {
@@ -100,7 +118,7 @@ const Gallery = () => {
 
   const isVideoMedia = (photo) => photo.mediaType === 'video' || /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(String(photo.videoUrl || photo.url || ''))
   const mediaSrc = (photo) => photo.videoUrl || photo.url
-  const imageSrc = (photo) => photo.thumbnail || photo.imageUrl || photo.url
+  const imageSrc = (photo) => getDriveThumbnailUrl(photo.thumbnail || photo.imageUrl || photo.url)
 
   const filteredPhotos = useMemo(() => {
     let result = photos
