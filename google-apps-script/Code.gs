@@ -140,13 +140,14 @@ function buildEventData(body, eventId, dateCreated) {
     requiredRole: body.requiredRole || body.required || '',
     dressCode: body.dressCode || '',
     mensDressCode: body.mensDressCode || body.mensDress || '',
+    status: body.status || 'scheduled',
     dateCreated: dateCreated || new Date().toISOString()
   };
 }
 
 function createEvent(body) {
   const sheet = getEventsSheet();
-  const headers = ensureHeaders(sheet, ['eventId', 'title', 'day', 'time', 'timeEnd', 'location', 'description', 'type', 'speaker', 'parentEventId', 'requiredRole', 'dressCode', 'mensDressCode', 'dateCreated']);
+  const headers = ensureHeaders(sheet, ['eventId', 'title', 'day', 'time', 'timeEnd', 'location', 'description', 'type', 'speaker', 'parentEventId', 'requiredRole', 'dressCode', 'mensDressCode', 'status', 'dateCreated']);
   const eventId = body.eventId || 'event_' + Date.now();
   const dateCreated = new Date().toISOString();
   writeObjectRow(sheet, sheet.getLastRow() + 1, headers, buildEventData(body, eventId, dateCreated));
@@ -155,7 +156,7 @@ function createEvent(body) {
 
 function updateEvent(body) {
   const sheet = getEventsSheet();
-  const headers = ensureHeaders(sheet, ['eventId', 'title', 'day', 'time', 'timeEnd', 'location', 'description', 'type', 'speaker', 'parentEventId', 'requiredRole', 'dressCode', 'mensDressCode', 'dateCreated']);
+  const headers = ensureHeaders(sheet, ['eventId', 'title', 'day', 'time', 'timeEnd', 'location', 'description', 'type', 'speaker', 'parentEventId', 'requiredRole', 'dressCode', 'mensDressCode', 'status', 'dateCreated']);
   const eventId = body.eventId || body.id;
   if (!eventId) return jsonResponse({ ok: false, success: false, error: 'Missing eventId' });
   const rowNumber = findRowById(sheet, headers, 'eventId', eventId);
