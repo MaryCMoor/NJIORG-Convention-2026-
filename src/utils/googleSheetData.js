@@ -130,6 +130,7 @@ const normalizeEvent = (row, index) => {
     capacity: Number(row.capacity) || 0,
     attended: [],
     source: 'google-sheet',
+    status: row.status || 'scheduled',
   }
 }
 
@@ -148,6 +149,7 @@ export const normalizeSheetRowForAdminSchedule = (row, index) => ({
   requiredRole: row.requiredRole || row.required || (Array.isArray(row.requiredRoles) ? row.requiredRoles.join(', ') : ''),
   dressCode: row.dressCode || (Array.isArray(row.dressCodes) ? row.dressCodes.join(', ') : ''),
   mensDressCode: row.mensDressCode || row.mensDress || '',
+  status: row.status || 'scheduled',
   dateCreated: row.dateCreated || '',
 })
 

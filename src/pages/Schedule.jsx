@@ -1,9 +1,23 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Calendar, Clock, MapPin, Shirt, User, X } from 'lucide-react'
+import { Calendar, Clock, MapPin, Shirt, User, X, CheckCircle, AlertCircle, Hourglass, PlayCircle } from 'lucide-react'
 import { useApp } from '../context/AppContext.jsx'
 import { getEventSpeakerTags } from '../data/speakerSchedule'
 import './Schedule.css'
+
+const STATUS_ICONS = {
+  scheduled: Hourglass,
+  'in-progress': PlayCircle,
+  completed: CheckCircle,
+  cancelled: AlertCircle,
+}
+
+const STATUS_LABELS = {
+  scheduled: 'Scheduled',
+  'in-progress': 'In Progress',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+}
 
 const buildConventionDays = (startDate, numberOfDays) => {
   const start = new Date(`${startDate || '2026-08-14'}T00:00:00`)
@@ -105,17 +119,21 @@ const Schedule = () => {
     const requiredForUser = isRequiredForSelectedRole(event, selectedRole)
     const childEvents = childEventsByParent.get(getEventKey(event)) || []
     const hasOwnTime = Boolean(event.time)
+    const eventStatus = event.status || 'scheduled'
+    const StatusIcon = STATUS_ICONS[eventStatus] || Hourglass
+    const statusLabel = STATUS_LABELS[eventStatus] || 'Scheduled'
+    const isCompletedOrCancelled = eventStatus === 'completed' || eventStatus === 'cancelled'
 
     return (
       <li key={event.id} className="event-group" style={{ marginLeft: depth > 0 ? `${depth * 24}px` : 0 }}>
-        <div className={`event-card ${requiredForUser ? 'required-event-card' : ''} ${depth > 0 ? 'sub-event-card' : ''}`}>
+        <div className={`event-card ${requiredForUser ? 'required-event-card' : ''} ${depth > 0 ? 'sub-event-card' : ''} ${isCompletedOrCancelled ? eventStatus : ''}`}>
           <button
             type="button"
             className="event-card-open"
             onClick={() => navigate(`/schedule/${event.id}`)}
             aria-label={`Open details for ${event.name}`}
           >
-            <EventCardContent event={event} speakers={speakers} selectedRole={selectedRole} isSubEvent={depth > 0} eventsById={eventsById} />
+            <EventCardContent event={event} speakers={speakers} selectedRole={selectedRole} isSubEvent={depth > 0} eventsById={eventsById} eventStatus={eventStatus} />
           </button>
         </div>
 
@@ -186,10 +204,12 @@ const Schedule = () => {
   )
 }
 
-const EventCardContent = ({ event, speakers, selectedRole, isSubEvent = false, eventsById }) => {
+const EventCardContent = ({ event, speakers, selectedRole, isSubEvent = false, eventsById, eventStatus = 'scheduled' }) => {
   const eventSpeakers = getEventSpeakerTags(event, speakers)
   const requiredForUser = isRequiredForSelectedRole(event, selectedRole)
   const hasOwnTime = Boolean(event.time)
+  const StatusIcon = STATUS_ICONS[eventStatus] || Hourglass
+  const statusLabel = STATUS_LABELS[eventStatus] || 'Scheduled'
 
   // Find parent event name for display
   const parentEvent = isSubEvent ? eventsById?.get(event.parentEventId) : null
@@ -210,7 +230,13 @@ const EventCardContent = ({ event, speakers, selectedRole, isSubEvent = false, e
       </div>
       <div className="event-body">
         {parentName && <span className="parent-event-name">Part of: {parentName}</span>}
-        <h3 className="event-name">{event.name}</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
+          <h3 className="event-name" style={{ margin: 0 }}>{event.name}</h3>
+          <span className={`event-status-badge ${eventStatus}`}>
+            <StatusIcon size={10} aria-hidden="true" />
+            {statusLabel}
+          </span>
+        </div>
         {requiredForUser && <span className="required-user-badge">Required for you</span>}
         {event.description && <p className="event-description concise">{event.description}</p>}
         <div className="event-quick-row" aria-label="Quick event details">
@@ -233,6 +259,9 @@ const EventDetail = ({ event, speakers, selectedRole, onClose }) => {
   const eventSpeakers = getEventSpeakerTags(event, speakers)
   const requiredForUser = isRequiredForSelectedRole(event, selectedRole)
   const hasOwnTime = Boolean(event.time)
+  const eventStatus = event.status || 'scheduled'
+  const StatusIcon = STATUS_ICONS[eventStatus] || Hourglass
+  const statusLabel = STATUS_LABELS[eventStatus] || 'Scheduled'
 
   return (
     <div className="event-detail-overlay" role="dialog" aria-modal="true" aria-labelledby="event-detail-title" onClick={onClose}>
@@ -243,6 +272,12 @@ const EventDetail = ({ event, speakers, selectedRole, onClose }) => {
 
         <p className="area-kicker">{formatDay(event.startTime)}</p>
         <h2 id="event-detail-title">{event.name}</h2>
+        <div className="event-detail-status">
+          <span className={`event-status-badge ${eventStatus}`}>
+            <StatusIcon size={12} aria-hidden="true" />
+            {statusLabel}
+          </span>
+        </div>
         {event.parentEventId && <span className="sub-event-label detail">Sub-event</span>}
         {requiredForUser && <span className="required-user-badge detail">Required for you</span>}
         <p className="event-detail-time">

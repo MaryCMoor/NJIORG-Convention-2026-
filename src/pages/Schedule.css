@@ -1189,3 +1189,85 @@
 .sub-event-label.detail {
   margin-bottom: 0.5rem;
 }
+
+/* Event Status Badges */
+.event-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-full);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.event-status-badge.scheduled {
+  background: var(--color-blue-100);
+  color: var(--color-blue-700);
+  border: 1px solid var(--color-blue-300);
+}
+
+.event-status-badge.in-progress {
+  background: var(--color-orange-100);
+  color: var(--color-orange-700);
+  border: 1px solid var(--color-orange-300);
+  animation: pulse 2s infinite;
+}
+
+.event-status-badge.completed {
+  background: var(--color-gray-200);
+  color: var(--color-gray-600);
+  border: 1px solid var(--color-gray-300);
+}
+
+.event-status-badge.cancelled {
+  background: var(--color-red-100);
+  color: var(--color-red-700);
+  border: 1px solid var(--color-red-300);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Completed/Cancelled event card styles - grayed out */
+.schedule-timeline .event-card.completed,
+.schedule-timeline .event-card.cancelled {
+  opacity: 0.55;
+  filter: grayscale(0.8);
+  border-left-color: var(--color-gray-400);
+}
+
+.schedule-timeline .event-card.completed .event-name,
+.schedule-timeline .event-card.cancelled .event-name {
+  text-decoration: line-through;
+}
+
+.schedule-timeline .event-card.completed .required-user-badge,
+.schedule-timeline .event-card.cancelled .required-user-badge {
+  opacity: 0.4;
+}
+
+/* Sub-event status inheritance */
+.schedule-timeline .sub-event-card.completed,
+.schedule-timeline .sub-event-card.cancelled {
+  opacity: 0.55;
+  filter: grayscale(0.8);
+}
+
+.schedule-timeline .sub-event-card.completed .event-name,
+.schedule-timeline .sub-event-card.cancelled .event-name {
+  text-decoration: line-through;
+}
+
+/* Detail view status */
+.event-detail-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 0.5rem;
+}

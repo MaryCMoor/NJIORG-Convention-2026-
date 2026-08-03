@@ -21,6 +21,7 @@ const blankForm = () => ({
   requiredRoles: ['All Roles'],
   dressCodes: [],
   mensDressCode: '',
+  status: 'scheduled',
 });
 
 const dayOptions = ['Friday', 'Saturday', 'Sunday'];
@@ -42,6 +43,7 @@ const requiredRoleOptions = [
   'Other',
 ];
 const dressCodeOptions = ['Casual', 'Business Casual', 'Formal', 'Rainbow Dress', 'Grand Officer Attire', 'Comfortable Shoes', 'Theme Attire'];
+const statusOptions = ['scheduled', 'in-progress', 'completed', 'cancelled'];
 
 const splitList = (value, fallback = []) => {
   if (Array.isArray(value)) return value.filter(Boolean);
@@ -173,6 +175,7 @@ const ManageSchedule = () => {
       requiredRoles: splitList(event.requiredRole, ['All Roles']),
       dressCodes: splitList(event.dressCode),
       mensDressCode: event.mensDressCode || '',
+      status: event.status || 'scheduled',
       eventId: event.eventId || event.id,
     });
     setSheetSaveStatus('idle');
@@ -309,6 +312,7 @@ const ManageSchedule = () => {
                 <th><button className="sortable-header" onClick={() => handleSort('requiredRole')}>Required <span className="sort-icon">{renderSortIcon('requiredRole')}</span></button></th>
                 <th><button className="sortable-header" onClick={() => handleSort('dressCode')}>Dress Code <span className="sort-icon">{renderSortIcon('dressCode')}</span></button></th>
                 <th><button className="sortable-header" onClick={() => handleSort('mensDressCode')}>Men's Dress <span className="sort-icon">{renderSortIcon('mensDressCode')}</span></button></th>
+                <th><button className="sortable-header" onClick={() => handleSort('status')}>Status <span className="sort-icon">{renderSortIcon('status')}</span></button></th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -331,6 +335,7 @@ const ManageSchedule = () => {
                     <td>{event.requiredRole || 'All Roles'}</td>
                     <td>{event.dressCode || '—'}</td>
                     <td>{event.mensDressCode || '—'}</td>
+                    <td><span className={`status-badge ${event.status || 'scheduled'}`}>{event.status || 'scheduled'}</span></td>
                     <td><div className="action-buttons"><button className="icon-btn view" onClick={() => setViewEvent(event)} aria-label="View event"><Eye size={16}/></button></div></td>
                   </tr>
                 ))
@@ -380,6 +385,7 @@ const ManageSchedule = () => {
                   </div>
                 </div>
                 <div className="form-field full-width"><label htmlFor="mensDressCode">Men's Dress Code</label><input type="text" id="mensDressCode" placeholder="Example: Dark suit and tie" value={formData.mensDressCode} onChange={event => setFormData({...formData, mensDressCode: event.target.value})}/></div>
+                <div className="form-field"><label htmlFor="status">Status</label><select id="status" value={formData.status} onChange={event => setFormData({...formData, status: event.target.value})}>{statusOptions.map(status => <option key={status} value={status}>{status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ')}</option>)}</select></div>
                 <div className="form-field full-width"><label htmlFor="speaker">Speaker</label><input type="text" id="speaker" value={formData.speaker} onChange={event => setFormData({...formData, speaker: event.target.value})}/></div>
                 <div className="form-field full-width"><label htmlFor="description">Description</label><textarea id="description" value={formData.description} onChange={event => setFormData({...formData, description: event.target.value})} rows={3}/></div>
               </div>
