@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import mockConvention from '../data/mockData'
 import { loadPublishedSheetData } from '../utils/googleSheetData'
-import { DEFAULT_APP_CONFIG, loadAppConfigFromGoogleSheet, loadAssembliesFromGoogleSheet, loadSocialPostsFromGoogleSheet, loadGallerySubmissionsFromGoogleSheet } from '../utils/appsScriptApi'
+import { DEFAULT_APP_CONFIG, loadAppConfigFromGoogleSheet, loadAssembliesFromGoogleSheet, loadAssembliesWithGallery, loadSocialPostsFromGoogleSheet, loadGallerySubmissionsFromGoogleSheet } from '../utils/appsScriptApi'
 
 const AppContext = createContext(null)
 
@@ -105,9 +105,14 @@ export const AppProvider = ({ children }) => {
         let socialPosts = []
         let gallerySubmissions = []
         try {
-          assemblies = await loadAssembliesFromGoogleSheet()
+          assemblies = await loadAssembliesWithGallery()
         } catch (assemblyError) {
-          console.warn('Failed to load Assemblies from Apps Script:', assemblyError)
+          console.warn('Failed to load Assemblies with gallery from Apps Script:', assemblyError)
+          try {
+            assemblies = await loadAssembliesFromGoogleSheet()
+          } catch (fallbackError) {
+            console.warn('Failed to load Assemblies from Apps Script (fallback):', fallbackError)
+          }
         }
         try {
           socialPosts = await loadSocialPostsFromGoogleSheet()
@@ -143,9 +148,14 @@ export const AppProvider = ({ children }) => {
       let socialPosts = []
       let gallerySubmissions = []
       try {
-        assemblies = await loadAssembliesFromGoogleSheet()
+        assemblies = await loadAssembliesWithGallery()
       } catch (assemblyError) {
-        console.warn('Failed to refresh Assemblies from Apps Script:', assemblyError)
+        console.warn('Failed to refresh Assemblies with gallery from Apps Script:', assemblyError)
+        try {
+          assemblies = await loadAssembliesFromGoogleSheet()
+        } catch (fallbackError) {
+          console.warn('Failed to refresh Assemblies from Apps Script (fallback):', fallbackError)
+        }
       }
       try {
         socialPosts = await loadSocialPostsFromGoogleSheet()

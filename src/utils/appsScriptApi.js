@@ -188,6 +188,21 @@ export const loadAssembliesFromGoogleSheet = async () => {
   return data.assemblies || []
 }
 
+export const loadAssembliesWithGallery = async () => {
+  const response = await fetch(`${APPS_SCRIPT_URL}?action=getAssembliesWithGallery&cacheBust=${Date.now()}`)
+  const text = await response.text()
+  let data = null
+  try {
+    data = JSON.parse(text)
+  } catch {
+    throw new Error('Assemblies with gallery endpoint did not return JSON')
+  }
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.error || `Assemblies with gallery fetch failed (${response.status})`)
+  }
+  return data.assemblies || []
+}
+
 const sendAssemblyToGoogleSheet = async (assembly, action = 'createAssembly') => {
   const payload = {
     action,
@@ -197,6 +212,7 @@ const sendAssemblyToGoogleSheet = async (assembly, action = 'createAssembly') =>
     motherAdvisor: assembly.motherAdvisor || '',
     termTheme: assembly.termTheme || '',
     galleryMediaUrls: assembly.galleryMediaUrls || assembly.galleryImageUrls || '',
+    galleryDriveFolderId: assembly.galleryDriveFolderId || '',
     galleryImageUrls: assembly.galleryImageUrls || assembly.galleryMediaUrls || '',
     notes: assembly.notes || '',
   }

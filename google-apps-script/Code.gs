@@ -9,6 +9,9 @@ function doGet(e) {
   if (action === 'getAssemblies') {
     return getAssemblies();
   }
+  if (action === 'getAssembliesWithGallery') {
+    return getAssembliesWithGallery();
+  }
   if (action === 'getSocialPosts') {
     return getSocialPosts();
   }
@@ -321,6 +324,7 @@ function buildAssemblyData(body, assemblyId) {
     motherAdvisor: body.motherAdvisor || '',
     termTheme: body.termTheme || '',
     galleryMediaUrls: body.galleryMediaUrls || body.galleryImageUrls || '',
+    galleryDriveFolderId: body.galleryDriveFolderId || '',
     galleryImageUrls: body.galleryImageUrls || body.galleryMediaUrls || '',
     notes: body.notes || ''
   };
@@ -346,7 +350,7 @@ function getAssemblies() {
 
 function createAssembly(body) {
   const sheet = getAssembliesSheet();
-  const headers = ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryMediaUrls', 'galleryImageUrls', 'notes']);
+  const headers = ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryMediaUrls', 'galleryDriveFolderId', 'galleryImageUrls', 'notes']);
   const assemblyId = body.assemblyId || 'assembly_' + Date.now();
   writeObjectRow(sheet, sheet.getLastRow() + 1, headers, buildAssemblyData(body, assemblyId));
   return jsonResponse({ ok: true, success: true, action: 'createAssembly', assemblyId: assemblyId });
@@ -354,7 +358,7 @@ function createAssembly(body) {
 
 function updateAssembly(body) {
   const sheet = getAssembliesSheet();
-  const headers = ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryMediaUrls', 'galleryImageUrls', 'notes']);
+  const headers = ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryMediaUrls', 'galleryDriveFolderId', 'galleryImageUrls', 'notes']);
   const assemblyId = body.assemblyId || body.id;
   if (!assemblyId) return jsonResponse({ ok: false, success: false, error: 'Missing assemblyId' });
   const rowNumber = findRowById(sheet, headers, 'assemblyId', assemblyId);
@@ -536,6 +540,58 @@ function authorizeUploadWriteAccess() {
   const file = folder.createFile('drive-write-permission-test.txt', 'This temporary file confirms upload permission.');
   Logger.log(file.getName());
   file.setTrashed(true);
+}
+
+function getAssemblyGalleryImages(folderId) {
+  if (!folderId) return [];
+  try {
+    const folder = DriveApp.getFolderById(folderId);
+    const files = folder.getFiles();
+    const images = [];
+    while (files.hasNext()) {
+      const file = files.next();
+      const mimeType = file.getMimeType();
+      if (mimeType.startsWith('image/')) {
+        images.push({
+          url: 'https://drive.google.com/uc?export=view&id=' + file.getId(),
+          thumbnail: 'https://drive.google.com/thumbnail?id=' + file.getId() + '&sz=w800',
+          name: file.getName(),
+          mimeType: mimeType
+        });
+      }
+    }
+    return images;
+  } catch (error) {
+    Logger.log('Error fetching assembly gallery images: ' + error);
+    return [];
+  }
+}
+
+function getAssembliesWithGallery() {
+  const sheet = getAssembliesSheet();
+  const headers = ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryMediaUrls', 'galleryDriveFolderId', 'galleryImageUrls', 'notes']);
+  const lastRow = sheet.getLastRow();
+  const assemblies = [];
+  if (lastRow >= 2) {
+    const values = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
+    values.forEach(function(row) {
+      const record = {};
+      headers.forEach(function(header, index) {
+        record[header] = row[index] || '';
+      });
+      if (Object.keys(record).some(function(key) { return record[key]; })) {
+        // Fetch images from Drive folder if specified
+        if (record.galleryDriveFolderId) {
+          const driveImages = getAssemblyGalleryImages(record.galleryDriveFolderId);
+          if (driveImages.length > 0) {
+            record.driveImages = driveImages;
+          }
+        }
+        assemblies.push(record);
+      }
+    });
+  }
+  return jsonResponse({ ok: true, success: true, action: 'getAssembliesWithGallery', assemblies: assemblies });
 }
 
 function getNotificationsSheet() {

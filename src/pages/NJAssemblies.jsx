@@ -84,9 +84,17 @@ const NJAssemblies = () => {
   }, [galleryAssembly, galleryItems.length])
 
   const openGallery = (assembly) => {
-    const items = parseGalleryMediaUrls(assembly.galleryMediaUrls || assembly.galleryImageUrls)
+    // Combine manual URLs and Drive folder images
+    const manualItems = parseGalleryMediaUrls(assembly.galleryMediaUrls || assembly.galleryImageUrls)
+    const driveItems = (assembly.driveImages || []).map((img, idx) => ({
+      id: `drive-${img.name}-${idx}`,
+      url: img.url,
+      displayUrl: img.thumbnail,
+      type: 'image',
+    }))
+    const allItems = [...manualItems, ...driveItems]
     setGalleryAssembly(assembly)
-    setGalleryItems(items)
+    setGalleryItems(allItems)
     setActiveIndex(0)
   }
 
@@ -132,7 +140,9 @@ const NJAssemblies = () => {
       ) : (
         <section className="assemblies-grid" aria-label="New Jersey Assemblies">
           {assemblies.map(assembly => {
-            const hasMediaUrls = parseGalleryMediaUrls(assembly.galleryMediaUrls || assembly.galleryImageUrls).length > 0
+            const manualItems = parseGalleryMediaUrls(assembly.galleryMediaUrls || assembly.galleryImageUrls)
+            const driveItemsCount = (assembly.driveImages || []).length
+            const hasMedia = manualItems.length > 0 || driveItemsCount > 0
 
             return (
               <article key={assembly.assemblyId || assembly.id || assembly.assemblyName} className="assembly-card">
@@ -146,9 +156,9 @@ const NJAssemblies = () => {
                     <p className="assembly-theme">Theme: {assembly.termTheme}</p>
                   )}
                   {assembly.notes && <p>{assembly.notes}</p>}
-                  {hasMediaUrls && (
+                  {hasMedia && (
                     <button type="button" className="assembly-gallery-link" onClick={() => openGallery(assembly)}>
-                      <Images size={16} /> View photo/video gallery
+                      <Images size={16} /> View photo/video gallery {driveItemsCount > 0 && <span className="drive-badge">({driveItemsCount} from Drive)</span>}
                     </button>
                   )}
                 </div>

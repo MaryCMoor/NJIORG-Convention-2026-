@@ -14,6 +14,7 @@ const blankForm = () => ({
   motherAdvisor: '',
   termTheme: '',
   galleryMediaUrls: '',
+  galleryDriveFolderId: '',
   notes: '',
 });
 
@@ -24,6 +25,7 @@ const normalizeAssemblyForAdmin = (assembly, index = 0) => ({
   motherAdvisor: assembly.motherAdvisor || '',
   termTheme: assembly.termTheme || '',
   galleryMediaUrls: assembly.galleryMediaUrls || assembly.galleryImageUrls || '',
+  galleryDriveFolderId: assembly.galleryDriveFolderId || '',
   notes: assembly.notes || '',
 });
 
@@ -109,6 +111,7 @@ const ManageAssemblies = () => {
       motherAdvisor: assembly.motherAdvisor || '',
       termTheme: assembly.termTheme || '',
       galleryMediaUrls: assembly.galleryMediaUrls || assembly.galleryImageUrls || '',
+      galleryDriveFolderId: assembly.galleryDriveFolderId || '',
       notes: assembly.notes || '',
     });
     setSheetSaveStatus('idle');
@@ -257,7 +260,8 @@ const ManageAssemblies = () => {
                 <div className="form-field"><label htmlFor="assemblyName">Assembly Name *</label><input type="text" id="assemblyName" value={formData.assemblyName} onChange={event => setFormData({...formData, assemblyName: event.target.value})} required /></div>
                 <div className="form-field"><label htmlFor="motherAdvisor">Mother Advisor</label><input type="text" id="motherAdvisor" value={formData.motherAdvisor} onChange={event => setFormData({...formData, motherAdvisor: event.target.value})} /></div>
                 <div className="form-field full-width"><label htmlFor="termTheme">Term Theme</label><input type="text" id="termTheme" value={formData.termTheme} onChange={event => setFormData({...formData, termTheme: event.target.value})} /></div>
-                <div className="form-field full-width"><label htmlFor="galleryMediaUrls">Gallery Photo/Video URLs</label><textarea id="galleryMediaUrls" value={formData.galleryMediaUrls} onChange={event => setFormData({...formData, galleryMediaUrls: event.target.value})} placeholder="Paste one public image or video URL per line. Google Drive file links are OK." rows={6} /></div>
+                <div className="form-field full-width"><label htmlFor="galleryDriveFolderId">Gallery Drive Folder ID</label><input type="text" id="galleryDriveFolderId" value={formData.galleryDriveFolderId} onChange={event => setFormData({...formData, galleryDriveFolderId: event.target.value})} placeholder="Google Drive folder ID (e.g., 1BsWuchkBe72ItymdFD2uuuqIRRU46rPp)" /><p className="field-help">Paste the folder ID from the Google Drive URL: https://drive.google.com/drive/folders/<b>FOLDER_ID</b>. Images in this folder will auto-populate the assembly gallery.</p></div>
+                <div className="form-field full-width"><label htmlFor="galleryMediaUrls">Gallery Photo/Video URLs (manual)</label><textarea id="galleryMediaUrls" value={formData.galleryMediaUrls} onChange={event => setFormData({...formData, galleryMediaUrls: event.target.value})} placeholder="Paste one public image or video URL per line. Google Drive file links are OK." rows={6} /></div>
                 <div className="form-field full-width"><label htmlFor="notes">Notes</label><textarea id="notes" value={formData.notes} onChange={event => setFormData({...formData, notes: event.target.value})} rows={4} /></div>
               </div>
               {sheetSaveMessage && <div className={`sheet-save-message ${sheetSaveStatus}`}>{sheetSaveMessage}</div>}
