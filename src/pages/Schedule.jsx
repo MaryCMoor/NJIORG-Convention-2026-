@@ -100,6 +100,36 @@ const Schedule = () => {
     return events.filter(event => !event.parentEventId || !eventsById.has(event.parentEventId))
   }, [events, eventsById])
 
+  // Recursive component to render event tree at any depth
+  const EventTree = ({ event, depth = 0 }) => {
+    const requiredForUser = isRequiredForSelectedRole(event, selectedRole)
+    const childEvents = childEventsByParent.get(getEventKey(event)) || []
+    const hasOwnTime = Boolean(event.time)
+
+    return (
+      <li key={event.id} className="event-group" style={{ marginLeft: depth > 0 ? `${depth * 24}px` : 0 }}>
+        <div className={`event-card ${requiredForUser ? 'required-event-card' : ''} ${depth > 0 ? 'sub-event-card' : ''}`}>
+          <button
+            type="button"
+            className="event-card-open"
+            onClick={() => navigate(`/schedule/${event.id}`)}
+            aria-label={`Open details for ${event.name}`}
+          >
+            <EventCardContent event={event} speakers={speakers} selectedRole={selectedRole} isSubEvent={depth > 0} eventsById={eventsById} />
+          </button>
+        </div>
+
+        {childEvents.length > 0 && (
+          <ol className="sub-event-list" aria-label={`Sub-events for ${event.name}`}>
+            {childEvents.map(childEvent => (
+              <EventTree key={childEvent.id} event={childEvent} depth={depth + 1} />
+            ))}
+          </ol>
+        )}
+      </li>
+    )
+  }
+
   useEffect(() => {
     if (selectedEvent) {
       setSelectedDay(selectedEvent.startTime.slice(0, 10))
@@ -144,45 +174,9 @@ const Schedule = () => {
           </div>
         ) : (
           <ol className="schedule-timeline">
-            {topLevelEvents.map(event => {
-              const requiredForUser = isRequiredForSelectedRole(event, selectedRole)
-              const childEvents = childEventsByParent.get(getEventKey(event)) || []
-
-              return (
-                <li key={event.id} className="event-group">
-                  <div className={`event-card ${requiredForUser ? 'required-event-card' : ''}`}>
-                    <button
-                      type="button"
-                      className="event-card-open"
-                      onClick={() => navigate(`/schedule/${event.id}`)}
-                      aria-label={`Open details for ${event.name}`}
-                    >
-                      <EventCardContent event={event} speakers={speakers} selectedRole={selectedRole} />
-                    </button>
-                  </div>
-
-                  {childEvents.length > 0 && (
-                    <ol className="sub-event-list" aria-label={`Sub-events for ${event.name}`}>
-                      {childEvents.map(childEvent => {
-                        const childRequiredForUser = isRequiredForSelectedRole(childEvent, selectedRole)
-                        return (
-                          <li key={childEvent.id} className={`event-card sub-event-card ${childRequiredForUser ? 'required-event-card' : ''}`}>
-                            <button
-                              type="button"
-                              className="event-card-open"
-                              onClick={() => navigate(`/schedule/${childEvent.id}`)}
-                              aria-label={`Open details for ${childEvent.name}`}
-                            >
-                              <EventCardContent event={childEvent} speakers={speakers} selectedRole={selectedRole} isSubEvent />
-                            </button>
-                          </li>
-                        )
-                      })}
-                    </ol>
-                  )}
-                </li>
-              )
-            })}
+            {topLevelEvents.map(event => (
+              <EventTree key={event.id} event={event} depth={0} />
+            ))}
           </ol>
         )}
       </div>
@@ -192,10 +186,14 @@ const Schedule = () => {
   )
 }
 
-const EventCardContent = ({ event, speakers, selectedRole, isSubEvent = false }) => {
+const EventCardContent = ({ event, speakers, selectedRole, isSubEvent = false, eventsById }) => {
   const eventSpeakers = getEventSpeakerTags(event, speakers)
   const requiredForUser = isRequiredForSelectedRole(event, selectedRole)
   const hasOwnTime = Boolean(event.time)
+
+  // Find parent event name for display
+  const parentEvent = isSubEvent ? eventsById?.get(event.parentEventId) : null
+  const parentName = parentEvent?.name
 
   return (
     <>
@@ -211,7 +209,7 @@ const EventCardContent = ({ event, speakers, selectedRole, isSubEvent = false })
         )}
       </div>
       <div className="event-body">
-        {isSubEvent && <span className="sub-event-label">Part of larger event</span>}
+        {parentName && <span className="parent-event-name">Part of: {parentName}</span>}
         <h3 className="event-name">{event.name}</h3>
         {requiredForUser && <span className="required-user-badge">Required for you</span>}
         {event.description && <p className="event-description concise">{event.description}</p>}
