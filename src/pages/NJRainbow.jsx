@@ -130,7 +130,8 @@ const PersonCard = ({ person }) => (
   <Link className="person-card" to={`/nj-rainbow/${person.id}`} aria-label={`Read bio for ${person.position}`}>
     <div className="person-photo" aria-hidden="true">
       {person.photo ? (
-        <img src={person.photo} alt="" loading="lazy" />
+        // ADDED: Wrapped person.photo with getDirectImageUrl
+        <img src={getDirectImageUrl(person.photo)} alt="" loading="lazy" />
       ) : (
         <>
           <UserRound size={42} />
@@ -166,7 +167,8 @@ const PersonBio = ({ person }) => {
       <article className="person-bio-card">
         <div className="person-bio-photo">
           {person.photo ? (
-            <img src={person.photo} alt={person.name} />
+            // ADDED: Wrapped person.photo with getDirectImageUrl
+            <img src={getDirectImageUrl(person.photo)} alt={person.name} />
           ) : (
             <>
               <UserRound size={68} />
@@ -202,6 +204,23 @@ const PersonBio = ({ person }) => {
       </article>
     </div>
   )
+}
+
+// ADDED: New helper function to transform Google Drive photo sharing links into raw image URLs
+const getDirectImageUrl = (url) => {
+  if (!url) return ''
+  try {
+    const parsed = new URL(url)
+    if (parsed.hostname.includes('drive.google.com')) {
+      const parts = parsed.pathname.split('/').filter(Boolean)
+      const fileIndex = parts.indexOf('d')
+      const id = fileIndex >= 0 ? parts[fileIndex + 1] : parsed.searchParams.get('id')
+      return id ? `https://lh3.googleusercontent.com/d/${id}` : url
+    }
+    return url
+  } catch {
+    return url
+  }
 }
 
 const getEmbeddableVideoUrl = (url) => {
