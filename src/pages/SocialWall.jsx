@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from 'react'
-import { ExternalLink, Hash, Heart, MessageCircle, UserRound } from 'lucide-react'
+import { ExternalLink, Hash, Heart, MessageCircle, UserRound, Send, Link } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import './AppArea.css'
 
@@ -46,12 +46,12 @@ const SocialWall = () => {
   // Waterfall up animation every 3 seconds
   useEffect(() => {
     if (allPosts.length <= POSTS_PER_VIEW) return undefined
-    
+
     const timer = window.setInterval(() => {
       if (animatingRef.current) return
       animatingRef.current = true
       setAnimating(true)
-      
+
       // After animation completes, update index
       setTimeout(() => {
         setStartIndex(index => (index + 3) % allPosts.length)
@@ -60,7 +60,7 @@ const SocialWall = () => {
         animatingRef.current = false
       }, 600) // Match CSS animation duration
     }, 3000)
-    
+
     return () => window.clearInterval(timer)
   }, [allPosts.length])
 
@@ -71,6 +71,11 @@ const SocialWall = () => {
         <p className="area-kicker">{appConfig.hashtag || 'Social Wall'}</p>
         <h1>Social Wall</h1>
         <p>Convention posts, photos, likes, comments, and links in one place.</p>
+        <div className="social-wall-header-actions">
+          <Link to="/submit-social" className="btn btn-gold" aria-label="Submit a social media post">
+            <Send size={18} /> Submit Your Post
+          </Link>
+        </div>
       </section>
 
       {allPosts.length === 0 ? (
@@ -80,7 +85,7 @@ const SocialWall = () => {
         </section>
       ) : (
         <section className="social-wall-frame" aria-label="Social media posts">
-          <div 
+          <div
             className={`social-waterfall-grid ${animating ? 'waterfall-animating' : ''}`}
             key={cycle}
             role="list"
@@ -131,7 +136,7 @@ const SocialWall = () => {
               </a>
             ))}
           </div>
-          
+
           {/* New posts entering from bottom during animation */}
           {animating && allPosts.length > POSTS_PER_VIEW && (
             <div className="social-waterfall-entering" aria-hidden="true">

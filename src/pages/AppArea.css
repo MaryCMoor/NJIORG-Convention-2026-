@@ -1084,6 +1084,10 @@
   color: var(--color-primary);
 }
 
+.social-wall-header-actions {
+  margin-top: 1rem;
+}
+
 @media (min-width: 760px) {
   .social-post-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
