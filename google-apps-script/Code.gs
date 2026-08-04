@@ -15,6 +15,9 @@ function doGet(e) {
   if (action === 'getSocialPosts') {
     return getSocialPosts();
   }
+  if (action === 'getSocialPostSubmissions') {
+    return getSocialPostSubmissions();
+  }
   if (action === 'getGallerySubmissions') {
     return getGallerySubmissions();
   }
@@ -38,6 +41,7 @@ function doPost(e) {
     // Public attendee upload endpoint. Submissions are saved as pending and
     // must be approved by an admin before they appear in the public gallery.
     if (action === 'submitGalleryMedia') return submitGalleryMedia(body);
+    if (action === 'submitSocialPost') return submitSocialPost(body);
 
     if (body.token !== ADMIN_TOKEN) {
       return jsonResponse({ ok: false, success: false, error: 'Unauthorized' });
@@ -523,6 +527,125 @@ function reviewGallerySubmission(body) {
   });
   writeObjectRow(sheet, rowNumber, headers, nextData);
   return jsonResponse({ ok: true, success: true, action: 'reviewGallerySubmission', submissionId: submissionId, status: nextData.status });
+}
+
+function submitGalleryMedia(body) {
+  const sheet = getGallerySubmissionsSheet();
+  const headers = ensureHeaders(sheet, ['submissionId', 'status', 'uploaderName', 'uploaderEmail', 'assembly', 'caption', 'mediaUrl', 'thumbnailUrl', 'mediaType', 'fileName', 'mimeType', 'submittedAt', 'reviewedAt', 'reviewedBy', 'reviewNotes']);
+  const submissionId = body.submissionId || 'submission_' + Date.now();
+  let mediaUrl = body.mediaUrl || '';
+  let reviewNotes = body.reviewNotes || '';
+
+  if (body.fileData && body.fileName) {
+    const bytes = Utilities.base64Decode(body.fileData);
+    const blob = Utilities.newBlob(bytes, body.mimeType || 'application/octet-stream', body.fileName);
+    const file = getGalleryUploadFolder().createFile(blob);
+    mediaUrl = 'https://drive.google.com/uc?export=view&id=' + file.getId();
+
+    // Some Workspace/Drive configurations allow creating the file but block
+    // changing its sharing settings. Do not let that prevent the submission
+    // row from being written; admins can adjust folder/file sharing separately.
+    try {
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    } catch (shareError) {
+      reviewNotes = 'Uploaded, but automatic link sharing failed: ' + String(shareError);
+    }
+  }
+
+  writeObjectRow(sheet, sheet.getLastRow() + 1, headers, buildGallerySubmissionData(Object.assign({}, body, { status: 'pending', reviewNotes: reviewNotes }), submissionId, mediaUrl));
+  return jsonResponse({ ok: true, success: true, action: 'submitGalleryMedia', submissionId: submissionId, mediaUrl: mediaUrl });
+}
+
+function getSocialPostSubmissionsSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName('SocialPostSubmissions');
+  if (!sheet) sheet = ss.insertSheet('SocialPostSubmissions');
+  ensureHeaders(sheet, ['submissionId', 'status', 'author', 'handle', 'platform', 'postUrl', 'caption', 'hashtag', 'submittedAt', 'reviewedAt', 'reviewedBy', 'reviewNotes']);
+  return sheet;
+}
+
+function buildSocialPostSubmissionData(body, submissionId) {
+  return {
+    submissionId: submissionId,
+    status: body.status || 'pending',
+    author: body.author || '',
+    handle: body.handle || '',
+    platform: body.platform || '',
+    postUrl: body.postUrl || '',
+    caption: body.caption || '',
+    hashtag: body.hashtag || '',
+    submittedAt: body.submittedAt || new Date().toISOString(),
+    reviewedAt: body.reviewedAt || '',
+    reviewedBy: body.reviewedBy || '',
+    reviewNotes: body.reviewNotes || ''
+  };
+}
+
+function submitSocialPost(body) {
+  const sheet = getSocialPostSubmissionsSheet();
+  const headers = ensureHeaders(sheet, ['submissionId', 'status', 'author', 'handle', 'platform', 'postUrl', 'caption', 'hashtag', 'submittedAt', 'reviewedAt', 'reviewedBy', 'reviewNotes']);
+  const submissionId = body.submissionId || 'socialpost_' + Date.now();
+  writeObjectRow(sheet, sheet.getLastRow() + 1, headers, buildSocialPostSubmissionData(Object.assign({}, body, { status: 'pending' }), submissionId));
+  return jsonResponse({ ok: true, success: true, action: 'submitSocialPost', submissionId: submissionId });
+}
+
+function getSocialPostSubmissions() {
+  const sheet = getSocialPostSubmissionsSheet();
+  const headers = ensureHeaders(sheet, ['submissionId', 'status', 'author', 'handle', 'platform', 'postUrl', 'caption', 'hashtag', 'submittedAt', 'reviewedAt', 'reviewedBy', 'reviewNotes']);
+  const lastRow = sheet.getLastRow();
+  const submissions = [];
+  if (lastRow >= 2) {
+    const values = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
+    values.forEach(function(row) {
+      const record = {};
+      headers.forEach(function(header, index) { record[header] = row[index] || ''; });
+      if (Object.keys(record).some(function(key) { return record[key]; })) submissions.push(record);
+    });
+  }
+  return jsonResponse({ ok: true, success: true, action: 'getSocialPostSubmissions', submissions: submissions });
+}
+
+function reviewSocialPostSubmission(body) {
+  const sheet = getSocialPostSubmissionsSheet();
+  const headers = ensureHeaders(sheet, ['submissionId', 'status', 'author', 'handle', 'platform', 'postUrl', 'caption', 'hashtag', 'submittedAt', 'reviewedAt', 'reviewedBy', 'reviewNotes']);
+  const submissionId = body.submissionId || body.id;
+  if (!submissionId) return jsonResponse({ ok: false, success: false, error: 'Missing submissionId' });
+  const rowNumber = findRowById(sheet, headers, 'submissionId', submissionId);
+  if (rowNumber === -1) return jsonResponse({ ok: false, success: false, error: 'Submission not found' });
+  const existingRow = sheet.getRange(rowNumber, 1, 1, headers.length).getValues()[0];
+  const existing = {};
+  headers.forEach(function(header, index) { existing[header] = existingRow[index] || ''; });
+  const nextData = Object.assign({}, existing, {
+    status: body.status || existing.status || 'pending',
+    reviewedAt: new Date().toISOString(),
+    reviewedBy: body.reviewedBy || 'Administrator',
+    reviewNotes: body.reviewNotes || existing.reviewNotes || ''
+  });
+  writeObjectRow(sheet, rowNumber, headers, nextData);
+  
+  // If approved, also create the social post in the SocialPosts sheet
+  if (nextData.status === 'approved') {
+    const socialPostsSheet = getSocialPostsSheet();
+    const socialHeaders = ensureHeaders(socialPostsSheet, ['postId', 'platform', 'author', 'handle', 'postUrl', 'caption', 'mediaUrl', 'videoUrl', 'hashtag', 'postedAt', 'likes', 'comments', 'status']);
+    const postId = 'social_' + Date.now();
+    writeObjectRow(socialPostsSheet, socialPostsSheet.getLastRow() + 1, socialHeaders, {
+      postId: postId,
+      platform: nextData.platform,
+      author: nextData.author,
+      handle: nextData.handle,
+      postUrl: nextData.postUrl,
+      caption: nextData.caption,
+      mediaUrl: '',
+      videoUrl: '',
+      hashtag: nextData.hashtag,
+      postedAt: nextData.submittedAt,
+      likes: 0,
+      comments: 0,
+      status: 'active'
+    });
+  }
+  
+  return jsonResponse({ ok: true, success: true, action: 'reviewSocialPostSubmission', submissionId: submissionId, status: nextData.status });
 }
 
 function authorizeDriveAccess() {

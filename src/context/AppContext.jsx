@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import mockConvention from '../data/mockData'
 import { loadPublishedSheetData } from '../utils/googleSheetData'
-import { DEFAULT_APP_CONFIG, loadAppConfigFromGoogleSheet, loadAssembliesFromGoogleSheet, loadAssembliesWithGallery, loadSocialPostsFromGoogleSheet, loadGallerySubmissionsFromGoogleSheet } from '../utils/appsScriptApi'
+import { DEFAULT_APP_CONFIG, loadAppConfigFromGoogleSheet, loadAssembliesFromGoogleSheet, loadAssembliesWithGallery, loadSocialPostsFromGoogleSheet, loadSocialPostSubmissionsFromGoogleSheet, loadGallerySubmissionsFromGoogleSheet } from '../utils/appsScriptApi'
 
 const AppContext = createContext(null)
 
@@ -64,7 +64,7 @@ export const AppProvider = ({ children }) => {
     }
   })
   const [notifications, setNotifications] = useState([])
-  const [sheetData, setSheetData] = useState({ events: [], members: [], speakers: [], notifications: [], gallery: [], assemblies: [], socialPosts: [], gallerySubmissions: [] })
+  const [sheetData, setSheetData] = useState({ events: [], members: [], speakers: [], notifications: [], gallery: [], assemblies: [], socialPosts: [], socialPostSubmissions: [], gallerySubmissions: [] })
   const [sheetStatus, setSheetStatus] = useState('idle')
   const [appConfig, setAppConfig] = useState(DEFAULT_APP_CONFIG)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -103,6 +103,7 @@ export const AppProvider = ({ children }) => {
         const data = await loadPublishedSheetData()
         let assemblies = []
         let socialPosts = []
+        let socialPostSubmissions = []
         let gallerySubmissions = []
         try {
           assemblies = await loadAssembliesWithGallery()
@@ -120,12 +121,17 @@ export const AppProvider = ({ children }) => {
           console.warn('Failed to load SocialPosts from Apps Script:', socialError)
         }
         try {
+          socialPostSubmissions = await loadSocialPostSubmissionsFromGoogleSheet()
+        } catch (socialPostError) {
+          console.warn('Failed to load SocialPostSubmissions from Apps Script:', socialPostError)
+        }
+        try {
           gallerySubmissions = await loadGallerySubmissionsFromGoogleSheet()
         } catch (galleryError) {
           console.warn('Failed to load GallerySubmissions from Apps Script:', galleryError)
         }
         if (cancelled) return
-        setSheetData({ ...data, assemblies, socialPosts, gallerySubmissions })
+        setSheetData({ ...data, assemblies, socialPosts, socialPostSubmissions, gallerySubmissions })
         setSheetStatus('loaded')
         setNotifications(prev => {
           const existingIds = new Set(prev.map(item => item.id))
@@ -146,6 +152,7 @@ export const AppProvider = ({ children }) => {
       const data = await loadPublishedSheetData()
       let assemblies = []
       let socialPosts = []
+      let socialPostSubmissions = []
       let gallerySubmissions = []
       try {
         assemblies = await loadAssembliesWithGallery()
@@ -163,11 +170,16 @@ export const AppProvider = ({ children }) => {
         console.warn('Failed to refresh SocialPosts from Apps Script:', socialError)
       }
       try {
+        socialPostSubmissions = await loadSocialPostSubmissionsFromGoogleSheet()
+      } catch (socialPostError) {
+        console.warn('Failed to refresh SocialPostSubmissions from Apps Script:', socialPostError)
+      }
+      try {
         gallerySubmissions = await loadGallerySubmissionsFromGoogleSheet()
       } catch (galleryError) {
         console.warn('Failed to refresh GallerySubmissions from Apps Script:', galleryError)
       }
-      setSheetData({ ...data, assemblies, socialPosts, gallerySubmissions })
+      setSheetData({ ...data, assemblies, socialPosts, socialPostSubmissions, gallerySubmissions })
       setSheetStatus('loaded')
       return true
     } catch (error) {

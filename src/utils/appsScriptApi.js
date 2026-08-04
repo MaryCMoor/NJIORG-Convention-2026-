@@ -329,6 +329,25 @@ export const submitGalleryMediaToGoogleSheet = async (submission) => {
   return data
 }
 
+export const submitSocialPostToGoogleSheet = async (submission) => {
+  const response = await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'submitSocialPost', ...submission }),
+  })
+  const text = await response.text()
+  let data = null
+  try {
+    data = JSON.parse(text)
+  } catch {
+    data = { ok: response.ok, raw: text }
+  }
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.error || `Social post submission failed (${response.status})`)
+  }
+  return data
+}
+
 export const reviewGallerySubmissionInGoogleSheet = async (submission) => {
   const response = await fetch(APPS_SCRIPT_URL, {
     method: 'POST',
@@ -351,6 +370,47 @@ export const reviewGallerySubmissionInGoogleSheet = async (submission) => {
   }
   if (!response.ok || data.ok === false) {
     throw new Error(data.error || `Gallery review failed (${response.status})`)
+  }
+  return data
+}
+
+export const loadSocialPostSubmissionsFromGoogleSheet = async () => {
+  const response = await fetch(`${APPS_SCRIPT_URL}?action=getSocialPostSubmissions&cacheBust=${Date.now()}`)
+  const text = await response.text()
+  let data = null
+  try {
+    data = JSON.parse(text)
+  } catch {
+    throw new Error('Social post submissions endpoint did not return JSON')
+  }
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.error || `Social post submissions fetch failed (${response.status})`)
+  }
+  return data.submissions || []
+}
+
+export const reviewSocialPostSubmissionInGoogleSheet = async (submission) => {
+  const response = await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({
+      action: 'reviewSocialPostSubmission',
+      token: ADMIN_TOKEN,
+      submissionId: submission.submissionId || submission.id,
+      status: submission.status,
+      reviewNotes: submission.reviewNotes || '',
+      reviewedBy: submission.reviewedBy || 'Administrator',
+    }),
+  })
+  const text = await response.text()
+  let data = null
+  try {
+    data = JSON.parse(text)
+  } catch {
+    data = { ok: response.ok, raw: text }
+  }
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.error || `Social post review failed (${response.status})`)
   }
   return data
 }

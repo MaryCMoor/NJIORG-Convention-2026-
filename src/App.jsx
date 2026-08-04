@@ -24,6 +24,7 @@ import NJAssemblies from './pages/NJAssemblies'
 import SocialWall from './pages/SocialWall'
 import Gallery from './pages/Gallery'
 import SubmitPhotos from './pages/SubmitPhotos'
+import SubmitSocialPost from './pages/SubmitSocialPost'
 import Awards from './pages/Awards'
 import Documents from './pages/Documents'
 import Surveys from './pages/Surveys'
@@ -41,6 +42,7 @@ import ManageAwards from './pages/admin/ManageAwards'
 import ManageDocuments from './pages/admin/ManageDocuments'
 import ManageGallery from './pages/admin/ManageGallery'
 import ManageGallerySubmissions from './pages/admin/ManageGallerySubmissions'
+import ManageSocialPosts from './pages/admin/ManageSocialPosts'
 import ManageSurveys from './pages/admin/ManageSurveys'
 import AdminSettings from './pages/admin/AdminSettings'
 import './styles/global.css'
@@ -87,11 +89,12 @@ const AppRoutes = () => {
             <Route path="assemblies" element={<NJAssemblies />} />
             <Route path="social-wall" element={<SocialWall />} />
             <Route path="gallery" element={<Gallery />} />
-            <Route path="submit-photos" element={<SubmitPhotos />} />
-            <Route path="awards" element={<Awards />} />
-            <Route path="documents" element={<Documents />} />
-            <Route path="surveys" element={<Surveys />} />
-            <Route path="reports" element={<Reports />} />
+                      <Route path="submit-photos" element={<SubmitPhotos />} />
+                      <Route path="submit-social" element={<SubmitSocialPost />} />
+                      <Route path="awards" element={<Awards />} />
+                      <Route path="documents" element={<Documents />} />
+                      <Route path="surveys" element={<Surveys />} />
+                      <Route path="reports" element={<Reports />} />
           </Route>
 
           {/* Hidden Admin Portal - only accessible via secret URL */}
@@ -111,6 +114,7 @@ const AppRoutes = () => {
             <Route path="documents" element={<ManageDocuments />} />
             <Route path="gallery" element={<ManageGallery />} />
             <Route path="gallery-submissions" element={<ManageGallerySubmissions />} />
+            <Route path="social-posts" element={<ManageSocialPosts />} />
             <Route path="surveys" element={<ManageSurveys />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
