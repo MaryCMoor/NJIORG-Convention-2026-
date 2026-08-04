@@ -4,7 +4,15 @@ import { ArrowLeft, Heart, UserRound, Users } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import './AppArea.css'
 
-const tabOrder = ['Grand Officers', 'Mother Advisors', 'Adult Grand Executive Committee', 'Majority Committee']
+const tabOrder = [
+  'Grand Officers',
+  'Mother Advisors',
+  'Adult Grand Executive Committee',
+  'Majority Committee',
+  'Pledge Mother',
+  'Assembly Chairperson',
+  'Grand Deputy',
+]
 
 const buildPeopleTabs = (members) => {
   return tabOrder.map(label => {
@@ -30,6 +38,9 @@ const getTabDescription = (label) => {
     'Mother Advisors': 'Adult leaders and advisors supporting assemblies and helping guide the convention experience.',
     'Adult Grand Executive Committee': 'The adult executive team helping oversee planning, tradition, safety, and convention operations.',
     'Majority Committee': 'Majority members staying connected, supporting current members, and celebrating lifelong Rainbow sisterhood.',
+    'Pledge Mother': 'Pledge Mothers guiding new members through their Rainbow journey and first convention experiences.',
+    'Assembly Chairperson': 'Assembly leaders coordinating local activities and representing their assemblies at convention.',
+    'Grand Deputy': 'Grand Deputies supporting Grand Officers and helping coordinate convention activities across New Jersey.',
   }
   return descriptions[label] || 'Meet the Rainbow leaders supporting convention.'
 }
