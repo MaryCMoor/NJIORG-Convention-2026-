@@ -1094,6 +1094,7 @@
 .social-wall-frame {
   overflow: hidden;
   border-radius: 24px;
+  position: relative;
 }
 
 .social-waterfall-grid {
@@ -1131,6 +1132,96 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Waterfall up animation - cards move up, new ones enter from bottom */
+.social-waterfall-grid.waterfall-animating {
+  animation: socialWaterfallUp 600ms ease-out;
+}
+
+.social-waterfall-entering {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  pointer-events: none;
+  animation: socialWaterfallEnter 600ms ease-out;
+}
+
+.social-waterfall-entering .social-post-card.entering {
+  opacity: 0;
+  animation: socialPostEnter 600ms ease-out forwards;
+}
+
+.social-waterfall-entering .social-post-card.entering:nth-child(1) { animation-delay: 50ms; }
+.social-waterfall-entering .social-post-card.entering:nth-child(2) { animation-delay: 150ms; }
+.social-waterfall-entering .social-post-card.entering:nth-child(3) { animation-delay: 250ms; }
+
+@keyframes socialWaterfallEnter {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes socialPostEnter {
+  from {
+    opacity: 0;
+    transform: translateY(3rem) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.social-post-placeholder {
+  padding: 1rem;
+}
+
+.placeholder-line {
+  height: 1rem;
+  background: linear-gradient(90deg, var(--color-surface-elevated) 25%, var(--color-border) 50%, var(--color-surface-elevated) 75%);
+  background-size: 200% 100%;
+  border-radius: 0.5rem;
+  animation: placeholderShimmer 1.5s infinite;
+}
+
+.placeholder-line.short {
+  width: 60%;
+}
+
+.placeholder-image {
+  margin-top: 0.75rem;
+  height: clamp(11rem, 24vw, 18rem);
+  background: linear-gradient(90deg, var(--color-surface-elevated) 25%, var(--color-border) 50%, var(--color-surface-elevated) 75%);
+  background-size: 200% 100%;
+  border-radius: 1rem;
+  animation: placeholderShimmer 1.5s infinite;
+}
+
+@keyframes placeholderShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (max-width: 900px) {
+  .social-waterfall-entering {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .social-waterfall-entering {
+    grid-template-columns: 1fr;
   }
 }
 
