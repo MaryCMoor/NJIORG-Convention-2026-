@@ -2316,3 +2316,220 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Social Wall Waterfall */
+.social-wall-waterfall-section {
+  max-width: 1200px;
+  margin: var(--space-lg) auto 0;
+  padding: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: 28px;
+  background: var(--color-surface);
+  box-shadow: 0 12px 28px rgba(28, 20, 10, 0.08);
+}
+
+.social-wall-waterfall-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.social-wall-waterfall-header h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: clamp(1.4rem, 6vw, 2.35rem);
+  line-height: 1;
+}
+
+.social-wall-waterfall-header .area-kicker {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.social-wall-submit-btn {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-elevated);
+  color: var(--color-primary);
+  font-weight: 900;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.social-wall-submit-btn:hover {
+  color: var(--color-primary);
+  text-decoration: none;
+  border-color: var(--color-primary);
+}
+
+.social-wall-screen-note {
+  margin: 0.25rem 0 0;
+  color: var(--color-text-light);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.social-waterfall-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+}
+
+.social-waterfall-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-sm);
+  transition: transform 600ms ease-out;
+  will-change: transform;
+}
+
+.social-waterfall-grid.waterfall-animating {
+  transform: translateY(-calc(33.333% + var(--space-sm)));
+}
+
+.social-waterfall-card {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--color-border);
+  border-radius: 22px;
+  background: var(--color-surface-elevated);
+  overflow: hidden;
+  cursor: pointer;
+  text-decoration: none;
+  transition: box-shadow 240ms ease, border-color 240ms ease;
+}
+
+.social-waterfall-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
+}
+
+.social-waterfall-media {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.social-waterfall-media img,
+.social-waterfall-media video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-slow);
+}
+
+.social-waterfall-card:hover .social-waterfall-media img,
+.social-waterfall-card:hover .social-waterfall-media video {
+  transform: scale(1.05);
+}
+
+.social-waterfall-media .loaded {
+  animation: fadeIn var(--transition-fast);
+}
+
+.social-waterfall-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--space-md);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  color: var(--color-white);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.social-waterfall-author {
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.social-waterfall-hashtag {
+  font-size: 0.75rem;
+  color: var(--color-gold-300);
+}
+
+.social-waterfall-entering {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-sm);
+  pointer-events: none;
+  animation: socialWaterfallEnter 600ms ease-out;
+}
+
+.social-waterfall-entering .social-waterfall-card.entering {
+  opacity: 0;
+  animation: socialPostEnter 600ms ease-out forwards;
+}
+
+.social-waterfall-entering .social-waterfall-card.entering:nth-child(1) { animation-delay: 50ms; }
+.social-waterfall-entering .social-waterfall-card.entering:nth-child(2) { animation-delay: 150ms; }
+.social-waterfall-entering .social-waterfall-card.entering:nth-child(3) { animation-delay: 250ms; }
+
+@keyframes socialWaterfallEnter {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes socialPostEnter {
+  from {
+    opacity: 0;
+    transform: translateY(2rem) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Full list section below waterfall */
+.social-wall-full-list {
+  max-width: 1400px;
+  margin: var(--space-xl) auto 0;
+  padding: var(--space-md);
+}
+
+.social-wall-full-list .filter-bar {
+  margin: 0 auto var(--space-lg);
+  max-width: 1400px;
+}
+
+@media (max-width: 900px) {
+  .social-waterfall-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .social-waterfall-entering {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .social-waterfall-grid {
+    grid-template-columns: 1fr;
+  }
+  .social-waterfall-entering {
+    grid-template-columns: 1fr;
+  }
+}
