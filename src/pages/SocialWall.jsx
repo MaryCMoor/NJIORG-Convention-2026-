@@ -122,7 +122,7 @@ const SocialWall = () => {
         setCycle(value => value + 1)
         setAnimating(false)
         animatingRef.current = false
-      }, 600) // Match CSS animation duration
+      }, 1200) // Match CSS animation duration (1200ms)
     }, 3000)
 
     return () => window.clearInterval(timer)
