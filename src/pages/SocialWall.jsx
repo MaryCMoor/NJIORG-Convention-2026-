@@ -245,31 +245,28 @@ const SocialWall = () => {
             </div>
           </div>
 
-          {/* Social Wall Grid */}
+          {/* Social Wall Grid - using simplified spotlight-style cards */}
           <div className="social-wall-container">
             {viewMode === 'grid' ? (
               <div className="social-wall-grid simple-social-wall-grid">
                 {filteredPosts.map((post, index) => (
-                  <SocialPostCard
+                  <SocialWallCard
                     key={post.postId || post.id}
                     post={post}
                     index={index}
                     onClick={handlePostClick}
-                    currentUser={currentUser}
-                    onLike={toggleLike}
+                    masonry={false}
                   />
                 ))}
               </div>
             ) : (
               <div className="social-wall-masonry">
                 {filteredPosts.map((post, index) => (
-                  <SocialPostCard
+                  <SocialWallCard
                     key={post.postId || post.id}
                     post={post}
                     index={index}
                     onClick={handlePostClick}
-                    currentUser={currentUser}
-                    onLike={toggleLike}
                     masonry={true}
                   />
                 ))}
@@ -298,6 +295,34 @@ const SocialWall = () => {
 const isVideoPostCheck = (post) => post.videoUrl || /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(String(post.mediaUrl || ''))
 const getPostMediaSrc = (post) => post.videoUrl || post.mediaUrl
 const getPostImageSrc = (post) => post.mediaUrl
+
+// Simplified card for full wall view - matches spotlight style (image + overlay only)
+const SocialWallCard = ({ post, index, onClick, masonry = false }) => {
+  const [loaded, setLoaded] = useState(false)
+  const [error, setError] = useState(false)
+
+  return (
+    <button
+      type="button"
+      className={`social-wall-spotlight-card ${masonry ? 'masonry' : ''} ${!loaded ? 'loading' : ''} ${error ? 'error' : ''}`}
+      style={{ animationDelay: `${(index % 10) * 50}ms` }}
+      onClick={() => onClick(post, index)}
+      aria-label={`Open post by ${post.author || 'poster'}`}
+    >
+      {isVideoPostCheck(post) ? (
+        <video src={getPostMediaSrc(post)} muted playsInline autoPlay loop preload="metadata" />
+      ) : (
+        <img src={getPostMediaSrc(post)} alt={post.caption || 'Social post'} loading="eager" />
+      )}
+      <div className="social-wall-spotlight-overlay">
+        <span className="social-wall-spotlight-author">{post.author}</span>
+        {post.hashtag && <span className="social-wall-spotlight-hashtag">{post.hashtag}</span>}
+      </div>
+      {isVideoPostCheck(post) && <span className="media-type-badge">Video</span>}
+      {!loaded && !error && <div className="social-post-skeleton" />}
+    </button>
+  )
+}
 
 const SocialPostCard = ({ post, index, onClick, currentUser, onLike, masonry = false }) => {
   const [loaded, setLoaded] = useState(false)
