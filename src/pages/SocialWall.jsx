@@ -64,6 +64,11 @@ const SocialWall = () => {
   const [selectedPost, setSelectedPost] = useState(null)
   const [lightboxIndex, setLightboxIndex] = useState(0)
   const [viewMode, setViewMode] = useState('grid')
+  const [showFullWall, setShowFullWall] = useState(false)
+
+  // Spotlight carousel state (matching Gallery)
+  const [rotationIndex, setRotationIndex] = useState(0)
+  const [slideTransition, setSlideTransition] = useState(true)
 
   const platforms = [...new Set(allPosts.map(p => p.platform))].sort()
 
@@ -90,6 +95,33 @@ const SocialWall = () => {
 
     return result
   }, [allPosts, filterPlatform, searchQuery])
+
+  // Spotlight carousel: show 3 posts, duplicate first 3 for seamless loop
+  const spotlightPosts = useMemo(() => (
+    filteredPosts.length <= 3 ? filteredPosts : [...filteredPosts.slice(0, 3), ...filteredPosts.slice(0, 3)]
+  ), [filteredPosts])
+
+  // Auto-rotate spotlight every 4 seconds (matching Gallery)
+  useEffect(() => {
+    if (filteredPosts.length <= 3) return undefined
+    const timer = window.setInterval(() => {
+      setRotationIndex(index => {
+        const nextIndex = index + 1
+        if (nextIndex === filteredPosts.length) refreshSheetData?.()
+        return nextIndex
+      })
+    }, 4000)
+    return () => window.clearInterval(timer)
+  }, [filteredPosts.length, refreshSheetData])
+
+  const handleSpotlightTransitionEnd = () => {
+    if (filteredPosts.length <= 3 || rotationIndex < filteredPosts.length) return
+    setSlideTransition(false)
+    setRotationIndex(0)
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => setSlideTransition(true))
+    })
+  }
 
   const handlePostClick = (post, index) => {
     setSelectedPost(post)
@@ -130,6 +162,10 @@ const SocialWall = () => {
     )
   }
 
+  const isVideoMedia = (post) => post.mediaType === 'video' || /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(String(post.videoUrl || post.url || ''))
+  const getGalleryMediaSrc = (post) => post.videoUrl || post.url
+  const getGalleryImageSrc = (post) => post.thumbnail || post.imageUrl || post.url
+
   return (
     <div className="social-wall-page">
       <div className="page-header social-wall-screen-header">
@@ -148,85 +184,123 @@ const SocialWall = () => {
         </section>
       ) : (
         <>
-          {/* Full Wall Grid with Filters */}
-          <section className="social-wall-full-list" aria-label="All social posts">
-            <div className="social-wall-header-bar">
-              <div className="social-wall-header-left">
-                <p className="area-kicker">All Posts</p>
+          {/* Spotlight Carousel - 1 row, 3 posts, auto-rotating (matching Gallery) */}
+          <section className="social-wall-spotlight event-screen-gallery" aria-label="Featured rotating social posts">
+            <div className="social-wall-spotlight-header">
+              <div>
+                <p className="area-kicker">Live Social Wall</p>
                 <h2>Convention Buzz</h2>
+                <p className="social-wall-screen-note">Posts rotate automatically. Click to view details.</p>
               </div>
+              <button type="button" className="social-wall-view-all-btn" onClick={() => setShowFullWall(v => !v)}>
+                {showFullWall ? 'Hide Full Wall' : 'View Full Wall'}
+              </button>
               <Link className="social-wall-submit-btn" to="/submit-social">Submit Your Post</Link>
             </div>
 
-            {/* Filter Bar */}
-            <div className="filter-bar">
-              <div className="filter-group">
-                <label>Platform</label>
-                <select value={filterPlatform} onChange={e => setFilterPlatform(e.target.value)} className="filter-select">
-                  <option value="all">All Platforms</option>
-                  {platforms.map(plat => <option key={plat} value={plat}>{plat}</option>)}
-                </select>
+            <div className="social-wall-spotlight-viewport">
+              <div
+                className={`social-wall-spotlight-track ${slideTransition ? '' : 'no-transition'}`}
+                style={{ transform: `translateX(-${rotationIndex * (100 / 3)}%)` }}
+                onTransitionEnd={handleSpotlightTransitionEnd}
+              >
+                {spotlightPosts.map((post, index) => (
+                  <button
+                    key={`${post.postId || post.id}-${index}`}
+                    type="button"
+                    className="social-wall-spotlight-card"
+                    onClick={() => handlePostClick(post, index)}
+                    aria-label={`Open post by ${post.author || 'poster'}`}
+                  >
+                    {isVideoPost(post) ? (
+                      <video src={mediaSrc(post)} muted playsInline autoPlay loop preload="metadata" />
+                    ) : (
+                      <img src={mediaSrc(post)} alt={post.caption || 'Social post'} loading="eager" />
+                    )}
+                    <div className="social-wall-spotlight-overlay">
+                      <span className="social-wall-spotlight-author">{post.author}</span>
+                      {post.hashtag && <span className="social-wall-spotlight-hashtag">{post.hashtag}</span>}
+                    </div>
+                  </button>
+                ))}
               </div>
-              <div className="filter-search">
-                <Search size={18} />
-                <input
-                  type="text"
-                  placeholder="Search posts, authors, hashtags..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="search-input"
-                />
-              </div>
-              <div className="view-toggle">
-                <button className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Grid View">
-                  <Grid size={20} />
-                </button>
-                <button className={`view-btn ${viewMode === 'masonry' ? 'active' : ''}`} onClick={() => setViewMode('masonry')} title="Masonry View">
-                  <div className="masonry-icon" />
-                </button>
-              </div>
-            </div>
-
-            {/* Grid */}
-            <div className="social-wall-container">
-              {viewMode === 'grid' ? (
-                <div className="social-wall-grid simple-social-wall-grid">
-                  {filteredPosts.map((post, index) => (
-                    <SocialPostCard
-                      key={post.postId || post.id}
-                      post={post}
-                      index={index}
-                      onClick={handlePostClick}
-                      currentUser={currentUser}
-                      onLike={toggleLike}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="social-wall-masonry">
-                  {filteredPosts.map((post, index) => (
-                    <SocialPostCard
-                      key={post.postId || post.id}
-                      post={post}
-                      index={index}
-                      onClick={handlePostClick}
-                      currentUser={currentUser}
-                      onLike={toggleLike}
-                      masonry={true}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {filteredPosts.length === 0 && (
-                <div className="empty-state">
-                  <Hash size={48} className="empty-state-icon" />
-                  <h3 className="empty-state-title">No Posts Found</h3>
-                  <p className="empty-state-message">Try adjusting your filters or search terms.</p>
-                </div>
-              )}
             </div>
           </section>
+
+          {showFullWall && (
+            <>
+              {/* Filter Bar */}
+              <div className="filter-bar">
+                <div className="filter-group">
+                  <label>Platform</label>
+                  <select value={filterPlatform} onChange={e => setFilterPlatform(e.target.value)} className="filter-select">
+                    <option value="all">All Platforms</option>
+                    {platforms.map(plat => <option key={plat} value={plat}>{plat}</option>)}
+                  </select>
+                </div>
+                <div className="filter-search">
+                  <Search size={18} />
+                  <input
+                    type="text"
+                    placeholder="Search posts, authors, hashtags..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="search-input"
+                  />
+                </div>
+                <div className="view-toggle">
+                  <button className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Grid View">
+                    <Grid size={20} />
+                  </button>
+                  <button className={`view-btn ${viewMode === 'masonry' ? 'active' : ''}`} onClick={() => setViewMode('masonry')} title="Masonry View">
+                    <div className="masonry-icon" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Full scrollable grid */}
+              <section className="social-wall-full-list" aria-label="All social posts">
+                <div className="social-wall-container">
+                  {viewMode === 'grid' ? (
+                    <div className="social-wall-grid simple-social-wall-grid">
+                      {filteredPosts.map((post, index) => (
+                        <SocialPostCard
+                          key={post.postId || post.id}
+                          post={post}
+                          index={index}
+                          onClick={handlePostClick}
+                          currentUser={currentUser}
+                          onLike={toggleLike}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="social-wall-masonry">
+                      {filteredPosts.map((post, index) => (
+                        <SocialPostCard
+                          key={post.postId || post.id}
+                          post={post}
+                          index={index}
+                          onClick={handlePostClick}
+                          currentUser={currentUser}
+                          onLike={toggleLike}
+                          masonry={true}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {filteredPosts.length === 0 && (
+                    <div className="empty-state">
+                      <Hash size={48} className="empty-state-icon" />
+                      <h3 className="empty-state-title">No Posts Found</h3>
+                      <p className="empty-state-message">Try adjusting your filters or search terms.</p>
+                    </div>
+                  )}
+                </div>
+              </section>
+            </>
+          )}
 
           {/* Featured Post of the Day */}
           {allPosts.find(p => p.featured) && (
@@ -242,7 +316,6 @@ const isVideoPostCheck = (post) => post.videoUrl || /\.(mp4|webm|ogg|mov)(\?|#|$
 const getPostMediaSrc = (post) => post.videoUrl || post.mediaUrl
 const getPostImageSrc = (post) => post.mediaUrl
 
-// Full detail card for scrollable list
 const SocialPostCard = ({ post, index, onClick, currentUser, onLike, masonry = false }) => {
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState(false)
