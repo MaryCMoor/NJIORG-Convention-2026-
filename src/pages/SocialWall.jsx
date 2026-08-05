@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Hash, Heart, MessageCircle, UserRound, Send,
@@ -64,13 +64,6 @@ const SocialWall = () => {
   const [selectedPost, setSelectedPost] = useState(null)
   const [lightboxIndex, setLightboxIndex] = useState(0)
   const [viewMode, setViewMode] = useState('grid')
-  const [showFullWall, setShowFullWall] = useState(false)
-
-  // Vertical carousel state
-  const [scrollOffset, setScrollOffset] = useState(0)
-  const [cycle, setCycle] = useState(0)
-  const animationRef = useRef(null)
-  const lastRefreshRef = useRef(0)
 
   const platforms = [...new Set(allPosts.map(p => p.platform))].sort()
 
@@ -97,72 +90,6 @@ const SocialWall = () => {
 
     return result
   }, [allPosts, filterPlatform, searchQuery])
-
-  // Carousel: show 6 posts (3 columns x 2 rows)
-  const POSTS_PER_VIEW = 6
-  const ROWS = 2
-  const COLS = 3
-
-  // Get visible posts with wrapping for vertical carousel
-  const visiblePosts = useMemo(() => {
-    if (filteredPosts.length <= POSTS_PER_VIEW) return filteredPosts
-    // We need extra posts for smooth scrolling - show current view + next row
-    const startIdx = Math.floor(scrollOffset / ROWS) % filteredPosts.length
-    const needed = POSTS_PER_VIEW + ROWS // extra row for entering
-    return Array.from({ length: needed }, (_, i) => 
-      filteredPosts[(startIdx + i) % filteredPosts.length]
-    )
-  }, [filteredPosts, scrollOffset])
-
-  // Continuous vertical scroll animation
-  useEffect(() => {
-    if (filteredPosts.length <= POSTS_PER_VIEW) return undefined
-
-    const ROW_HEIGHT_PERCENT = 100 / ROWS // 50% per row
-    const SCROLL_DURATION = 8000 // 8 seconds per row movement
-    const PAUSE_DURATION = 2000 // pause at each row
-
-    let startTime = null
-    let currentRow = 0
-    let isPaused = false
-    let pauseStart = null
-
-    const animate = (timestamp) => {
-      if (!startTime) startTime = timestamp
-
-      if (isPaused) {
-        if (timestamp - pauseStart >= PAUSE_DURATION) {
-          isPaused = false
-          startTime = timestamp
-          currentRow = (currentRow + 1) % filteredPosts.length
-          
-          // Check if completed full cycle
-          if (currentRow === 0 && Date.now() - lastRefreshRef.current > 30000) {
-            lastRefreshRef.current = Date.now()
-            refreshSheetData?.()
-          }
-        }
-      } else {
-        const elapsed = timestamp - startTime
-        const progress = Math.min(elapsed / SCROLL_DURATION, 1)
-        // Smooth easing
-        const eased = progress * progress * (3 - 2 * progress)
-        setScrollOffset(currentRow * ROW_HEIGHT_PERCENT + eased * ROW_HEIGHT_PERCENT)
-
-        if (progress >= 1) {
-          isPaused = true
-          pauseStart = timestamp
-        }
-      }
-
-      animationRef.current = requestAnimationFrame(animate)
-    }
-
-    animationRef.current = requestAnimationFrame(animate)
-    return () => {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current)
-    }
-  }, [filteredPosts.length, refreshSheetData])
 
   const handlePostClick = (post, index) => {
     setSelectedPost(post)
@@ -221,111 +148,85 @@ const SocialWall = () => {
         </section>
       ) : (
         <>
-          {/* Live Vertical Carousel */}
-          <section className="social-wall-vertical-carousel event-screen-gallery" aria-label="Live social media posts">
-            <div className="social-wall-carousel-header">
-              <div>
-                <p className="area-kicker">Live Social Wall</p>
+          {/* Full Wall Grid with Filters */}
+          <section className="social-wall-full-list" aria-label="All social posts">
+            <div className="social-wall-header-bar">
+              <div className="social-wall-header-left">
+                <p className="area-kicker">All Posts</p>
                 <h2>Convention Buzz</h2>
-                <p className="social-wall-screen-note">Posts continuously flow upward. Click any post to view details.</p>
               </div>
-              <button type="button" className="social-wall-view-all-btn" onClick={() => setShowFullWall(v => !v)}>
-                {showFullWall ? 'Hide Full Wall' : 'View Full Wall'}
-              </button>
               <Link className="social-wall-submit-btn" to="/submit-social">Submit Your Post</Link>
             </div>
 
-            <div className="social-vertical-carousel-frame">
-              <div
-                className="social-vertical-carousel-track"
-                style={{ transform: `translateY(-${scrollOffset}%)` }}
-              >
-                {visiblePosts.map((post, index) => (
-                  <SocialVerticalCard
-                    key={`${post.postId || post.id}-${index}-${cycle}`}
-                    post={post}
-                    index={index}
-                    onClick={handlePostClick}
-                  />
-                ))}
+            {/* Filter Bar */}
+            <div className="filter-bar">
+              <div className="filter-group">
+                <label>Platform</label>
+                <select value={filterPlatform} onChange={e => setFilterPlatform(e.target.value)} className="filter-select">
+                  <option value="all">All Platforms</option>
+                  {platforms.map(plat => <option key={plat} value={plat}>{plat}</option>)}
+                </select>
+              </div>
+              <div className="filter-search">
+                <Search size={18} />
+                <input
+                  type="text"
+                  placeholder="Search posts, authors, hashtags..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="search-input"
+                />
+              </div>
+              <div className="view-toggle">
+                <button className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Grid View">
+                  <Grid size={20} />
+                </button>
+                <button className={`view-btn ${viewMode === 'masonry' ? 'active' : ''}`} onClick={() => setViewMode('masonry')} title="Masonry View">
+                  <div className="masonry-icon" />
+                </button>
               </div>
             </div>
+
+            {/* Grid */}
+            <div className="social-wall-container">
+              {viewMode === 'grid' ? (
+                <div className="social-wall-grid simple-social-wall-grid">
+                  {filteredPosts.map((post, index) => (
+                    <SocialPostCard
+                      key={post.postId || post.id}
+                      post={post}
+                      index={index}
+                      onClick={handlePostClick}
+                      currentUser={currentUser}
+                      onLike={toggleLike}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="social-wall-masonry">
+                  {filteredPosts.map((post, index) => (
+                    <SocialPostCard
+                      key={post.postId || post.id}
+                      post={post}
+                      index={index}
+                      onClick={handlePostClick}
+                      currentUser={currentUser}
+                      onLike={toggleLike}
+                      masonry={true}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {filteredPosts.length === 0 && (
+                <div className="empty-state">
+                  <Hash size={48} className="empty-state-icon" />
+                  <h3 className="empty-state-title">No Posts Found</h3>
+                  <p className="empty-state-message">Try adjusting your filters or search terms.</p>
+                </div>
+              )}
+            </div>
           </section>
-
-          {showFullWall && (
-            <>
-              {/* Filter Bar */}
-              <div className="filter-bar">
-                <div className="filter-group">
-                  <label>Platform</label>
-                  <select value={filterPlatform} onChange={e => setFilterPlatform(e.target.value)} className="filter-select">
-                    <option value="all">All Platforms</option>
-                    {platforms.map(plat => <option key={plat} value={plat}>{plat}</option>)}
-                  </select>
-                </div>
-                <div className="filter-search">
-                  <Search size={18} />
-                  <input
-                    type="text"
-                    placeholder="Search posts, authors, hashtags..."
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    className="search-input"
-                  />
-                </div>
-                <div className="view-toggle">
-                  <button className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Grid View">
-                    <Grid size={20} />
-                  </button>
-                  <button className={`view-btn ${viewMode === 'masonry' ? 'active' : ''}`} onClick={() => setViewMode('masonry')} title="Masonry View">
-                    <div className="masonry-icon" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Full scrollable grid */}
-              <section className="social-wall-full-list" aria-label="All social posts">
-                <div className="social-wall-container">
-                  {viewMode === 'grid' ? (
-                    <div className="social-wall-grid simple-social-wall-grid">
-                      {filteredPosts.map((post, index) => (
-                        <SocialPostCard
-                          key={post.postId || post.id}
-                          post={post}
-                          index={index}
-                          onClick={handlePostClick}
-                          currentUser={currentUser}
-                          onLike={toggleLike}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="social-wall-masonry">
-                      {filteredPosts.map((post, index) => (
-                        <SocialPostCard
-                          key={post.postId || post.id}
-                          post={post}
-                          index={index}
-                          onClick={handlePostClick}
-                          currentUser={currentUser}
-                          onLike={toggleLike}
-                          masonry={true}
-                        />
-                      ))}
-                    </div>
-                  )}
-
-                  {filteredPosts.length === 0 && (
-                    <div className="empty-state">
-                      <Hash size={48} className="empty-state-icon" />
-                      <h3 className="empty-state-title">No Posts Found</h3>
-                      <p className="empty-state-message">Try adjusting your filters or search terms.</p>
-                    </div>
-                  )}
-                </div>
-              </section>
-            </>
-          )}
 
           {/* Featured Post of the Day */}
           {allPosts.find(p => p.featured) && (
@@ -340,69 +241,6 @@ const SocialWall = () => {
 const isVideoPostCheck = (post) => post.videoUrl || /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(String(post.mediaUrl || ''))
 const getPostMediaSrc = (post) => post.videoUrl || post.mediaUrl
 const getPostImageSrc = (post) => post.mediaUrl
-
-// Vertical carousel card - 3 columns, compact
-const SocialVerticalCard = ({ post, index, onClick }) => {
-  const [loaded, setLoaded] = useState(false)
-  const [error, setError] = useState(false)
-
-  return (
-    <button
-      type="button"
-      className="social-vertical-card"
-      onClick={() => onClick(post, index)}
-      aria-label={`Open post by ${post.author || 'poster'}`}
-    >
-      <div className="social-vertical-media">
-        {error ? (
-          <div className="social-post-placeholder">
-            <Hash size={32} />
-            <span>Failed to load</span>
-          </div>
-        ) : (
-          isVideoPostCheck(post) ? (
-            <video
-              src={getPostMediaSrc(post)}
-              muted
-              playsInline
-              autoPlay
-              loop
-              preload="metadata"
-              onLoadedData={() => setLoaded(true)}
-              onError={() => { setError(true); setLoaded(true); }}
-              className={loaded ? 'loaded' : ''}
-            />
-          ) : (
-            <img
-              src={getPostMediaSrc(post)}
-              alt={post.caption || 'Social post'}
-              loading="eager"
-              onLoad={() => setLoaded(true)}
-              onError={() => { setError(true); setLoaded(true); }}
-              className={loaded ? 'loaded' : ''}
-            />
-          )
-        )}
-        {isVideoPostCheck(post) && <span className="media-type-badge">Video</span>}
-        {!loaded && !error && <div className="social-post-skeleton" />}
-      </div>
-      <div className="social-vertical-footer">
-        <div className="social-vertical-author-row">
-          <span className="social-author-icon"><UserRound size={14} /></span>
-          <span className="social-vertical-author-name">{post.author || 'Unknown'}</span>
-        </div>
-        <div className="social-vertical-stats">
-          <span className="social-vertical-stat">
-            <Heart size={12} /> {normalizeCount(post.likes)}
-          </span>
-          <span className="social-vertical-stat">
-            <MessageCircle size={12} /> {normalizeCount(post.comments)}
-          </span>
-        </div>
-      </div>
-    </button>
-  )
-}
 
 // Full detail card for scrollable list
 const SocialPostCard = ({ post, index, onClick, currentUser, onLike, masonry = false }) => {
