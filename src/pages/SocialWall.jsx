@@ -161,7 +161,7 @@ const SocialWall = () => {
   }
 
   return (
-    <div className="app-area-page social-wall-page">
+    <div className="social-wall-page">
       <div className="page-header social-wall-screen-header">
         <h1 className="page-title">
           <Hash className="page-title-icon" size={32} />
