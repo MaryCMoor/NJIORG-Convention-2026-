@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Hash, Heart, MessageCircle, UserRound, Send,
@@ -33,7 +33,7 @@ const isVideoUrl = (url) => /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(String(url || '
 const SocialWall = () => {
   const { sheetData, appConfig, currentUser, refreshSheetData } = useApp()
 
-  // Include approved social post submissions (like Gallery does with gallerySubmissions)
+  // Include approved social post submissions
   const approvedSubmissions = useMemo(() => (sheetData.socialPostSubmissions || [])
     .filter(sub => String(sub.status || 'pending').toLowerCase() === 'approved')
     .map((sub, index) => ({
@@ -64,6 +64,13 @@ const SocialWall = () => {
   const [selectedPost, setSelectedPost] = useState(null)
   const [lightboxIndex, setLightboxIndex] = useState(0)
   const [viewMode, setViewMode] = useState('grid')
+  const [showFullWall, setShowFullWall] = useState(false)
+
+  // Continuous vertical marquee state
+  const [marqueeOffset, setMarqueeOffset] = useState(0)
+  const marqueeRef = useRef(null)
+  const animationRef = useRef(null)
+  const lastRefreshRef = useRef(0)
 
   const platforms = [...new Set(allPosts.map(p => p.platform))].sort()
 
@@ -130,103 +137,187 @@ const SocialWall = () => {
     )
   }
 
+  // Continuous vertical marquee animation
+  useEffect(() => {
+    if (filteredPosts.length < 4) return undefined
+
+    const ROW_HEIGHT = 280 // Approximate card height + gap in px
+    const SPEED_PX_PER_SEC = 40 // Pixels per second
+    const GAP = 12 // Gap between cards
+
+    let lastTime = null
+    let accumulatedOffset = marqueeOffset
+
+    const animate = (timestamp) => {
+      if (lastTime === null) lastTime = timestamp
+      const delta = (timestamp - lastTime) / 1000 // seconds
+      lastTime = timestamp
+
+      // Move up
+      accumulatedOffset += SPEED_PX_PER_SEC * delta
+
+      // Check if we've moved one full card height + gap (time to wrap)
+      const cardHeight = ROW_HEIGHT + GAP
+      if (accumulatedOffset >= cardHeight) {
+        // Seamless wrap: subtract one card height
+        accumulatedOffset -= cardHeight
+        // Trigger refresh check every full cycle
+        if (Date.now() - lastRefreshRef.current > 30000) {
+          lastRefreshRef.current = Date.now()
+          refreshSheetData?.()
+        }
+      }
+
+      setMarqueeOffset(accumulatedOffset)
+      animationRef.current = requestAnimationFrame(animate)
+    }
+
+    animationRef.current = requestAnimationFrame(animate)
+    return () => {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current)
+    }
+  }, [filteredPosts.length, refreshSheetData, marqueeOffset])
+
+  // Create duplicated list for infinite marquee
+  const marqueePosts = useMemo(() => {
+    if (filteredPosts.length < 4) return filteredPosts
+    // Duplicate the list 3 times for seamless wrapping
+    return [...filteredPosts, ...filteredPosts, ...filteredPosts]
+  }, [filteredPosts])
+
   return (
     <div className="social-wall-page">
-      <div className="page-header social-wall-screen-header">
-        <h1 className="page-title">
-          <Hash className="page-title-icon" size={32} />
-          Social Wall
-        </h1>
-        <p className="page-subtitle">Posts from {appConfig.appTitle || 'the convention'}</p>
-      </div>
+      {/* Fixed Header/Banner */}
+      <header className="social-wall-fixed-header">
+        <div className="social-wall-header-content">
+          <div className="social-wall-header-left">
+            <h1 className="social-wall-title">
+              <Hash className="social-wall-title-icon" size={28} />
+              Social Wall
+            </h1>
+            <p className="social-wall-subtitle">Posts from {appConfig.appTitle || 'the convention'}</p>
+          </div>
+          <Link className="social-wall-submit-btn" to="/submit-social">Submit Your Post</Link>
+        </div>
+        {/* Fade gradient at bottom of header for cards disappearing under */}
+        <div className="social-wall-header-fade" />
+      </header>
 
       {filteredPosts.length === 0 ? (
-        <section className="area-info-card">
+        <section className="area-info-card" style={{ marginTop: 'var(--space-xl)' }}>
           <h2><Hash size={22} /> Social Wall</h2>
           <p>No social posts have been added yet. Add posts via Admin → Social Posts or submit your own.</p>
           <Link className="social-wall-submit-btn" to="/submit-social">Submit Your Post</Link>
         </section>
       ) : (
         <>
-          {/* Full Wall Grid with Filters */}
-          <section className="social-wall-full-list" aria-label="All social posts">
-            <div className="social-wall-header-bar">
-              <div className="social-wall-header-left">
-                <p className="area-kicker">All Posts</p>
+          {/* Live Vertical Marquee Feed */}
+          <section className="social-wall-marquee-section" aria-label="Live social media posts">
+            <div className="social-wall-marquee-header">
+              <div>
+                <p className="area-kicker">Live Feed</p>
                 <h2>Convention Buzz</h2>
+                <p className="social-wall-screen-note">Posts continuously scroll. Click any post to view details.</p>
               </div>
+              <button type="button" className="social-wall-view-all-btn" onClick={() => setShowFullWall(v => !v)}>
+                {showFullWall ? 'Hide Full Wall' : 'View Full Wall'}
+              </button>
               <Link className="social-wall-submit-btn" to="/submit-social">Submit Your Post</Link>
             </div>
 
-            {/* Filter Bar */}
-            <div className="filter-bar">
-              <div className="filter-group">
-                <label>Platform</label>
-                <select value={filterPlatform} onChange={e => setFilterPlatform(e.target.value)} className="filter-select">
-                  <option value="all">All Platforms</option>
-                  {platforms.map(plat => <option key={plat} value={plat}>{plat}</option>)}
-                </select>
+            <div className="social-wall-marquee-frame" ref={marqueeRef}>
+              <div
+                className="social-wall-marquee-track"
+                style={{ transform: `translateY(-${marqueeOffset}px)` }}
+              >
+                {marqueePosts.map((post, index) => (
+                  <SocialMarqueeCard
+                    key={`${post.postId || post.id}-${index}`}
+                    post={post}
+                    index={index}
+                    onClick={handlePostClick}
+                  />
+                ))}
               </div>
-              <div className="filter-search">
-                <Search size={18} />
-                <input
-                  type="text"
-                  placeholder="Search posts, authors, hashtags..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="search-input"
-                />
-              </div>
-              <div className="view-toggle">
-                <button className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Grid View">
-                  <Grid size={20} />
-                </button>
-                <button className={`view-btn ${viewMode === 'masonry' ? 'active' : ''}`} onClick={() => setViewMode('masonry')} title="Masonry View">
-                  <div className="masonry-icon" />
-                </button>
-              </div>
-            </div>
-
-            {/* Grid */}
-            <div className="social-wall-container">
-              {viewMode === 'grid' ? (
-                <div className="social-wall-grid simple-social-wall-grid">
-                  {filteredPosts.map((post, index) => (
-                    <SocialPostCard
-                      key={post.postId || post.id}
-                      post={post}
-                      index={index}
-                      onClick={handlePostClick}
-                      currentUser={currentUser}
-                      onLike={toggleLike}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="social-wall-masonry">
-                  {filteredPosts.map((post, index) => (
-                    <SocialPostCard
-                      key={post.postId || post.id}
-                      post={post}
-                      index={index}
-                      onClick={handlePostClick}
-                      currentUser={currentUser}
-                      onLike={toggleLike}
-                      masonry={true}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {filteredPosts.length === 0 && (
-                <div className="empty-state">
-                  <Hash size={48} className="empty-state-icon" />
-                  <h3 className="empty-state-title">No Posts Found</h3>
-                  <p className="empty-state-message">Try adjusting your filters or search terms.</p>
-                </div>
-              )}
+              {/* Bottom fade mask */}
+              <div className="social-wall-marquee-bottom-fade" />
             </div>
           </section>
+
+          {showFullWall && (
+            <>
+              {/* Filter Bar */}
+              <div className="filter-bar">
+                <div className="filter-group">
+                  <label>Platform</label>
+                  <select value={filterPlatform} onChange={e => setFilterPlatform(e.target.value)} className="filter-select">
+                    <option value="all">All Platforms</option>
+                    {platforms.map(plat => <option key={plat} value={plat}>{plat}</option>)}
+                  </select>
+                </div>
+                <div className="filter-search">
+                  <Search size={18} />
+                  <input
+                    type="text"
+                    placeholder="Search posts, authors, hashtags..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="search-input"
+                  />
+                </div>
+                <div className="view-toggle">
+                  <button className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Grid View">
+                    <Grid size={20} />
+                  </button>
+                  <button className={`view-btn ${viewMode === 'masonry' ? 'active' : ''}`} onClick={() => setViewMode('masonry')} title="Masonry View">
+                    <div className="masonry-icon" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Full scrollable grid */}
+              <section className="social-wall-full-list" aria-label="All social posts">
+                <div className="social-wall-container">
+                  {viewMode === 'grid' ? (
+                    <div className="social-wall-grid simple-social-wall-grid">
+                      {filteredPosts.map((post, index) => (
+                        <SocialPostCard
+                          key={post.postId || post.id}
+                          post={post}
+                          index={index}
+                          onClick={handlePostClick}
+                          currentUser={currentUser}
+                          onLike={toggleLike}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="social-wall-masonry">
+                      {filteredPosts.map((post, index) => (
+                        <SocialPostCard
+                          key={post.postId || post.id}
+                          post={post}
+                          index={index}
+                          onClick={handlePostClick}
+                          currentUser={currentUser}
+                          onLike={toggleLike}
+                          masonry={true}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {filteredPosts.length === 0 && (
+                    <div className="empty-state">
+                      <Hash size={48} className="empty-state-icon" />
+                      <h3 className="empty-state-title">No Posts Found</h3>
+                      <p className="empty-state-message">Try adjusting your filters or search terms.</p>
+                    </div>
+                  )}
+                </div>
+              </section>
+            </>
+          )}
 
           {/* Featured Post of the Day */}
           {allPosts.find(p => p.featured) && (
@@ -241,6 +332,70 @@ const SocialWall = () => {
 const isVideoPostCheck = (post) => post.videoUrl || /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(String(post.mediaUrl || ''))
 const getPostMediaSrc = (post) => post.videoUrl || post.mediaUrl
 const getPostImageSrc = (post) => post.mediaUrl
+
+// Marquee card - compact, optimized for continuous scrolling
+const SocialMarqueeCard = ({ post, index, onClick }) => {
+  const [loaded, setLoaded] = useState(false)
+  const [error, setError] = useState(false)
+
+  return (
+    <button
+      type="button"
+      className="social-marquee-card"
+      onClick={() => onClick(post, index)}
+      aria-label={`Open post by ${post.author || 'poster'}`}
+    >
+      <div className="social-marquee-media">
+        {error ? (
+          <div className="social-post-placeholder">
+            <Hash size={28} />
+            <span>Failed to load</span>
+          </div>
+        ) : (
+          isVideoPostCheck(post) ? (
+            <video
+              src={getPostMediaSrc(post)}
+              muted
+              playsInline
+              autoPlay
+              loop
+              preload="metadata"
+              onLoadedData={() => setLoaded(true)}
+              onError={() => { setError(true); setLoaded(true); }}
+              className={loaded ? 'loaded' : ''}
+            />
+          ) : (
+            <img
+              src={getPostMediaSrc(post)}
+              alt={post.caption || 'Social post'}
+              loading="eager"
+              onLoad={() => setLoaded(true)}
+              onError={() => { setError(true); setLoaded(true); }}
+              className={loaded ? 'loaded' : ''}
+            />
+          )
+        )}
+        {isVideoPostCheck(post) && <span className="media-type-badge">Video</span>}
+        {!loaded && !error && <div className="social-post-skeleton" />}
+      </div>
+      <div className="social-marquee-footer">
+        <div className="social-marquee-author-row">
+          <span className="social-author-icon"><UserRound size={14} /></span>
+          <span className="social-marquee-author-name">{post.author || 'Unknown'}</span>
+        </div>
+        <div className="social-marquee-stats">
+          <span className="social-marquee-stat">
+            <Heart size={12} /> {normalizeCount(post.likes)}
+          </span>
+          <span className="social-marquee-stat">
+            <MessageCircle size={12} /> {normalizeCount(post.comments)}
+          </span>
+        </div>
+        <span className="social-marquee-platform">{post.platform}</span>
+      </div>
+    </button>
+  )
+}
 
 // Full detail card for scrollable list
 const SocialPostCard = ({ post, index, onClick, currentUser, onLike, masonry = false }) => {
