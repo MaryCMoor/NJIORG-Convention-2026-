@@ -75,7 +75,6 @@ const sendEventToGoogleSheet = async (event, action = 'createEvent') => {
 
   const response = await fetch(APPS_SCRIPT_URL, {
     method: 'POST',
-    // Keep this a simple request so Apps Script does not require CORS preflight.
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(payload),
   })
@@ -390,17 +389,26 @@ export const loadSocialPostSubmissionsFromGoogleSheet = async () => {
 }
 
 export const reviewSocialPostSubmissionInGoogleSheet = async (submission) => {
+  const payload = {
+    action: 'reviewSocialPostSubmission',
+    token: ADMIN_TOKEN,
+    submissionId: submission.submissionId || submission.id,
+    status: submission.status,
+    reviewNotes: submission.reviewNotes || '',
+    reviewedBy: submission.reviewedBy || 'Administrator',
+  }
+
+  // If approving with media, include media data
+  if (submission.status === 'approved' && submission.mediaData) {
+    payload.mediaFile = submission.mediaFile
+    payload.mediaType = submission.mediaType
+    payload.mediaData = submission.mediaData
+  }
+
   const response = await fetch(APPS_SCRIPT_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({
-      action: 'reviewSocialPostSubmission',
-      token: ADMIN_TOKEN,
-      submissionId: submission.submissionId || submission.id,
-      status: submission.status,
-      reviewNotes: submission.reviewNotes || '',
-      reviewedBy: submission.reviewedBy || 'Administrator',
-    }),
+    body: JSON.stringify(payload),
   })
   const text = await response.text()
   let data = null

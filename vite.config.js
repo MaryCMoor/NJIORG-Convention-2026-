@@ -11,6 +11,7 @@ export default defineConfig({
     allowedHosts: [
       'convention-app-quermdpjl.apps.run.brev.nvidia.com',
       'convention-z6ac2skfl.apps.run.brev.nvidia.com',
+      'convention-burrh4ddt.apps.run.brev.nvidia.com',
       'localhost',
       '127.0.0.1',
     ],
