@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   Hash, Heart, MessageCircle, UserRound, Send,
   ExternalLink, Filter, Search, ChevronLeft, ChevronRight, X,
-  Star
+  Star, Grid
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import './AppArea.css'
@@ -63,12 +63,14 @@ const SocialWall = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedPost, setSelectedPost] = useState(null)
   const [lightboxIndex, setLightboxIndex] = useState(0)
-  
-  // Waterfall state
-  const [startIndex, setStartIndex] = useState(0)
+  const [viewMode, setViewMode] = useState('grid')
+  const [showFullWall, setShowFullWall] = useState(false)
+
+  // Vertical carousel state
+  const [scrollOffset, setScrollOffset] = useState(0)
   const [cycle, setCycle] = useState(0)
-  const [animating, setAnimating] = useState(false)
-  const animatingRef = useRef(false)
+  const animationRef = useRef(null)
+  const lastRefreshRef = useRef(0)
 
   const platforms = [...new Set(allPosts.map(p => p.platform))].sort()
 
@@ -96,37 +98,71 @@ const SocialWall = () => {
     return result
   }, [allPosts, filterPlatform, searchQuery])
 
-  // Waterfall: show ~10-11 posts (3 columns x ~3.5 rows)
-  const POSTS_PER_VIEW = 11
+  // Carousel: show 6 posts (3 columns x 2 rows)
+  const POSTS_PER_VIEW = 6
+  const ROWS = 2
+  const COLS = 3
 
-  // Get visible posts with wrapping
+  // Get visible posts with wrapping for vertical carousel
   const visiblePosts = useMemo(() => {
     if (filteredPosts.length <= POSTS_PER_VIEW) return filteredPosts
-    return Array.from({ length: POSTS_PER_VIEW }, (_, offset) => 
-      filteredPosts[(startIndex + offset) % filteredPosts.length]
+    // We need extra posts for smooth scrolling - show current view + next row
+    const startIdx = Math.floor(scrollOffset / ROWS) % filteredPosts.length
+    const needed = POSTS_PER_VIEW + ROWS // extra row for entering
+    return Array.from({ length: needed }, (_, i) => 
+      filteredPosts[(startIdx + i) % filteredPosts.length]
     )
-  }, [filteredPosts, startIndex])
+  }, [filteredPosts, scrollOffset])
 
-  // Waterfall up animation every 3 seconds
+  // Continuous vertical scroll animation
   useEffect(() => {
     if (filteredPosts.length <= POSTS_PER_VIEW) return undefined
 
-    const timer = window.setInterval(() => {
-      if (animatingRef.current) return
-      animatingRef.current = true
-      setAnimating(true)
+    const ROW_HEIGHT_PERCENT = 100 / ROWS // 50% per row
+    const SCROLL_DURATION = 8000 // 8 seconds per row movement
+    const PAUSE_DURATION = 2000 // pause at each row
 
-      // After animation completes, update index
-      setTimeout(() => {
-        setStartIndex(index => (index + 3) % filteredPosts.length) // Move up by 3 (one row)
-        setCycle(value => value + 1)
-        setAnimating(false)
-        animatingRef.current = false
-      }, 1200) // Match CSS animation duration (1200ms)
-    }, 3000)
+    let startTime = null
+    let currentRow = 0
+    let isPaused = false
+    let pauseStart = null
 
-    return () => window.clearInterval(timer)
-  }, [filteredPosts.length])
+    const animate = (timestamp) => {
+      if (!startTime) startTime = timestamp
+
+      if (isPaused) {
+        if (timestamp - pauseStart >= PAUSE_DURATION) {
+          isPaused = false
+          startTime = timestamp
+          currentRow = (currentRow + 1) % filteredPosts.length
+          
+          // Check if completed full cycle
+          if (currentRow === 0 && Date.now() - lastRefreshRef.current > 30000) {
+            lastRefreshRef.current = Date.now()
+            refreshSheetData?.()
+          }
+        }
+      } else {
+        const elapsed = timestamp - startTime
+        const progress = Math.min(elapsed / SCROLL_DURATION, 1)
+        // Smooth easing
+        const eased = progress * progress * (3 - 2 * progress)
+        setScrollOffset(currentRow * ROW_HEIGHT_PERCENT + eased * ROW_HEIGHT_PERCENT)
+
+        if (progress >= 1) {
+          isPaused = true
+          pauseStart = timestamp
+        }
+      }
+
+      animationRef.current = requestAnimationFrame(animate)
+    }
+
+    animationRef.current = requestAnimationFrame(animate)
+    return () => {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current)
+    }
+  }, [filteredPosts.length, refreshSheetData])
 
   const handlePostClick = (post, index) => {
     setSelectedPost(post)
@@ -181,29 +217,31 @@ const SocialWall = () => {
         <section className="area-info-card">
           <h2><Hash size={22} /> Social Wall</h2>
           <p>No social posts have been added yet. Add posts via Admin → Social Posts or submit your own.</p>
+          <Link className="social-wall-submit-btn" to="/submit-social">Submit Your Post</Link>
         </section>
       ) : (
         <>
-          {/* Live Waterfall Grid */}
-          <section className="social-wall-waterfall-section" aria-label="Live social media posts">
-            <div className="social-wall-waterfall-header">
+          {/* Live Vertical Carousel */}
+          <section className="social-wall-vertical-carousel event-screen-gallery" aria-label="Live social media posts">
+            <div className="social-wall-carousel-header">
               <div>
                 <p className="area-kicker">Live Social Wall</p>
                 <h2>Convention Buzz</h2>
-                <p className="social-wall-screen-note">Posts flow continuously. Scroll to explore all posts.</p>
+                <p className="social-wall-screen-note">Posts continuously flow upward. Click any post to view details.</p>
               </div>
+              <button type="button" className="social-wall-view-all-btn" onClick={() => setShowFullWall(v => !v)}>
+                {showFullWall ? 'Hide Full Wall' : 'View Full Wall'}
+              </button>
               <Link className="social-wall-submit-btn" to="/submit-social">Submit Your Post</Link>
             </div>
 
-            <div className="social-waterfall-frame">
+            <div className="social-vertical-carousel-frame">
               <div
-                className={`social-waterfall-grid ${animating ? 'waterfall-animating' : ''}`}
-                key={cycle}
-                role="list"
-                aria-label="Social media posts"
+                className="social-vertical-carousel-track"
+                style={{ transform: `translateY(-${scrollOffset}%)` }}
               >
                 {visiblePosts.map((post, index) => (
-                  <SocialWaterfallCard
+                  <SocialVerticalCard
                     key={`${post.postId || post.id}-${index}-${cycle}`}
                     post={post}
                     index={index}
@@ -211,79 +249,89 @@ const SocialWall = () => {
                   />
                 ))}
               </div>
-
-              {/* New posts entering from bottom during animation */}
-              {animating && filteredPosts.length > POSTS_PER_VIEW && (
-                <div className="social-waterfall-entering" aria-hidden="true">
-                  {Array.from({ length: 3 }, (_, i) => {
-                    const enteringIndex = (startIndex + POSTS_PER_VIEW + i) % filteredPosts.length
-                    const post = filteredPosts[enteringIndex]
-                    return (
-                      <SocialWaterfallCard
-                        key={`entering-${enteringIndex}-${cycle}`}
-                        post={post}
-                        index={enteringIndex}
-                        onClick={handlePostClick}
-                        entering={true}
-                      />
-                    )
-                  })}
-                </div>
-              )}
             </div>
           </section>
 
-          {/* Scrollable full list below */}
-          <section className="social-wall-full-list" aria-label="All social posts">
-            <div className="filter-bar">
-              <div className="filter-group">
-                <label>Platform</label>
-                <select value={filterPlatform} onChange={e => setFilterPlatform(e.target.value)} className="filter-select">
-                  <option value="all">All Platforms</option>
-                  {platforms.map(plat => <option key={plat} value={plat}>{plat}</option>)}
-                </select>
-              </div>
-              <div className="filter-search">
-                <Search size={18} />
-                <input
-                  type="text"
-                  placeholder="Search posts, authors, hashtags..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="search-input"
-                />
-              </div>
-            </div>
-
-            <div className="social-wall-container">
-              <div className="social-wall-grid simple-social-wall-grid">
-                {filteredPosts.map((post, index) => (
-                  <SocialPostCard
-                    key={post.postId || post.id}
-                    post={post}
-                    index={index}
-                    onClick={handlePostClick}
-                    currentUser={currentUser}
-                    onLike={toggleLike}
+          {showFullWall && (
+            <>
+              {/* Filter Bar */}
+              <div className="filter-bar">
+                <div className="filter-group">
+                  <label>Platform</label>
+                  <select value={filterPlatform} onChange={e => setFilterPlatform(e.target.value)} className="filter-select">
+                    <option value="all">All Platforms</option>
+                    {platforms.map(plat => <option key={plat} value={plat}>{plat}</option>)}
+                  </select>
+                </div>
+                <div className="filter-search">
+                  <Search size={18} />
+                  <input
+                    type="text"
+                    placeholder="Search posts, authors, hashtags..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="search-input"
                   />
-                ))}
+                </div>
+                <div className="view-toggle">
+                  <button className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Grid View">
+                    <Grid size={20} />
+                  </button>
+                  <button className={`view-btn ${viewMode === 'masonry' ? 'active' : ''}`} onClick={() => setViewMode('masonry')} title="Masonry View">
+                    <div className="masonry-icon" />
+                  </button>
+                </div>
               </div>
 
-              {filteredPosts.length === 0 && (
-                <div className="empty-state">
-                  <Hash size={48} className="empty-state-icon" />
-                  <h3 className="empty-state-title">No Posts Found</h3>
-                  <p className="empty-state-message">Try adjusting your filters or search terms.</p>
-                </div>
-              )}
-            </div>
-          </section>
-        </>
-      )}
+              {/* Full scrollable grid */}
+              <section className="social-wall-full-list" aria-label="All social posts">
+                <div className="social-wall-container">
+                  {viewMode === 'grid' ? (
+                    <div className="social-wall-grid simple-social-wall-grid">
+                      {filteredPosts.map((post, index) => (
+                        <SocialPostCard
+                          key={post.postId || post.id}
+                          post={post}
+                          index={index}
+                          onClick={handlePostClick}
+                          currentUser={currentUser}
+                          onLike={toggleLike}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="social-wall-masonry">
+                      {filteredPosts.map((post, index) => (
+                        <SocialPostCard
+                          key={post.postId || post.id}
+                          post={post}
+                          index={index}
+                          onClick={handlePostClick}
+                          currentUser={currentUser}
+                          onLike={toggleLike}
+                          masonry={true}
+                        />
+                      ))}
+                    </div>
+                  )}
 
-      {/* Featured Post of the Day */}
-      {allPosts.find(p => p.featured) && (
-        <FeaturedPost post={allPosts.find(p => p.featured)} />
+                  {filteredPosts.length === 0 && (
+                    <div className="empty-state">
+                      <Hash size={48} className="empty-state-icon" />
+                      <h3 className="empty-state-title">No Posts Found</h3>
+                      <p className="empty-state-message">Try adjusting your filters or search terms.</p>
+                    </div>
+                  )}
+                </div>
+              </section>
+            </>
+          )}
+
+          {/* Featured Post of the Day */}
+          {allPosts.find(p => p.featured) && (
+            <FeaturedPost post={allPosts.find(p => p.featured)} />
+          )}
+        </>
       )}
     </div>
   )
@@ -293,22 +341,19 @@ const isVideoPostCheck = (post) => post.videoUrl || /\.(mp4|webm|ogg|mov)(\?|#|$
 const getPostMediaSrc = (post) => post.videoUrl || post.mediaUrl
 const getPostImageSrc = (post) => post.mediaUrl
 
-// Waterfall card - simplified, matches spotlight style
-const SocialWaterfallCard = ({ post, index, onClick, entering = false }) => {
+// Vertical carousel card - 3 columns, compact
+const SocialVerticalCard = ({ post, index, onClick }) => {
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState(false)
 
-  const className = `social-waterfall-card ${entering ? 'entering' : ''} ${!loaded ? 'loading' : ''} ${error ? 'error' : ''}`
-
   return (
-    <a
-      className={className}
-      href="#"
-      onClick={e => { e.preventDefault(); onClick(post, index); }}
-      role="listitem"
+    <button
+      type="button"
+      className="social-vertical-card"
+      onClick={() => onClick(post, index)}
       aria-label={`Open post by ${post.author || 'poster'}`}
     >
-      <div className="social-waterfall-media">
+      <div className="social-vertical-media">
         {error ? (
           <div className="social-post-placeholder">
             <Hash size={32} />
@@ -331,7 +376,7 @@ const SocialWaterfallCard = ({ post, index, onClick, entering = false }) => {
             <img
               src={getPostMediaSrc(post)}
               alt={post.caption || 'Social post'}
-              loading="lazy"
+              loading="eager"
               onLoad={() => setLoaded(true)}
               onError={() => { setError(true); setLoaded(true); }}
               className={loaded ? 'loaded' : ''}
@@ -341,21 +386,21 @@ const SocialWaterfallCard = ({ post, index, onClick, entering = false }) => {
         {isVideoPostCheck(post) && <span className="media-type-badge">Video</span>}
         {!loaded && !error && <div className="social-post-skeleton" />}
       </div>
-      <div className="social-waterfall-footer">
-        <div className="social-waterfall-author-row">
-          <span className="social-author-icon"><UserRound size={16} /></span>
-          <span className="social-waterfall-author-name">{post.author || 'Unknown'}</span>
+      <div className="social-vertical-footer">
+        <div className="social-vertical-author-row">
+          <span className="social-author-icon"><UserRound size={14} /></span>
+          <span className="social-vertical-author-name">{post.author || 'Unknown'}</span>
         </div>
-        <div className="social-waterfall-stats">
-          <span className="social-waterfall-stat">
-            <Heart size={14} /> {normalizeCount(post.likes)}
+        <div className="social-vertical-stats">
+          <span className="social-vertical-stat">
+            <Heart size={12} /> {normalizeCount(post.likes)}
           </span>
-          <span className="social-waterfall-stat">
-            <MessageCircle size={14} /> {normalizeCount(post.comments)}
+          <span className="social-vertical-stat">
+            <MessageCircle size={12} /> {normalizeCount(post.comments)}
           </span>
         </div>
       </div>
-    </a>
+    </button>
   )
 }
 
