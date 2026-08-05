@@ -41,6 +41,7 @@ export const ADMIN_CONFIG = {
     { id: 'members', label: 'Meet NJ Rainbow', icon: 'Users' },
     { id: 'assemblies', label: 'NJ Assemblies', icon: 'Landmark' },
     { id: 'social', label: 'Social Feed', icon: 'Hash' },
+    { id: 'social-posts', label: 'Social Post Submissions', icon: 'Hash' },
     { id: 'speakers', label: 'Speakers', icon: 'Mic' },
     { id: 'awards', label: 'Awards', icon: 'Award' },
     { id: 'gallery', label: 'Gallery', icon: 'Images' },

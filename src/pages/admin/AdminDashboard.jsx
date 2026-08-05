@@ -34,6 +34,7 @@ const AdminDashboard = () => {
     { label: 'Meet NJ Rainbow', description: 'Manage member profiles, photos, bios, videos, and speaker toggle.', to: `${ADMIN_CONFIG.routePrefix}/members`, icon: Users, primary: false },
     { label: 'NJ Assemblies', description: 'Manage assemblies, Mother Advisors, term themes, and photos.', to: `${ADMIN_CONFIG.routePrefix}/assemblies`, icon: Landmark, primary: false },
     { label: 'Social Feed', description: 'Add social posts with likes, comments, media, and links.', to: `${ADMIN_CONFIG.routePrefix}/social`, icon: Hash, primary: false },
+    { label: 'Social Post Submissions', description: 'Approve or reject guest social media post submissions.', to: `${ADMIN_CONFIG.routePrefix}/social-posts`, icon: Hash, primary: false },
     { label: 'Speakers', description: 'Edit speaker-specific details and event tags.', to: `${ADMIN_CONFIG.routePrefix}/speakers`, icon: Mic, primary: false },
     { label: 'Awards', description: 'Manage awards and recognitions.', to: `${ADMIN_CONFIG.routePrefix}/awards`, icon: Award, primary: false },
     { label: 'Gallery', description: 'Manage photos from the Gallery sheet.', to: `${ADMIN_CONFIG.routePrefix}/gallery`, icon: Images, primary: false },
