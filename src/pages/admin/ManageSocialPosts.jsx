@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Check, Send, RefreshCw, X } from 'lucide-react'
+import { Check, Send, RefreshCw, X, Upload, Image, Video } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { reviewSocialPostSubmissionInGoogleSheet } from '../../utils/appsScriptApi'
 import './ManageSchedule.css'
@@ -10,11 +10,20 @@ const statusTabs = [
   { id: 'rejected', label: 'Denied' },
 ]
 
+const fileToBase64 = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader()
+  reader.onload = () => resolve(String(reader.result || '').split(',')[1] || '')
+  reader.onerror = reject
+  reader.readAsDataURL(file)
+})
+
 const ManageSocialPosts = () => {
   const { sheetData, refreshSheetData } = useApp()
   const [savingId, setSavingId] = useState('')
   const [message, setMessage] = useState('')
   const [activeStatus, setActiveStatus] = useState('pending')
+  const [approvingId, setApprovingId] = useState(null)
+  const [approveMedia, setApproveMedia] = useState({ mediaFile: null, mediaType: 'image' })
   const submissions = sheetData.socialPostSubmissions || []
 
   const sortedSubmissions = useMemo(() => {
@@ -39,12 +48,52 @@ const ManageSocialPosts = () => {
     return sortedSubmissions.filter(submission => String(submission.status || 'pending').toLowerCase() === activeStatus)
   }, [activeStatus, sortedSubmissions])
 
+  const handleMediaFileChange = (e) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setApproveMedia(prev => ({
+        ...prev,
+        mediaFile: file,
+        mediaType: file.type.startsWith('video/') ? 'video' : 'image'
+      }))
+    }
+  }
+
+  const openApproveModal = (submission) => {
+    setApprovingId(submission.submissionId || submission.id)
+    setApproveMedia({ mediaFile: null, mediaType: 'image' })
+  }
+
+  const closeApproveModal = () => {
+    setApprovingId(null)
+    setApproveMedia({ mediaFile: null, mediaType: 'image' })
+  }
+
   const reviewSubmission = async (submission, status) => {
-    setSavingId(submission.submissionId || submission.id)
+    if (status === 'approved' && !approveMedia.mediaFile) {
+      // Open modal for media upload
+      openApproveModal(submission)
+      return
+    }
+
+    const submissionId = submission.submissionId || submission.id
+    setSavingId(submissionId)
     setMessage('')
+
     try {
-      await reviewSocialPostSubmissionInGoogleSheet({ ...submission, status })
+      const payload = { ...submission, status }
+      
+      // If approving with media, convert to base64
+      if (status === 'approved' && approveMedia.mediaFile) {
+        const fileData = await fileToBase64(approveMedia.mediaFile)
+        payload.mediaFile = approveMedia.mediaFile.name
+        payload.mediaType = approveMedia.mediaType
+        payload.mediaData = fileData
+      }
+
+      await reviewSocialPostSubmissionInGoogleSheet(payload)
       await refreshSheetData?.()
+      closeApproveModal()
       setMessage(status === 'approved' ? 'Post approved and added to Social Wall.' : 'Post rejected.')
     } catch (error) {
       console.error(error)
@@ -109,7 +158,7 @@ const ManageSocialPosts = () => {
                       <span className={`category-badge ${status === 'rejected' ? 'secondary' : 'primary'}`}>
                         {status === 'rejected' ? 'denied' : status}
                       </span>
-                      <h2 style={{ margin: '0.25rem 0 0' }}>{submission.author || 'Anonymous'}{submission.handle ? ` @${submission.handle}` : ''}</h2>
+                      <h2>{submission.author || 'Anonymous'}{submission.handle ? ` @${submission.handle}` : ''}</h2>
                       <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-light)', fontSize: '0.875rem' }}>
                         {submission.platform} · {new Date(submission.submittedAt).toLocaleString()}
                       </p>
@@ -121,22 +170,30 @@ const ManageSocialPosts = () => {
                           View original post →
                         </a>
                       )}
+                      {submission.hashtag && (
+                        <p style={{ margin: '0.5rem 0 0', fontWeight: 600, color: 'var(--color-primary)' }}>
+                          {submission.hashtag}
+                        </p>
+                      )}
+                      {submission.reviewNotes && (
+                        <p className="submission-review-note">{submission.reviewNotes}</p>
+                      )}
                     </div>
                   </div>
-                  {submission.hashtag && (
-                    <p style={{ margin: '0.5rem 0 0', fontWeight: 600, color: 'var(--color-primary)' }}>
-                      {submission.hashtag}
-                    </p>
-                  )}
-                  {submission.reviewNotes && (
-                    <p className="submission-review-note">{submission.reviewNotes}</p>
-                  )}
                   {status === 'pending' && (
                     <div className="submission-review-actions" style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <button className="btn btn-primary" disabled={savingId === id} onClick={() => reviewSubmission(submission, 'approved')}>
+                      <button 
+                        className="btn btn-primary" 
+                        disabled={savingId === id}
+                        onClick={() => reviewSubmission(submission, 'approved')}
+                      >
                         <Check size={16} /> Approve
                       </button>
-                      <button className="btn btn-secondary" disabled={savingId === id} onClick={() => reviewSubmission(submission, 'rejected')}>
+                      <button 
+                        className="btn btn-secondary" 
+                        disabled={savingId === id}
+                        onClick={() => reviewSubmission(submission, 'rejected')}
+                      >
                         <X size={16} /> Deny
                       </button>
                     </div>
@@ -146,6 +203,62 @@ const ManageSocialPosts = () => {
             )
           })}
         </section>
+      )}
+
+      {/* Approve with Media Modal */}
+      {approvingId && (
+        <div className="modal-overlay" onClick={closeApproveModal}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">Approve with Media</h2>
+              <button className="modal-close" onClick={closeApproveModal}>
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={e => { e.preventDefault(); reviewSubmission({ submissionId: approvingId }, 'approved'); }} className="modal-form">
+              <div className="form-grid">
+                <div className="form-field">
+                  <label htmlFor="approve-media-type">Media Type</label>
+                  <select 
+                    id="approve-media-type"
+                    value={approveMedia.mediaType}
+                    onChange={e => setApproveMedia(prev => ({ ...prev, mediaType: e.target.value }))}
+                  >
+                    <option value="image">Image</option>
+                    <option value="video">Video</option>
+                  </select>
+                </div>
+                <div className="form-field full-width">
+                  <label htmlFor="approve-media-file">
+                    {approveMedia.mediaType === 'video' ? (
+                      <>Upload Video <Video size={14} /></>
+                    ) : (
+                      <>Upload Image <Image size={14} /></>
+                    )}
+                  </label>
+                  <input
+                    type="file"
+                    id="approve-media-file"
+                    accept={approveMedia.mediaType === 'video' ? 'video/*' : 'image/*'}
+                    onChange={handleMediaFileChange}
+                    required
+                  />
+                  {approveMedia.mediaFile && (
+                    <p className="submission-file-count">{approveMedia.mediaFile.name} ({Math.round(approveMedia.mediaFile.size / 1024)} KB)</p>
+                  )}
+                </div>
+              </div>
+              <div className="submission-review-actions" style={{ marginTop: '1rem', justifyContent: 'flex-end' }}>
+                <button type="button" className="btn btn-secondary" onClick={closeApproveModal} disabled={savingId === approvingId}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={savingId === approvingId || !approveMedia.mediaFile}>
+                  {savingId === approvingId ? 'Approving...' : 'Approve with Media'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   )
