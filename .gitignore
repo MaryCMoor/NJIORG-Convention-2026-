@@ -23,7 +23,4 @@ dist-ssr
 *.sln
 *.sw?
 
-# Local deployment files (not for main branch)
-.github/workflows/deploy.yml
-Dockerfile
-nginx.conf
+
