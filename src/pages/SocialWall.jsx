@@ -341,9 +341,19 @@ const SocialWaterfallCard = ({ post, index, onClick, entering = false }) => {
         {isVideoPostCheck(post) && <span className="media-type-badge">Video</span>}
         {!loaded && !error && <div className="social-post-skeleton" />}
       </div>
-      <div className="social-waterfall-overlay">
-        <span className="social-waterfall-author">{post.author}</span>
-        {post.hashtag && <span className="social-waterfall-hashtag">{post.hashtag}</span>}
+      <div className="social-waterfall-footer">
+        <div className="social-waterfall-author-row">
+          <span className="social-author-icon"><UserRound size={16} /></span>
+          <span className="social-waterfall-author-name">{post.author || 'Unknown'}</span>
+        </div>
+        <div className="social-waterfall-stats">
+          <span className="social-waterfall-stat">
+            <Heart size={14} /> {normalizeCount(post.likes)}
+          </span>
+          <span className="social-waterfall-stat">
+            <MessageCircle size={14} /> {normalizeCount(post.comments)}
+          </span>
+        </div>
       </div>
     </a>
   )

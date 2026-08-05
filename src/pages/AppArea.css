@@ -2464,6 +2464,51 @@
   color: var(--color-gold-300);
 }
 
+/* Footer at bottom of card - visible without gradient overlay */
+.social-waterfall-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--space-sm) var(--space-md);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent 70%);
+  color: var(--color-white);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.social-waterfall-author-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-weight: 600;
+  font-size: 0.8125rem;
+}
+
+.social-waterfall-author-icon {
+  color: var(--color-gold-400);
+}
+
+.social-waterfall-author-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.social-waterfall-stats {
+  display: flex;
+  gap: var(--space-md);
+  font-size: 0.6875rem;
+  color: var(--color-white);
+}
+
+.social-waterfall-stat {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
 .social-waterfall-entering {
   position: absolute;
   bottom: 0;
