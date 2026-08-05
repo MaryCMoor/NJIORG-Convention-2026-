@@ -96,10 +96,12 @@ const SocialWall = () => {
     return result
   }, [allPosts, filterPlatform, searchQuery])
 
-  // Spotlight carousel: show 3 posts, duplicate first 3 for seamless loop
-  const spotlightPosts = useMemo(() => (
-    filteredPosts.length <= 3 ? filteredPosts : [...filteredPosts.slice(0, 3), ...filteredPosts.slice(0, 3)]
-  ), [filteredPosts])
+  // Spotlight carousel: show 3 posts, duplicate entire list for seamless infinite loop
+  const spotlightPosts = useMemo(() => {
+    if (filteredPosts.length <= 3) return filteredPosts
+    // Duplicate the full list 3 times for seamless infinite horizontal scroll
+    return [...filteredPosts, ...filteredPosts, ...filteredPosts]
+  }, [filteredPosts])
 
   // Auto-rotate spotlight every 4 seconds (matching Gallery)
   useEffect(() => {
@@ -107,6 +109,7 @@ const SocialWall = () => {
     const timer = window.setInterval(() => {
       setRotationIndex(index => {
         const nextIndex = index + 1
+        // When we've scrolled through one full original list length, refresh data
         if (nextIndex === filteredPosts.length) refreshSheetData?.()
         return nextIndex
       })
@@ -162,10 +165,6 @@ const SocialWall = () => {
     )
   }
 
-  const isVideoMedia = (post) => post.mediaType === 'video' || /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(String(post.videoUrl || post.url || ''))
-  const getGalleryMediaSrc = (post) => post.videoUrl || post.url
-  const getGalleryImageSrc = (post) => post.thumbnail || post.imageUrl || post.url
-
   return (
     <div className="social-wall-page">
       <div className="page-header social-wall-screen-header">
@@ -205,23 +204,14 @@ const SocialWall = () => {
                 onTransitionEnd={handleSpotlightTransitionEnd}
               >
                 {spotlightPosts.map((post, index) => (
-                  <button
+                  <SocialSpotlightCard
                     key={`${post.postId || post.id}-${index}`}
-                    type="button"
-                    className="social-wall-spotlight-card"
-                    onClick={() => handlePostClick(post, index)}
-                    aria-label={`Open post by ${post.author || 'poster'}`}
-                  >
-                    {isVideoPost(post) ? (
-                      <video src={mediaSrc(post)} muted playsInline autoPlay loop preload="metadata" />
-                    ) : (
-                      <img src={mediaSrc(post)} alt={post.caption || 'Social post'} loading="eager" />
-                    )}
-                    <div className="social-wall-spotlight-overlay">
-                      <span className="social-wall-spotlight-author">{post.author}</span>
-                      {post.hashtag && <span className="social-wall-spotlight-hashtag">{post.hashtag}</span>}
-                    </div>
-                  </button>
+                    post={post}
+                    index={index}
+                    onClick={handlePostClick}
+                    currentUser={currentUser}
+                    onLike={toggleLike}
+                  />
                 ))}
               </div>
             </div>
@@ -316,6 +306,97 @@ const isVideoPostCheck = (post) => post.videoUrl || /\.(mp4|webm|ogg|mov)(\?|#|$
 const getPostMediaSrc = (post) => post.videoUrl || post.mediaUrl
 const getPostImageSrc = (post) => post.mediaUrl
 
+// Spotlight card - uses the SAME detailed format as SocialPostCard (matching Gallery style)
+const SocialSpotlightCard = ({ post, index, onClick, currentUser, onLike }) => {
+  const [loaded, setLoaded] = useState(false)
+  const [error, setError] = useState(false)
+
+  return (
+    <button
+      type="button"
+      className="social-wall-spotlight-card"
+      onClick={() => onClick(post, index)}
+      aria-label={`Open post by ${post.author || 'poster'}`}
+    >
+      <div className="social-post-image-wrapper">
+        {error ? (
+          <div className="social-post-placeholder">
+            <Hash size={32} />
+            <span>Failed to load</span>
+          </div>
+        ) : (
+          isVideoPostCheck(post) ? (
+            <video
+              src={getPostMediaSrc(post)}
+              muted
+              playsInline
+              autoPlay
+              loop
+              preload="metadata"
+              onLoadedData={() => setLoaded(true)}
+              onError={() => { setError(true); setLoaded(true); }}
+              className={loaded ? 'loaded' : ''}
+            />
+          ) : (
+            <img
+              src={getPostMediaSrc(post)}
+              alt={post.caption || 'Social post'}
+              loading="eager"
+              onLoad={() => setLoaded(true)}
+              onError={() => { setError(true); setLoaded(true); }}
+              className={loaded ? 'loaded' : ''}
+            />
+          )
+        )}
+        {isVideoPostCheck(post) && <span className="media-type-badge">Video</span>}
+        {post.featured && <span className="featured-badge">★ Featured</span>}
+        {!loaded && !error && <div className="social-post-skeleton" />}
+      </div>
+
+      <div className="social-post-info">
+        <div className="social-post-header">
+          <div className="social-post-author-row">
+            <span className="social-author-icon"><UserRound size={18} /></span>
+            <div>
+              <strong>{post.author || 'Unknown'}</strong>
+              {post.handle && <span>{post.handle}</span>}
+            </div>
+          </div>
+          <span className="social-platform-badge">{post.platform}</span>
+        </div>
+        {post.caption && <p className="social-post-caption">{post.caption}</p>}
+        {post.hashtag && <span className="social-post-hashtag">{post.hashtag}</span>}
+        <div className="social-post-meta">
+          <span>{formatPostedAt(post.postedAt)}</span>
+        </div>
+        <div className="social-post-actions">
+          <button
+            className={`action-btn ${post.liked ? 'liked' : ''}`}
+            onClick={e => { e.stopPropagation(); onLike(post); }}
+            title={post.liked ? 'Unlike' : 'Like'}
+          >
+            <Heart size={16} className={post.liked ? 'filled' : ''} />
+            <span>{normalizeCount(post.likes)}</span>
+          </button>
+          <button className="action-btn" onClick={e => { e.stopPropagation(); }} title="Comment">
+            <MessageCircle size={16} />
+            <span>{normalizeCount(post.comments)}</span>
+          </button>
+          {post.postUrl && (
+            <a href={post.postUrl} target="_blank" rel="noreferrer" className="action-btn" onClick={e => e.stopPropagation()} title="Open original post">
+              <ExternalLink size={16} />
+            </a>
+          )}
+          <button className="action-btn" onClick={e => { e.stopPropagation(); }} title="Share">
+            <Send size={16} />
+          </button>
+        </div>
+      </div>
+    </button>
+  )
+}
+
+// Full detail card for scrollable list
 const SocialPostCard = ({ post, index, onClick, currentUser, onLike, masonry = false }) => {
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState(false)
