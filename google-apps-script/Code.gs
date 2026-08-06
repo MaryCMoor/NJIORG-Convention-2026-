@@ -1,5 +1,5 @@
-const ADMIN_TOKEN = '2026RainboW_Convention-SerVice!';
-const GALLERY_UPLOAD_FOLDER_ID = '1BsWuchkBe72ItymdFD2uuuqIRRU46rPp';
+const ADMIN_TOKEN = '2026RainboW_Convention-SerVice!' ;
+const GALLERY_UPLOAD_FOLDER_ID = '1BsWuchkBe72ItymdFD2uuuqIRRU46rPp' ;
 
 function doGet(e) {
   const action = e && e.parameter && e.parameter.action;
@@ -58,6 +58,7 @@ function doPost(e) {
     if (action === 'createSocialPost' || action === 'addSocialPost' || action === 'saveSocialPost') return createSocialPost(body);
     if (action === 'updateSocialPost') return updateSocialPost(body);
     if (action === 'reviewGallerySubmission') return reviewGallerySubmission(body);
+    if (action === 'reviewSocialPostSubmission') return reviewSocialPostSubmission(body);
     if (action === 'createNotification' || action === 'addNotification' || action === 'saveNotification') return createNotification(body);
     if (action === 'updateNotification') return updateNotification(body);
     if (action === 'saveAppConfig') return saveAppConfig(body);
@@ -529,38 +530,11 @@ function reviewGallerySubmission(body) {
   return jsonResponse({ ok: true, success: true, action: 'reviewGallerySubmission', submissionId: submissionId, status: nextData.status });
 }
 
-function submitGalleryMedia(body) {
-  const sheet = getGallerySubmissionsSheet();
-  const headers = ensureHeaders(sheet, ['submissionId', 'status', 'uploaderName', 'uploaderEmail', 'assembly', 'caption', 'mediaUrl', 'thumbnailUrl', 'mediaType', 'fileName', 'mimeType', 'submittedAt', 'reviewedAt', 'reviewedBy', 'reviewNotes']);
-  const submissionId = body.submissionId || 'submission_' + Date.now();
-  let mediaUrl = body.mediaUrl || '';
-  let reviewNotes = body.reviewNotes || '';
-
-  if (body.fileData && body.fileName) {
-    const bytes = Utilities.base64Decode(body.fileData);
-    const blob = Utilities.newBlob(bytes, body.mimeType || 'application/octet-stream', body.fileName);
-    const file = getGalleryUploadFolder().createFile(blob);
-    mediaUrl = 'https://drive.google.com/uc?export=view&id=' + file.getId();
-
-    // Some Workspace/Drive configurations allow creating the file but block
-    // changing its sharing settings. Do not let that prevent the submission
-    // row from being written; admins can adjust folder/file sharing separately.
-    try {
-      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    } catch (shareError) {
-      reviewNotes = 'Uploaded, but automatic link sharing failed: ' + String(shareError);
-    }
-  }
-
-  writeObjectRow(sheet, sheet.getLastRow() + 1, headers, buildGallerySubmissionData(Object.assign({}, body, { status: 'pending', reviewNotes: reviewNotes }), submissionId, mediaUrl));
-  return jsonResponse({ ok: true, success: true, action: 'submitGalleryMedia', submissionId: submissionId, mediaUrl: mediaUrl });
-}
-
 function getSocialPostSubmissionsSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName('SocialPostSubmissions');
   if (!sheet) sheet = ss.insertSheet('SocialPostSubmissions');
-  ensureHeaders(sheet, ['submissionId', 'status', 'author', 'handle', 'platform', 'postUrl', 'caption', 'hashtag', 'submittedAt', 'reviewedAt', 'reviewedBy', 'reviewNotes']);
+  ensureHeaders(sheet, ['submissionId', 'status', 'author', 'handle', 'platform', 'postUrl', 'caption', 'hashtag', 'mediaUrl', 'videoUrl', 'submittedAt', 'reviewedAt', 'reviewedBy', 'reviewNotes']);
   return sheet;
 }
 
@@ -574,6 +548,8 @@ function buildSocialPostSubmissionData(body, submissionId) {
     postUrl: body.postUrl || '',
     caption: body.caption || '',
     hashtag: body.hashtag || '',
+    mediaUrl: body.mediaUrl || '',
+    videoUrl: body.videoUrl || '',
     submittedAt: body.submittedAt || new Date().toISOString(),
     reviewedAt: body.reviewedAt || '',
     reviewedBy: body.reviewedBy || '',
@@ -583,7 +559,7 @@ function buildSocialPostSubmissionData(body, submissionId) {
 
 function submitSocialPost(body) {
   const sheet = getSocialPostSubmissionsSheet();
-  const headers = ensureHeaders(sheet, ['submissionId', 'status', 'author', 'handle', 'platform', 'postUrl', 'caption', 'hashtag', 'submittedAt', 'reviewedAt', 'reviewedBy', 'reviewNotes']);
+  const headers = ensureHeaders(sheet, ['submissionId', 'status', 'author', 'handle', 'platform', 'postUrl', 'caption', 'hashtag', 'mediaUrl', 'videoUrl', 'submittedAt', 'reviewedAt', 'reviewedBy', 'reviewNotes']);
   const submissionId = body.submissionId || 'socialpost_' + Date.now();
   writeObjectRow(sheet, sheet.getLastRow() + 1, headers, buildSocialPostSubmissionData(Object.assign({}, body, { status: 'pending' }), submissionId));
   return jsonResponse({ ok: true, success: true, action: 'submitSocialPost', submissionId: submissionId });
@@ -591,7 +567,7 @@ function submitSocialPost(body) {
 
 function getSocialPostSubmissions() {
   const sheet = getSocialPostSubmissionsSheet();
-  const headers = ensureHeaders(sheet, ['submissionId', 'status', 'author', 'handle', 'platform', 'postUrl', 'caption', 'hashtag', 'submittedAt', 'reviewedAt', 'reviewedBy', 'reviewNotes']);
+  const headers = ensureHeaders(sheet, ['submissionId', 'status', 'author', 'handle', 'platform', 'postUrl', 'caption', 'hashtag', 'mediaUrl', 'videoUrl', 'submittedAt', 'reviewedAt', 'reviewedBy', 'reviewNotes']);
   const lastRow = sheet.getLastRow();
   const submissions = [];
   if (lastRow >= 2) {
@@ -607,7 +583,7 @@ function getSocialPostSubmissions() {
 
 function reviewSocialPostSubmission(body) {
   const sheet = getSocialPostSubmissionsSheet();
-  const headers = ensureHeaders(sheet, ['submissionId', 'status', 'author', 'handle', 'platform', 'postUrl', 'caption', 'hashtag', 'submittedAt', 'reviewedAt', 'reviewedBy', 'reviewNotes']);
+  const headers = ensureHeaders(sheet, ['submissionId', 'status', 'author', 'handle', 'platform', 'postUrl', 'caption', 'hashtag', 'mediaUrl', 'videoUrl', 'submittedAt', 'reviewedAt', 'reviewedBy', 'reviewNotes']);
   const submissionId = body.submissionId || body.id;
   if (!submissionId) return jsonResponse({ ok: false, success: false, error: 'Missing submissionId' });
   const rowNumber = findRowById(sheet, headers, 'submissionId', submissionId);
@@ -635,8 +611,8 @@ function reviewSocialPostSubmission(body) {
       handle: nextData.handle,
       postUrl: nextData.postUrl,
       caption: nextData.caption,
-      mediaUrl: '',
-      videoUrl: '',
+      mediaUrl: nextData.mediaUrl,
+      videoUrl: nextData.videoUrl,
       hashtag: nextData.hashtag,
       postedAt: nextData.submittedAt,
       likes: 0,
