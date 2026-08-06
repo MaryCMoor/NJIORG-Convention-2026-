@@ -30,6 +30,32 @@ const normalizeCount = (value) => {
 
 const isVideoUrl = (url) => /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(String(url || ''))
 
+// Extract Google Drive file ID from various URL formats
+const extractDriveFileId = (url) => {
+  const text = String(url || '')
+  const patterns = [
+    /\/file\/d\/([a-zA-Z0-9_-]+)/,
+    /[?&]id=([a-zA-Z0-9_-]+)/,
+    /\/open\?id=([a-zA-Z0-9_-]+)/,
+    /\/thumbnail\?id=([a-zA-Z0-9_-]+)/,
+    /\/uc\?export=view&id=([a-zA-Z0-9_-]+)/,
+  ]
+  const match = patterns.map(pattern => text.match(pattern)).find(Boolean)
+  return match?.[1] || ''
+}
+
+// Convert Google Drive URLs to direct thumbnail/image URLs
+const getDriveThumbnailUrl = (url, size = 'w1600') => {
+  const id = extractDriveFileId(url)
+  return id ? `https://drive.google.com/thumbnail?id=${id}&sz=${size}` : url
+}
+
+// Get the proper media source URL (handles Google Drive URLs)
+const getMediaSrc = (post) => {
+  const url = post.videoUrl || post.mediaUrl
+  return getDriveThumbnailUrl(url)
+}
+
 const SocialWall = () => {
   const { sheetData, appConfig, currentUser, refreshSheetData } = useApp()
 
@@ -303,8 +329,8 @@ const SocialWall = () => {
 }
 
 const isVideoPostCheck = (post) => post.videoUrl || /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(String(post.mediaUrl || ''))
-const getPostMediaSrc = (post) => post.videoUrl || post.mediaUrl
-const getPostImageSrc = (post) => post.mediaUrl
+const getPostMediaSrc = (post) => getDriveThumbnailUrl(post.videoUrl || post.mediaUrl)
+const getPostImageSrc = (post) => getDriveThumbnailUrl(post.mediaUrl)
 
 // Spotlight card - uses the SAME detailed format as SocialPostCard (matching Gallery style)
 const SocialSpotlightCard = ({ post, index, onClick, currentUser, onLike }) => {

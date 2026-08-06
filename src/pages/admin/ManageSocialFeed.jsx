@@ -9,6 +9,31 @@ import {
 } from '../../utils/appsScriptApi';
 import './ManageSchedule.css';
 
+// Extract Google Drive file ID from various URL formats
+const extractDriveFileId = (url) => {
+  const text = String(url || '')
+  const patterns = [
+    /\/file\/d\/([a-zA-Z0-9_-]+)/,
+    /[?&]id=([a-zA-Z0-9_-]+)/,
+    /\/open\?id=([a-zA-Z0-9_-]+)/,
+    /\/thumbnail\?id=([a-zA-Z0-9_-]+)/,
+    /\/uc\?export=view&id=([a-zA-Z0-9_-]+)/,
+  ]
+  const match = patterns.map(pattern => text.match(pattern)).find(Boolean)
+  return match?.[1] || ''
+}
+
+// Convert Google Drive URLs to direct thumbnail/image URLs
+const getDriveThumbnailUrl = (url, size = 'w1600') => {
+  const id = extractDriveFileId(url)
+  return id ? `https://drive.google.com/thumbnail?id=${id}&sz=${size}` : url
+}
+
+const getMediaPreviewUrl = (post) => {
+  const url = post.videoUrl || post.mediaUrl
+  return getDriveThumbnailUrl(url)
+}
+
 const blankForm = () => ({
   platform: 'Instagram',
   author: '',
@@ -318,7 +343,24 @@ const ManageSocialFeed = () => {
         <div className="modal-overlay" onClick={() => setViewPost(null)}>
           <div className="modal modal-lg" onClick={event => event.stopPropagation()}>
             <div className="modal-header"><h2 className="modal-title">Social Post Details</h2><button className="modal-close" onClick={() => setViewPost(null)}><X size={20}/></button></div>
-            <div className="modal-body"><div className="view-grid"><div className="view-section"><h4>Platform</h4><p>{viewPost.platform || '—'}</p></div><div className="view-section"><h4>Posted By</h4><p>{viewPost.author || viewPost.handle || '—'}</p></div><div className="view-section full-width"><h4>Post URL</h4><p>{viewPost.postUrl || '—'}</p></div><div className="view-section full-width"><h4>Caption</h4><p>{viewPost.caption || '—'}</p></div></div></div>
+            <div className="modal-body">
+              <div className="view-grid">
+                <div className="view-section full-width">
+                  <h4>Media Preview</h4>
+                  {viewPost.videoUrl ? (
+                    <video src={getMediaPreviewUrl(viewPost)} controls playsInline style={{maxWidth:'100%',borderRadius:'var(--radius-md)'}} />
+                  ) : viewPost.mediaUrl ? (
+                    <img src={getMediaPreviewUrl(viewPost)} alt={viewPost.caption || 'Social post'} style={{maxWidth:'100%',borderRadius:'var(--radius-md)'}} />
+                  ) : (
+                    <p className="empty-preview">No media attached</p>
+                  )}
+                </div>
+                <div className="view-section"><h4>Platform</h4><p>{viewPost.platform || '—'}</p></div>
+                <div className="view-section"><h4>Posted By</h4><p>{viewPost.author || viewPost.handle || '—'}</p></div>
+                <div className="view-section full-width"><h4>Post URL</h4><p>{viewPost.postUrl || '—'}</p></div>
+                <div className="view-section full-width"><h4>Caption</h4><p>{viewPost.caption || '—'}</p></div>
+              </div>
+            </div>
             <div className="modal-actions"><button className="btn btn-secondary" onClick={() => setViewPost(null)}>Close</button><button className="btn btn-primary" onClick={() => { setViewPost(null); openEditModal(viewPost); }}><Edit size={16}/> Edit</button></div>
           </div>
         </div>

@@ -6,6 +6,31 @@ import { useAdmin } from '../../context/AdminContext';
 import { ADMIN_CONFIG } from '../../config/admin';
 import './ManageGallery.css';
 
+// Extract Google Drive file ID from various URL formats
+const extractDriveFileId = (url) => {
+  const text = String(url || '')
+  const patterns = [
+    /\/file\/d\/([a-zA-Z0-9_-]+)/,
+    /[?&]id=([a-zA-Z0-9_-]+)/,
+    /\/open\?id=([a-zA-Z0-9_-]+)/,
+    /\/thumbnail\?id=([a-zA-Z0-9_-]+)/,
+    /\/uc\?export=view&id=([a-zA-Z0-9_-]+)/,
+  ]
+  const match = patterns.map(pattern => text.match(pattern)).find(Boolean)
+  return match?.[1] || ''
+}
+
+// Convert Google Drive URLs to direct thumbnail/image URLs
+const getDriveThumbnailUrl = (url, size = 'w1600') => {
+  const id = extractDriveFileId(url)
+  return id ? `https://drive.google.com/thumbnail?id=${id}&sz=${size}` : url
+}
+
+const getImagePreviewUrl = (item) => {
+  const url = item.thumbnailUrl || item.imageUrl
+  return getDriveThumbnailUrl(url)
+}
+
 const ManageGallery = () => {
   const { gallery, addGalleryItem, updateGalleryItem, deleteGalleryItem } = useAdmin();
   
@@ -116,7 +141,7 @@ const ManageGallery = () => {
             <tr><td colSpan={6} className="empty-state"><Images size={32}/><p>No images found</p><button className="btn btn-primary" onClick={openAddModal}><Plus size={16}/>Add First Image</button></td></tr>
           ):(
             paginatedGallery.map(g=><tr key={g.id}>
-              <td className="image-cell"><div className="image-preview" style={{backgroundImage:`url(${g.thumbnailUrl||g.imageUrl})`}}/><div className="image-info"><div className="image-title">{g.title}</div>{g.description&&<div className="image-desc">{g.description}</div>}</div></td>
+              <td className="image-cell"><div className="image-preview" style={{backgroundImage:`url(${getImagePreviewUrl(g)})`}}/><div className="image-info"><div className="image-title">{g.title}</div>{g.description&&<div className="image-desc">{g.description}</div>}</div></td>
               <td><span className="category-badge">{g.category}</span></td>
               <td><span className={`featured-badge ${g.featured?'yes':'no'}`}>{g.featured?'★ Featured':'Not Featured'}</span></td>
               <td>{g.date?new Date(g.date).toLocaleDateString():'—'}</td>
@@ -130,7 +155,7 @@ const ManageGallery = () => {
 
       {showModal&&<div className="modal-overlay" onClick={closeModal}><div className="modal" onClick={e=>e.stopPropagation()}><div className="modal-header"><h2 className="modal-title">{editingItem?'Edit':'Add'} Gallery Image</h2><button className="modal-close" onClick={closeModal}><X size={20}/></button></div><form onSubmit={handleSubmit} className="modal-form"><div className="form-grid"><div className="form-field"><label htmlFor="title">Title *</label><input type="text" id="title" value={formData.title} onChange={e=>setFormData({...formData,title:e.target.value})} required/></div><div className="form-field"><label htmlFor="category">Category *</label><select id="category" value={formData.category} onChange={e=>setFormData({...formData,category:e.target.value})} required>{categories.map(c=><option key={c} value={c}>{c}</option>)}</select></div><div className="form-field"><label htmlFor="featured"><input type="checkbox" id="featured" checked={formData.featured} onChange={e=>setFormData({...formData,featured:e.target.checked})}/> Featured</label></div><div className="form-field"><label htmlFor="displayOrder">Display Order</label><input type="number" id="displayOrder" value={formData.displayOrder} onChange={e=>setFormData({...formData,displayOrder:parseInt(e.target.value)||0})} min="0"/></div><div className="form-field"><label htmlFor="date">Date *</label><input type="date" id="date" value={formData.date} onChange={e=>setFormData({...formData,date:e.target.value})} required/></div><div className="form-field"><label htmlFor="mediaType">Media Type</label><select id="mediaType" value={formData.mediaType || 'image'} onChange={e=>setFormData({...formData,mediaType:e.target.value})}><option value="image">Photo</option><option value="video">Video</option></select></div><div className="form-field full-width"><label htmlFor="imageUrl">Image URL</label><input type="url" id="imageUrl" value={formData.imageUrl} onChange={e=>setFormData({...formData,imageUrl:e.target.value})} placeholder="https://..." /></div><div className="form-field full-width"><label htmlFor="videoUrl">Video URL</label><input type="url" id="videoUrl" value={formData.videoUrl || ''} onChange={e=>setFormData({...formData,videoUrl:e.target.value,mediaType:e.target.value ? 'video' : formData.mediaType})} placeholder="https://...mp4" /></div><div className="form-field full-width"><label htmlFor="thumbnailUrl">Thumbnail URL (optional)</label><input type="url" id="thumbnailUrl" value={formData.thumbnailUrl} onChange={e=>setFormData({...formData,thumbnailUrl:e.target.value})} placeholder="https://... (auto-generated if empty)"/></div><div className="form-field full-width"><label htmlFor="tags">Tags (comma-separated)</label><input type="text" id="tags" value={formData.tags} onChange={e=>setFormData({...formData,tags:e.target.value})} placeholder="opening, ceremony, lion"/></div><div className="form-field full-width"><label htmlFor="description">Description</label><textarea id="description" value={formData.description} onChange={e=>setFormData({...formData,description:e.target.value})} rows={3}/></div></div><div className="modal-actions"><button type="button" className="btn btn-secondary" onClick={closeModal}>Cancel</button><button type="submit" className="btn btn-primary">{editingItem?'Save Changes':'Add Image'}</button></div></form></div></div>}
 
-      {viewItem&&<div className="modal-overlay" onClick={()=>setViewItem(null)}><div className="modal modal-lg" onClick={e=>e.stopPropagation()}><div className="modal-header"><h2 className="modal-title">Image Details</h2><button className="modal-close" onClick={()=>setViewItem(null)}><X size={20}/></button></div><div className="modal-body"><div className="view-grid"><div className="view-section full-width"><h4>Preview</h4><img src={viewItem.imageUrl} alt={viewItem.title} style={{maxWidth:'100%',borderRadius:'var(--radius-md)'}}/></div><div className="view-section"><h4>Info</h4><dl><dt>Title</dt><dd>{viewItem.title}</dd><dt>Description</dt><dd>{viewItem.description||'—'}</dd><dt>Category</dt><dd><span className="category-badge">{viewItem.category}</span></dd><dt>Featured</dt><dd>{viewItem.featured?'Yes':'No'}</dd><dt>Date</dt><dd>{viewItem.date?new Date(viewItem.date).toLocaleDateString():'—'}</dd><dt>Display Order</dt><dd>{viewItem.displayOrder}</dd><dt>Tags</dt><dd>{(viewItem.tags||[]).join(', ')||'—'}</dd></dl></div></div></div><div className="modal-actions"><button className="btn btn-secondary" onClick={()=>setViewItem(null)}>Close</button><button className="btn btn-primary" onClick={()=>{setViewItem(null);openEditModal(viewItem);}}><Edit size={16}/> Edit</button></div></div></div>}
+      {viewItem&&<div className="modal-overlay" onClick={()=>setViewItem(null)}><div className="modal modal-lg" onClick={e=>e.stopPropagation()}><div className="modal-header"><h2 className="modal-title">Image Details</h2><button className="modal-close" onClick={()=>setViewItem(null)}><X size={20}/></button></div><div className="modal-body"><div className="view-grid"><div className="view-section full-width"><h4>Preview</h4><img src={getImagePreviewUrl(viewItem)} alt={viewItem.title} style={{maxWidth:'100%',borderRadius:'var(--radius-md)'}}/></div><div className="view-section"><h4>Info</h4><dl><dt>Title</dt><dd>{viewItem.title}</dd><dt>Description</dt><dd>{viewItem.description||'—'}</dd><dt>Category</dt><dd><span className="category-badge">{viewItem.category}</span></dd><dt>Featured</dt><dd>{viewItem.featured?'Yes':'No'}</dd><dt>Date</dt><dd>{viewItem.date?new Date(viewItem.date).toLocaleDateString():'—'}</dd><dt>Display Order</dt><dd>{viewItem.displayOrder}</dd><dt>Tags</dt><dd>{(viewItem.tags||[]).join(', ')||'—'}</dd></dl></div></div></div><div className="modal-actions"><button className="btn btn-secondary" onClick={()=>setViewItem(null)}>Close</button><button className="btn btn-primary" onClick={()=>{setViewItem(null);openEditModal(viewItem);}}><Edit size={16}/> Edit</button></div></div></div>}
 
       {confirmDelete&&<div className="modal-overlay" onClick={()=>setConfirmDelete(null)}><div className="modal modal-sm" onClick={e=>e.stopPropagation()}><div className="modal-header"><h2 className="modal-title">Confirm Delete</h2></div><div className="modal-body"><div className="delete-warning"><AlertCircle size={48} className="warning-icon"/><p>Delete this image?</p><p className="attendee-name">{gallery.find(g=>g.id===confirmDelete)?.title}</p><p className="delete-note">Cannot be undone.</p></div></div><div className="modal-actions"><button className="btn btn-secondary" onClick={()=>setConfirmDelete(null)}>Cancel</button><button className="btn btn-danger" onClick={confirmDeleteGallery}><Trash2 size={16}/> Delete</button></div></div></div>}
     </div>

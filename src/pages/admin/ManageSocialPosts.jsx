@@ -4,6 +4,33 @@ import { useApp } from '../../context/AppContext'
 import { reviewSocialPostSubmissionInGoogleSheet } from '../../utils/appsScriptApi'
 import './ManageSchedule.css'
 
+// Extract Google Drive file ID from various URL formats
+const extractDriveFileId = (url) => {
+  const text = String(url || '')
+  const patterns = [
+    /\/file\/d\/([a-zA-Z0-9_-]+)/,
+    /[?&]id=([a-zA-Z0-9_-]+)/,
+    /\/open\?id=([a-zA-Z0-9_-]+)/,
+    /\/thumbnail\?id=([a-zA-Z0-9_-]+)/,
+    /\/uc\?export=view&id=([a-zA-Z0-9_-]+)/,
+  ]
+  const match = patterns.map(pattern => text.match(pattern)).find(Boolean)
+  return match?.[1] || ''
+}
+
+// Convert Google Drive URLs to direct thumbnail/image URLs
+const getDriveThumbnailUrl = (url, size = 'w1600') => {
+  const id = extractDriveFileId(url)
+  return id ? `https://drive.google.com/thumbnail?id=${id}&sz=${size}` : url
+}
+
+const getMediaPreviewUrl = (submission) => {
+  const url = submission.videoUrl || submission.mediaUrl
+  return getDriveThumbnailUrl(url)
+}
+
+const isVideoPost = (submission) => submission.videoUrl || /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(String(submission.mediaUrl || ''))
+
 const statusTabs = [
   { id: 'pending', label: 'Pending' },
   { id: 'approved', label: 'Approved' },
@@ -146,6 +173,8 @@ const ManageSocialPosts = () => {
           {visibleSubmissions.map(submission => {
             const id = submission.submissionId || submission.id
             const status = String(submission.status || 'pending').toLowerCase()
+            const mediaUrl = getMediaPreviewUrl(submission)
+            const isVideo = isVideoPost(submission)
 
             return (
               <article key={id} className={`submission-review-card status-${status}`}>
@@ -165,6 +194,15 @@ const ManageSocialPosts = () => {
                       <p style={{ margin: '0.5rem 0 0', color: 'var(--color-text)', lineHeight: 1.5 }}>
                         {submission.caption || 'No caption'}
                       </p>
+                      {mediaUrl && (
+                        <div style={{ marginTop: '0.75rem', maxWidth: '300px' }}>
+                          {isVideo ? (
+                            <video src={mediaUrl} controls playsInline style={{ width: '100%', borderRadius: 'var(--radius-md)', background: '#000' }} />
+                          ) : (
+                            <img src={mediaUrl} alt={submission.caption || 'Submitted post'} style={{ width: '100%', borderRadius: 'var(--radius-md)' }} />
+                          )}
+                        </div>
+                      )}
                       {submission.postUrl && (
                         <a href={submission.postUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--color-primary)', fontSize: '0.875rem', fontWeight: 600 }}>
                           View original post →
