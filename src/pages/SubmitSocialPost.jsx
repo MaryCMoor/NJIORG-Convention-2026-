@@ -11,34 +11,69 @@ const SubmitSocialPost = () => {
     postUrl: '',
     caption: '',
     hashtag: '',
+    mediaFile: null,
+    mediaType: ''
   })
   const [status, setStatus] = useState('idle')
   const [message, setMessage] = useState('')
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    if (!formData.postUrl.trim()) {
+    
+    // Validation - either postUrl OR mediaFile must be provided
+    if (!formData.postUrl.trim() && !formData.mediaFile) {
       setStatus('error')
-      setMessage('Please provide a link to the social media post.')
+      setMessage('Please provide either a link to the social media post OR upload a photo/video.')
       return
     }
 
     setStatus('saving')
     setMessage('Submitting for approval...')
+    
     try {
-      await submitSocialPostToGoogleSheet({
+      // Prepare submission data
+      const submissionData = {
         ...formData,
         status: 'pending',
         postedAt: new Date().toISOString(),
-      })
+      }
+      
+      // If we have a file, we need to handle it differently
+      if (formData.mediaFile) {
+        // Convert file to base64 for transmission
+        const base64 = await fileToBase64(formData.mediaFile)
+        submissionData.mediaFile = base64
+        submissionData.mediaType = formData.mediaFile.type
+        submissionData.fileName = formData.mediaFile.name
+      }
+      
+      await submitSocialPostToGoogleSheet(submissionData)
       setStatus('success')
       setMessage('Thank you! Your post has been submitted for admin approval.')
-      setFormData({ author: '', handle: '', platform: 'Instagram', postUrl: '', caption: '', hashtag: '' })
+      setFormData({ 
+        author: '', 
+        handle: '', 
+        platform: 'Instagram', 
+        postUrl: '', 
+        caption: '', 
+        hashtag: '',
+        mediaFile: null,
+        mediaType: ''
+      })
     } catch (error) {
       console.error(error)
       setStatus('error')
       setMessage(error.message || 'Submission failed. Please try again later.')
     }
+  }
+
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = () => resolve(reader.result.split(',')[1]) // Remove data:image/jpeg;base64, prefix
+      reader.onerror = error => reject(error)
+    })
   }
 
   return (
@@ -47,11 +82,11 @@ const SubmitSocialPost = () => {
         <span className="area-icon"><Send size={34} /></span>
         <p className="area-kicker">Social Wall Submissions</p>
         <h1>Submit a Social Post</h1>
-        <p>Share your convention moments from social media. An admin will approve before it appears on the Social Wall.</p>
+        <p>Share your convention moments from social media or upload photos/videos directly. An admin will approve before it appears on the Social Wall.</p>
       </section>
 
       <section className="area-info-card submission-card">
-        <h2><Send size={22} /> Submit a post</h2>
+        <h2><Send size={22} /> Submit a post</h1>
         <form className="submission-form" onSubmit={handleSubmit}>
           <label>
             Your name *
@@ -86,16 +121,46 @@ const SubmitSocialPost = () => {
               <option value="Other">Other</option>
             </select>
           </label>
-          <label>
-            Post URL *
-            <input
-              type="url"
-              value={formData.postUrl}
-              onChange={event => setFormData(prev => ({ ...prev, postUrl: event.target.value }))}
-              placeholder="https://instagram.com/p/... or https://tiktok.com/@.../video/..."
-              required
-            />
-          </label>
+          
+          {/* Either post URL OR file upload */}
+          <div className="input-option">
+            <label>
+              Post URL *
+              <input
+                type="url"
+                value={formData.postUrl}
+                onChange={event => setFormData(prev => ({ ...prev, postUrl: event.target.value, mediaFile: null, mediaType: '' }))}
+                placeholder="https://instagram.com/p/... or https://tiktok.com/@.../video/... (optional if uploading file)"
+                required={!formData.mediaFile}
+              />
+            </label>
+          </div>
+          
+          <div className="input-option">
+            <label>
+              Or upload photo/video *
+              <input
+                type="file"
+                accept="image/*,video/*"
+                onChange={event => {
+                  const file = event.target.files[0]
+                  setFormData(prev => ({ 
+                    ...prev, 
+                    mediaFile: file,
+                    mediaType: file ? file.type : '',
+                    postUrl: file ? '' : formData.postUrl
+                  }))
+                }}
+                required={!formData.postUrl.trim()}
+              />
+              {formData.mediaFile && (
+                <p className="file-selected">
+                  Selected: {formData.mediaFile.name} ({formData.mediaType.split('/')[0].toUpperCase()})
+                </p>
+              )}
+            </label>
+          </div>
+
           <label>
             Caption / description
             <textarea
@@ -128,10 +193,11 @@ const SubmitSocialPost = () => {
       <section className="area-info-card">
         <h2>How it works</h2>
         <ul>
-          <li>Paste a link to your public social media post (Instagram, TikTok, Facebook, Twitter/X, etc.)</li>
+          <li>Either paste a link to your public social media post (Instagram, TikTok, Facebook, Twitter/X, etc.) OR upload a photo/video directly</li>
           <li>Add your name, handle, and any caption or hashtag</li>
           <li>Admin reviews and approves — then it appears on the Social Wall for everyone to see</li>
-          <li>Your original post link is preserved so viewers can engage on the platform</li>
+          <li>If you provided a URL, your original post link is preserved so viewers can engage on the platform</li>
+          <li>If you uploaded a file, it will be hosted on our Google Drive and displayed on the Social Wall</li>
         </ul>
       </section>
 

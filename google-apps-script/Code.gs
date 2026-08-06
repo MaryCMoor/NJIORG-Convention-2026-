@@ -233,7 +233,7 @@ function updateMember(body) {
   if (rowNumber === -1) return jsonResponse({ ok: false, success: false, error: 'Member not found' });
   writeObjectRow(sheet, rowNumber, headers, buildMemberData(body, memberId));
   syncSpeakerFromMember(body, memberId);
-  return jsonResponse({ ok: true, success: true, action: 'updateMember', memberId: memberId, updatedAt: new Date().toISOString() });
+  return jsonResponse({ ok: true, success: true, action: 'updateMember', memberId: memberId, updatedAt: new Date().toISOString() };
 }
 
 function getSpeakersSheet() {
@@ -561,7 +561,41 @@ function submitSocialPost(body) {
   const sheet = getSocialPostSubmissionsSheet();
   const headers = ensureHeaders(sheet, ['submissionId', 'status', 'author', 'handle', 'platform', 'postUrl', 'caption', 'hashtag', 'mediaUrl', 'videoUrl', 'submittedAt', 'reviewedAt', 'reviewedBy', 'reviewNotes']);
   const submissionId = body.submissionId || 'socialpost_' + Date.now();
-  writeObjectRow(sheet, sheet.getLastRow() + 1, headers, buildSocialPostSubmissionData(Object.assign({}, body, { status: 'pending' }), submissionId));
+  let mediaUrl = body.mediaUrl || '';
+  let videoUrl = body.videoUrl || '';
+  let reviewNotes = body.reviewNotes || '';
+
+  // Handle file upload for media (image or video)
+  if (body.fileData && body.fileName) {
+    const bytes = Utilities.base64Decode(body.fileData);
+    const blob = Utilities.newBlob(bytes, body.mimeType || 'application/octet-stream', body.fileName);
+    const file = getGalleryUploadFolder().createFile(blob);
+    const fileUrl = 'https://drive.google.com/uc?export=view&id=' + file.getId();
+
+    // Determine if it's a video based on mimeType or file extension
+    const isVideo = body.mimeType && body.mimeType.startsWith('video/') ||
+                    body.fileName && /\.(mp4|webm|ogg|mov)$/i.test(body.fileName);
+
+    if (isVideo) {
+      videoUrl = fileUrl;
+    } else {
+      mediaUrl = fileUrl;
+    }
+
+    // Try to set sharing (admins can adjust later if needed)
+    try {
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    } catch (shareError) {
+      reviewNotes = 'Uploaded, but automatic link sharing failed: ' + String(shareError);
+    }
+  }
+
+  writeObjectRow(sheet, sheet.getLastRow() + 1, headers, buildSocialPostSubmissionData(Object.assign({}, body, { 
+    status: 'pending', 
+    mediaUrl: mediaUrl,
+    videoUrl: videoUrl,
+    reviewNotes: reviewNotes
+  }), submissionId));
   return jsonResponse({ ok: true, success: true, action: 'submitSocialPost', submissionId: submissionId });
 }
 
