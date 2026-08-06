@@ -42,7 +42,7 @@ const requiredRoleOptions = [
   'Pledge',
   'Other',
 ];
-const dressCodeOptions = ['Casual', 'Business Casual', 'Formal', 'Rainbow Dress', 'Grand Officer Attire', 'Comfortable Shoes', 'Theme Attire'];
+const dressCodeOptions = ['Casual', 'Business Casual', 'Formal', 'Rainbow Dress', 'Grand Officer Attire', 'Comfortable Shoes', 'Theme Attire', 'Assembly polo', 'khaki skirt'];
 const statusOptions = ['scheduled', 'in-progress', 'completed', 'cancelled'];
 
 const splitList = (value, fallback = []) => {

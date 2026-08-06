@@ -233,7 +233,7 @@ function updateMember(body) {
   if (rowNumber === -1) return jsonResponse({ ok: false, success: false, error: 'Member not found' });
   writeObjectRow(sheet, rowNumber, headers, buildMemberData(body, memberId));
   syncSpeakerFromMember(body, memberId);
-  return jsonResponse({ ok: true, success: true, action: 'updateMember', memberId: memberId, updatedAt: new Date().toISOString() };
+  return jsonResponse({ ok: true, success: true, action: 'updateMember', memberId: memberId, updatedAt: new Date().toISOString() });
 }
 
 function getSpeakersSheet() {
@@ -364,12 +364,12 @@ function createAssembly(body) {
 function updateAssembly(body) {
   const sheet = getAssembliesSheet();
   const headers = ensureHeaders(sheet, ['assemblyId', 'assemblyName', 'motherAdvisor', 'termTheme', 'galleryMediaUrls', 'galleryDriveFolderId', 'galleryImageUrls', 'notes']);
-  const assemblyId = body.assemblyId || body.id;
-  if (!assemblyId) return jsonResponse({ ok: false, success: false, error: 'Missing assemblyId' });
-  const rowNumber = findRowById(sheet, headers, 'assemblyId', assemblyId);
-  if (rowNumber === -1) return createAssembly(Object.assign({}, body, { assemblyId: assemblyId }));
-  writeObjectRow(sheet, rowNumber, headers, buildAssemblyData(body, assemblyId));
-  return jsonResponse({ ok: true, success: true, action: 'updateAssembly', assemblyId: assemblyId, updatedAt: new Date().toISOString() });
+  const assignmentId = body.assignmentId || body.id;
+  if (!assignmentId) return jsonResponse({ ok: false, success: false, error: 'Missing assignmentId' });
+  const rowNumber = findRowById(sheet, headers, 'assignmentId', assignmentId);
+  if (rowNumber === -1) return createAssembly(Object.assign({}, body, { assignmentId: assignmentId }));
+  writeObjectRow(sheet, rowNumber, headers, buildAssemblyData(body, assignmentId));
+  return jsonResponse({ ok: true, success: true, action: 'updateAssignment', assignmentId: assignmentId, updatedAt: new Date().toISOString() });
 }
 
 function getSocialPostsSheet() {
@@ -638,6 +638,38 @@ function reviewSocialPostSubmission(body) {
     const socialPostsSheet = getSocialPostsSheet();
     const socialHeaders = ensureHeaders(socialPostsSheet, ['postId', 'platform', 'author', 'handle', 'postUrl', 'caption', 'mediaUrl', 'videoUrl', 'hashtag', 'postedAt', 'likes', 'comments', 'status']);
     const postId = 'social_' + Date.now();
+    
+    // Handle media upload if present in the submission data
+    let finalMediaUrl = nextData.mediaUrl;
+    let finalVideoUrl = nextData.videoUrl;
+    
+    if (body.mediaData && body.mediaFile && body.mediaType) {
+      // Admin uploaded new media during approval
+      const bytes = Utilities.base64Decode(body.mediaData);
+      const blob = Utilities.newBlob(bytes, body.mediaType, body.mediaFile);
+      const file = getGalleryUploadFolder().createFile(blob);
+      const fileUrl = 'https://drive.google.com/uc?export=view&id=' + file.getId();
+      
+      // Determine if it's a video based on mediaType or file name
+      const isVideo = body.mediaType && body.mediaType.startsWith('video/') ||
+                      body.mediaFile && /\.(mp4|webm|ogg|mov)$/i.test(body.mediaFile);
+      
+      if (isVideo) {
+        finalVideoUrl = fileUrl;
+      } else {
+        finalMediaUrl = fileUrl;
+      }
+      
+      // Try to set sharing (admins can adjust later if needed)
+      try {
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      } catch (shareError) {
+        // Log error but don't fail the submission
+        Logger.log('Failed to set sharing on uploaded file: ' + shareError);
+      }
+    }
+    // If no new media was uploaded, keep the existing mediaUrl/videoUrl from the submission
+    
     writeObjectRow(socialPostsSheet, socialPostsSheet.getLastRow() + 1, socialHeaders, {
       postId: postId,
       platform: nextData.platform,
@@ -645,8 +677,8 @@ function reviewSocialPostSubmission(body) {
       handle: nextData.handle,
       postUrl: nextData.postUrl,
       caption: nextData.caption,
-      mediaUrl: nextData.mediaUrl,
-      videoUrl: nextData.videoUrl,
+      mediaUrl: finalMediaUrl,
+      videoUrl: finalVideoUrl,
       hashtag: nextData.hashtag,
       postedAt: nextData.submittedAt,
       likes: 0,
