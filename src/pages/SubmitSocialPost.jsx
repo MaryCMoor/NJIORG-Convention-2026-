@@ -86,7 +86,7 @@ const SubmitSocialPost = () => {
       </section>
 
       <section className="area-info-card submission-card">
-        <h2><Send size={22} /> Submit a post</h1>
+        <h2><Send size={22} /> Submit a post</h2>
         <form className="submission-form" onSubmit={handleSubmit}>
           <label>
             Your name *
