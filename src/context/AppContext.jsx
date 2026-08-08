@@ -181,6 +181,15 @@ export const AppProvider = ({ children }) => {
       }
       setSheetData({ ...data, assemblies, socialPosts, socialPostSubmissions, gallerySubmissions })
       setSheetStatus('loaded')
+      
+      // Also refresh app config
+      try {
+        const config = await loadAppConfigFromGoogleSheet()
+        setAppConfig(config)
+      } catch (configError) {
+        console.warn('Failed to refresh app config:', configError)
+      }
+      
       return true
     } catch (error) {
       console.warn('Failed to refresh Google Sheet data:', error)
