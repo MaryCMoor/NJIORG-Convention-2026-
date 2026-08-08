@@ -9,22 +9,6 @@ import { useApp } from '../context/AppContext'
 import '../components/ui/UIComponents.css'
 import './Gallery.css'
 
-const repoGalleryFiles = import.meta.glob('../assets/gallery/**/*.{jpg,jpeg,png,webp,gif,JPG,JPEG,PNG,WEBP,GIF,mp4,webm,ogg,mov,MP4,WEBM,OGG,MOV}', {
-  eager: true,
-  query: '?url',
-  import: 'default',
-})
-
-const titleFromPath = (path) => {
-  const fileName = path.split('/').pop() || 'Gallery item'
-  return fileName
-    .replace(/\.[^.]+$/, '')
-    .replace(/[-_]+/g, ' ')
-    .replace(/\b\w/g, letter => letter.toUpperCase())
-}
-
-const isVideoPath = (path) => /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(String(path || ''))
-
 const extractDriveFileId = (url) => {
   const text = String(url || '')
   const patterns = [
@@ -42,32 +26,6 @@ const getDriveThumbnailUrl = (url, size = 'w1600') => {
   const id = extractDriveFileId(url)
   return id ? `https://drive.google.com/thumbnail?id=${id}&sz=${size}` : url
 }
-
-const repoGalleryItems = Object.entries(repoGalleryFiles).map(([path, url], index) => {
-  const mediaType = isVideoPath(path) ? 'video' : 'image'
-  return {
-    id: `repo-gallery-${index + 1}`,
-    url,
-    imageUrl: mediaType === 'image' ? url : '',
-    videoUrl: mediaType === 'video' ? url : '',
-    mediaType,
-    title: titleFromPath(path),
-    description: '',
-    caption: '',
-    category: 'Convention',
-    day: '',
-    photographer: 'Convention Team',
-    tags: [],
-    thumbnail: mediaType === 'image' ? url : '',
-    featured: false,
-    likes: 0,
-    comments: 0,
-    liked: false,
-    uploadedBy: 'GitHub gallery folder',
-    uploadDate: '',
-    source: 'github-folder',
-  }
-})
 
 const Gallery = () => {
   const { sheetData, appConfig, currentUser, refreshSheetData } = useApp()
@@ -112,7 +70,7 @@ const Gallery = () => {
     })
     .filter(item => item.url), [sheetData.gallerySubmissions])
 
-  const photos = useMemo(() => [...sheetData.gallery, ...approvedSubmissions, ...repoGalleryItems], [sheetData.gallery, approvedSubmissions])
+  const photos = useMemo(() => [...sheetData.gallery, ...approvedSubmissions], [sheetData.gallery, approvedSubmissions])
   const categories = [...new Set(photos.map(p => p.category))].sort()
   const days = [...new Set(photos.map(p => p.day))].sort()
 
