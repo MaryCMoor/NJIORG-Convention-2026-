@@ -6,7 +6,7 @@ import './Layout.css'
 const Layout = () => {
   const location = useLocation()
   const navigate = useNavigate()
-  const { selectedRole, clearRole, currentUser, logout, sidebarOpen, setSidebarOpen, sheetData } = useApp()
+  const { selectedRole, clearRole, currentUser, logout, sidebarOpen, setSidebarOpen, sheetData, appConfig } = useApp()
   const [isAppMounted, setIsAppMounted] = useState(false)
   const [showRoleChange, setShowRoleChange] = useState(false)
   const [keyboardOpen, setKeyboardOpen] = useState(false)
@@ -44,6 +44,7 @@ const Layout = () => {
       { path: '/', icon: 'home', label: 'Home', roles: ['attendee', 'grand_officer', 'advisor', 'administrator'] },
       { path: '/schedule', icon: 'calendar', label: 'Schedule', roles: ['attendee', 'grand_officer', 'advisor', 'administrator'] },
       { path: '/directory', icon: 'users', label: 'People', roles: ['attendee', 'grand_officer', 'advisor', 'administrator'] },
+      { path: '/elected-grand-officers', icon: 'crown', label: 'Elected Officers', roles: ['attendee', 'grand_officer', 'advisor', 'administrator'], requiresConfig: 'showElectedGrandOfficers' },
     ]
 
     const roleItems = {
@@ -68,7 +69,9 @@ const Layout = () => {
       ],
     }
 
-    return [...baseItems, ...(roleItems[selectedRole] || [])].filter(item => item.roles.includes(selectedRole))
+    return [...baseItems, ...(roleItems[selectedRole] || [])]
+      .filter(item => item.roles.includes(selectedRole))
+      .filter(item => !item.requiresConfig || appConfig?.[item.requiresConfig] === true)
   }, [selectedRole])
 
   const navItems = getNavItems()
