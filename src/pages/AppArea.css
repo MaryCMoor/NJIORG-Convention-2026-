@@ -216,7 +216,8 @@
 }
 
 .person-photo {
-  min-height: 128px;
+  height: 160px;
+  min-height: 160px;
   display: grid;
   place-items: center;
   gap: 0.35rem;
@@ -224,6 +225,15 @@
     radial-gradient(circle at 22% 12%, rgba(212, 175, 55, 0.22), transparent 32%),
     linear-gradient(145deg, #050505, #171717);
   color: var(--color-gold-400);
+  overflow: hidden;
+}
+
+.person-photo > img,
+.person-photo > svg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
 }
 
 .person-photo span {
@@ -2661,6 +2671,7 @@
 
 .elected-photo {
   position: relative;
+  height: 160px;
   min-height: 160px;
   display: grid;
   place-items: center;
@@ -2669,6 +2680,15 @@
     radial-gradient(circle at 22% 12%, rgba(212, 175, 55, 0.22), transparent 32%),
     linear-gradient(145deg, #050505, #171717);
   color: var(--color-gold-400);
+  overflow: hidden;
+}
+
+.elected-photo > img,
+.elected-photo > svg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
 }
 
 .elected-photo span {
