@@ -6,7 +6,7 @@ import { loadPublishedMemberRows, normalizeSheetRowForAdminMember } from '../../
 import { saveMemberToGoogleSheet, updateMemberInGoogleSheet } from '../../utils/appsScriptApi';
 import './ManageSchedule.css';
 
-const categoryOptions = ['Grand Officers', 'Mother Advisors', 'Adult Grand Executive Committee', 'Majority Committee'];
+const categoryOptions = ['Grand Officers', 'Elected Grand Officers', 'Mother Advisors', 'Adult Grand Executive Committee', 'Majority Committee'];
 
 const blankForm = () => ({
   name: '',

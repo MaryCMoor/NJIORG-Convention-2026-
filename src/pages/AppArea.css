@@ -2581,3 +2581,170 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Elected Grand Officers Page */
+.elected-grand-officers-page {
+  min-height: 100vh;
+  background: var(--color-background);
+}
+
+.elected-grand-officers-page .app-area-hero {
+  text-align: center;
+}
+
+.elected-grand-officers-page .area-kicker {
+  color: var(--color-gold-300);
+}
+
+.elected-grand-officers-page .app-area-hero h1 {
+  color: var(--color-white);
+}
+
+.elected-grand-officers-page .app-area-hero p {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.preview-notice {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1.25rem;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--color-white);
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.elected-officers-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+@media (min-width: 760px) {
+  .elected-officers-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  .elected-officers-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.elected-officer-card {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  text-decoration: none;
+  box-shadow: 0 12px 28px rgba(28, 20, 10, 0.08);
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  animation: fadeInUp 400ms ease both;
+}
+
+.elected-officer-card:active {
+  transform: scale(0.98);
+}
+
+.elected-officer-card:hover {
+  border-color: var(--color-gold-400);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+  text-decoration: none;
+}
+
+.elected-photo {
+  position: relative;
+  min-height: 160px;
+  display: grid;
+  place-items: center;
+  gap: 0.35rem;
+  background:
+    radial-gradient(circle at 22% 12%, rgba(212, 175, 55, 0.22), transparent 32%),
+    linear-gradient(145deg, #050505, #171717);
+  color: var(--color-gold-400);
+}
+
+.elected-photo span {
+  color: rgba(255, 244, 210, 0.68);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.elected-photo svg {
+  color: var(--color-gold-400);
+}
+
+.admin-preview-badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--color-gold-500);
+  color: var(--color-charcoal);
+  font-size: 0.625rem;
+  font-weight: 900;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.elected-copy {
+  padding: 0.9rem;
+  text-align: center;
+}
+
+.elected-copy h3 {
+  margin: 0 0 0.25rem;
+  color: var(--color-charcoal);
+  font-size: 1.05rem;
+  line-height: 1.1;
+  font-weight: 900;
+}
+
+.officer-position {
+  margin: 0 0 0.25rem;
+  color: var(--color-primary);
+  font-size: 0.88rem;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.officer-assembly {
+  margin: 0;
+  color: var(--color-text-light);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+[data-theme="dark"] .elected-copy h3,
+[data-theme="dark"] .elected-officer-card {
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .elected-copy h3 {
+  color: var(--color-text);
+}

@@ -23,6 +23,7 @@ import Speakers from './pages/Speakers'
 import NJAssemblies from './pages/NJAssemblies'
 import SocialWall from './pages/SocialWall'
 import Gallery from './pages/Gallery'
+import ElectedGrandOfficers from './pages/ElectedGrandOfficers'
 import SubmitPhotos from './pages/SubmitPhotos'
 import SubmitSocialPost from './pages/SubmitSocialPost'
 import Awards from './pages/Awards'
@@ -89,6 +90,7 @@ const AppRoutes = () => {
             <Route path="assemblies" element={<NJAssemblies />} />
             <Route path="social-wall" element={<SocialWall />} />
             <Route path="gallery" element={<Gallery />} />
+                      <Route path="elected-grand-officers" element={<ElectedGrandOfficers />} />
                       <Route path="submit-photos" element={<SubmitPhotos />} />
                       <Route path="submit-social" element={<SubmitSocialPost />} />
                       <Route path="awards" element={<Awards />} />

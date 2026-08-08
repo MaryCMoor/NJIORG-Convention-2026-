@@ -39,6 +39,7 @@ export const ADMIN_CONFIG = {
     { id: 'schedule', label: 'Manage Schedule', icon: 'Calendar' },
     { id: 'announcements', label: 'Announcements', icon: 'Megaphone' },
     { id: 'members', label: 'Meet NJ Rainbow', icon: 'Users' },
+    { id: 'elected-officers', label: 'Elected Grand Officers', icon: 'Crown' },
     { id: 'assemblies', label: 'NJ Assemblies', icon: 'Landmark' },
     { id: 'social', label: 'Social Feed', icon: 'Hash' },
     { id: 'social-posts', label: 'Social Post Submissions', icon: 'Hash' },
