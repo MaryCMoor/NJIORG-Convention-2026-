@@ -32,6 +32,7 @@ const AdminDashboard = () => {
     { label: 'Manage Schedule', description: 'Add, edit, and review Google Sheet events.', to: `${ADMIN_CONFIG.routePrefix}/schedule`, icon: CalendarIcon, primary: true },
     { label: 'Announcements', description: 'Create updates and ticker alerts from Notifications.', to: `${ADMIN_CONFIG.routePrefix}/announcements`, icon: Megaphone, primary: false },
     { label: 'Meet NJ Rainbow', description: 'Manage member profiles, photos, bios, videos, and speaker toggle.', to: `${ADMIN_CONFIG.routePrefix}/members`, icon: Users, primary: false },
+    { label: 'Elected Grand Officers', description: 'Manage 2026-2027 elected grand officers.', to: `${ADMIN_CONFIG.routePrefix}/elected-officers`, icon: Crown, primary: false },
     { label: 'NJ Assemblies', description: 'Manage assemblies, Mother Advisors, term themes, and photos.', to: `${ADMIN_CONFIG.routePrefix}/assemblies`, icon: Landmark, primary: false },
     { label: 'Social Feed', description: 'Add social posts with likes, comments, media, and links.', to: `${ADMIN_CONFIG.routePrefix}/social`, icon: Hash, primary: false },
     { label: 'Social Post Submissions', description: 'Approve or reject guest social media post submissions.', to: `${ADMIN_CONFIG.routePrefix}/social-posts`, icon: Hash, primary: false },
