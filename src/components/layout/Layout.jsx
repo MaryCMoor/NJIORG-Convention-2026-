@@ -6,7 +6,7 @@ import './Layout.css'
 const Layout = () => {
   const location = useLocation()
   const navigate = useNavigate()
-  const { selectedRole, clearRole, currentUser, logout, sidebarOpen, setSidebarOpen, sheetData, appConfig } = useApp()
+  const { selectedRole, clearRole, currentUser, logout, sidebarOpen, setSidebarOpen, sheetData, appConfig, refreshSheetData } = useApp()
   const [isAppMounted, setIsAppMounted] = useState(false)
   const [showRoleChange, setShowRoleChange] = useState(false)
   const [keyboardOpen, setKeyboardOpen] = useState(false)
@@ -105,6 +105,8 @@ const Layout = () => {
     clearRole()
     setShowRoleChange(true)
     setSidebarOpen(false)
+    // Refresh app config when role changes to pick up visibility settings
+    refreshSheetData()
   }
 
   if (!isAppMounted) {
