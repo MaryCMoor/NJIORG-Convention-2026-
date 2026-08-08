@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Heart, Users, Crown, Eye, EyeOff } from 'lucide-react'
+import { ArrowLeft, Heart, Users, Crown } from 'lucide-react'
 import { useApp } from '../context/AppContext'
-import { useAdmin } from '../context/AdminContext'
 import { loadElectedOfficersFromGoogleSheet } from '../utils/appsScriptApi'
 import './AppArea.css'
 
@@ -24,31 +23,10 @@ const getDirectImageUrl = (url) => {
 
 const ElectedGrandOfficers = () => {
   const { appConfig } = useApp()
-  const { config: adminConfig } = useAdmin()
   const navigate = useNavigate()
   
-  // Check if the page should be visible
-  const [isVisible, setIsVisible] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [electedOfficers, setElectedOfficers] = useState([])
-
-  useEffect(() => {
-    // Check visibility from admin config
-    const checkVisibility = () => {
-      // First check if admin config has the visibility flag
-      if (adminConfig && typeof adminConfig.showElectedGrandOfficers === 'boolean') {
-        setIsVisible(adminConfig.showElectedGrandOfficers)
-      }
-      // Fallback to appConfig if available
-      else if (appConfig && typeof appConfig.showElectedGrandOfficers === 'boolean') {
-        setIsVisible(appConfig.showElectedGrandOfficers)
-      } else {
-        setIsVisible(false)
-      }
-      setIsLoading(false)
-    }
-    checkVisibility()
-  }, [adminConfig, appConfig])
 
   // Load elected officers from dedicated sheet
   useEffect(() => {
@@ -59,12 +37,14 @@ const ElectedGrandOfficers = () => {
       } catch (error) {
         console.error('Failed to load elected officers:', error);
         setElectedOfficers([]);
+      } finally {
+        setIsLoading(false);
       }
     }
     loadOfficers();
   }, [])
 
-  // If not visible and not admin, redirect to home
+  // If loading show loading state
   if (isLoading) {
     return (
       <div className="app-area-page elected-grand-officers-page">
@@ -76,34 +56,6 @@ const ElectedGrandOfficers = () => {
         </section>
       </div>
     )
-  }
-
-  if (!isVisible) {
-    // If admin, show preview message
-    const { selectedRole, adminUnlocked } = useApp()
-    if (selectedRole === 'administrator' && adminUnlocked) {
-      return (
-        <div className="app-area-page elected-grand-officers-page">
-          <section className="app-area-hero compact-hero">
-            <span className="area-icon"><Crown size={34} /></span>
-            <p className="area-kicker">2026-2027</p>
-            <h1>Elected Grand Officers</h1>
-            <p>This page is currently <strong>hidden</strong> from the public.</p>
-            <p>Use the <strong>Preview</strong> button in Admin Settings to view this page, or enable <strong>Show Elected Grand Officers</strong> to make it public.</p>
-            <div className="preview-notice">
-              <Eye size={24} />
-              <span>Admin Preview Mode - Public cannot see this page</span>
-            </div>
-          </section>
-          
-          {/* Still show the content for admin preview */}
-          <ElectedOfficersGrid officers={electedOfficers} isPreview={true} />
-        </div>
-      )
-    }
-    // Redirect non-admin users
-    navigate('/')
-    return null
   }
 
   return (

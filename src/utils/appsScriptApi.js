@@ -29,6 +29,7 @@ export const DEFAULT_APP_CONFIG = {
   tiktokUrl: '',
   websiteUrl: '',
   hashtag: '',
+  showElectedGrandOfficers: true
 }
 
 const dayFromDate = (isoString, fallbackDay) => {

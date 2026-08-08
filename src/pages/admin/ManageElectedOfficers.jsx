@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  Search, Filter, Plus, Download, ChevronDown, ChevronUp, X, Eye, Edit, RefreshCw, ChevronLeft, ChevronRight, UserRound, Crown, ToggleRight, ToggleLeft, Save
+  Search, Filter, Plus, Download, ChevronDown, ChevronUp, X, Eye, Edit, RefreshCw, ChevronLeft, ChevronRight, UserRound, Crown
 } from 'lucide-react'
 import { normalizeSheetRowForAdminMember } from '../../utils/googleSheetData'
-import { loadElectedOfficersFromGoogleSheet, saveElectedOfficerToGoogleSheet, updateElectedOfficerInGoogleSheet, saveAppConfigToGoogleSheet } from '../../utils/appsScriptApi'
-import { useApp } from '../../context/AppContext'
+import { loadElectedOfficersFromGoogleSheet, saveElectedOfficerToGoogleSheet, updateElectedOfficerInGoogleSheet } from '../../utils/appsScriptApi'
 import './ManageSchedule.css'
 
 // Helper to convert Google Drive sharing links to thumbnail URLs
@@ -40,7 +39,6 @@ const blankForm = () => ({
 const sortValue = (member, field) => String(member[field] || '').toLowerCase();
 
 const ManageElectedOfficers = () => {
-  const { appConfig, setAppConfig } = useApp()
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -56,19 +54,6 @@ const ManageElectedOfficers = () => {
   const [sheetSaveStatus, setSheetSaveStatus] = useState('idle');
   const [sheetSaveMessage, setSheetSaveMessage] = useState('');
   const [formData, setFormData] = useState(blankForm);
-  const [showVisibilityToggle, setShowVisibilityToggle] = useState(true);
-
-  const isVisible = appConfig?.showElectedGrandOfficers === true
-
-  const toggleVisibility = async () => {
-    const newConfig = { ...appConfig, showElectedGrandOfficers: !isVisible }
-    try {
-      await saveAppConfigToGoogleSheet(newConfig)
-      setAppConfig(newConfig)
-    } catch (error) {
-      console.error('Failed to save visibility:', error)
-    }
-  }
 
   const refreshMembers = async () => {
     setLoading(true);
@@ -236,35 +221,6 @@ const ManageElectedOfficers = () => {
           </button>
         </div>
       </header>
-
-      <div className="visibility-toggle-section" style={{marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap'}}>
-          <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
-            <span style={{fontWeight: 600}}>Public Page Visibility:</span>
-            <label className="toggle-switch" style={{position: 'relative', width: '52px', height: '28px', cursor: 'pointer'}}>
-              <input
-                type="checkbox"
-                checked={isVisible}
-                onChange={toggleVisibility}
-                style={{opacity: 0, width: 0, height: 0}}
-              />
-              <span className="toggle-slider" style={{
-                position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                backgroundColor: isVisible ? 'var(--color-primary)' : '#ccc',
-                borderRadius: '28px', transition: '.3s'
-              }} />
-            </label>
-            <span style={{fontWeight: 600, color: isVisible ? 'var(--color-primary)' : 'var(--color-text-light)'}}>
-              {isVisible ? 'VISIBLE to everyone' : 'HIDDEN from public'}
-            </span>
-          </div>
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => window.open('/elected-grand-officers', '_blank')}
-            style={{marginLeft: 'auto'}}
-          >
-            <Eye size={18} /><span> Preview Page</span>
-          </button>
-        </div>
 
       {loadError && <div className="sheet-save-message error">{loadError}</div>}
 
