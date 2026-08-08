@@ -45,6 +45,7 @@ import ManageGallery from './pages/admin/ManageGallery'
 import ManageGallerySubmissions from './pages/admin/ManageGallerySubmissions'
 import ManageSocialPosts from './pages/admin/ManageSocialPosts'
 import ManageSurveys from './pages/admin/ManageSurveys'
+import ManageElectedOfficers from './pages/admin/ManageElectedOfficers'
 import AdminSettings from './pages/admin/AdminSettings'
 import './styles/global.css'
 
@@ -108,6 +109,7 @@ const AppRoutes = () => {
             <Route path="schedule/new" element={<ManageSchedule />} />
             <Route path="announcements" element={<ManageAnnouncements />} />
             <Route path="members" element={<ManageMembers />} />
+            <Route path="elected-officers" element={<ManageElectedOfficers />} />
             <Route path="speakers" element={<ManageSpeakers />} />
             <Route path="assemblies" element={<ManageAssemblies />} />
             <Route path="social" element={<ManageSocialFeed />} />
