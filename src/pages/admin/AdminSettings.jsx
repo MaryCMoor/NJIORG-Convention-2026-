@@ -267,37 +267,6 @@ const AdminSettings = () => {
                 <div className="form-field"><label htmlFor="tagline">Tagline</label><input type="text" id="tagline" value={config.general?.tagline||''} onChange={e=>handleConfigChange('general','tagline',e.target.value)} /></div>
                 <div className="form-field full-width"><label htmlFor="description">Description</label><textarea id="description" value={config.general?.description||''} onChange={e=>handleConfigChange('general','description',e.target.value)} rows={3} /></div>
               </div>
-
-              {/* Elected Grand Officers Page Visibility */}
-              <div className="settings-section" style={{marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--color-border)'}}>
-                <h3 className="section-title" style={{fontSize: '1.1rem', marginBottom: '1rem'}}>Elected Grand Officers Page</h3>
-                <div className="settings-grid">
-                  <div className="form-field full-width">
-                    <label style={{display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer'}}>
-                      <input 
-                        type="checkbox" 
-                        checked={config.general?.showElectedGrandOfficers === true} 
-                        onChange={e => handleConfigChange('general', 'showElectedGrandOfficers', e.target.checked)} 
-                        style={{width: '20px', height: '20px', accentColor: 'var(--color-primary)'}}
-                      />
-                      <span style={{fontWeight: '600', fontSize: '1rem'}}>Show Elected Grand Officers Page</span>
-                    </label>
-                    <p className="field-help" style={{marginTop: '0.5rem', color: 'var(--color-text-light)', fontSize: '0.875rem'}}>
-                      When enabled, the "Elected Grand Officers" page will be visible to all users. When disabled, the page is hidden from the public but admins can still preview it in Admin Settings. Add elected officers in the "Meet NJ Rainbow" section with category "Elected Grand Officers".
-                    </p>
-                  </div>
-                  <div className="form-field">
-                    <button 
-                      className="btn btn-secondary" 
-                      type="button"
-                      onClick={() => window.open('/elected-grand-officers', '_blank')}
-                      style={{marginTop: 'auto'}}
-                    >
-                      <Eye size={18} /><span> Preview Page</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
             </section>
           )}
 
