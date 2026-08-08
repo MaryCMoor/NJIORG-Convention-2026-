@@ -268,6 +268,8 @@ function getElectedOfficers() {
 }
 
 function getMembersSheet() {
+  return getSheetByName('Members');
+}
 
 function buildMemberData(body, memberId) {
   return {
