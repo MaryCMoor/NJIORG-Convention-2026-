@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Heart, Users, Crown, Eye, EyeOff } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useAdmin } from '../context/AdminContext'
+import { loadElectedOfficersFromGoogleSheet } from '../utils/appsScriptApi'
 import './AppArea.css'
 
 const getDirectImageUrl = (url) => {
@@ -22,13 +23,14 @@ const getDirectImageUrl = (url) => {
 }
 
 const ElectedGrandOfficers = () => {
-  const { sheetData, appConfig } = useApp()
+  const { appConfig } = useApp()
   const { config: adminConfig } = useAdmin()
   const navigate = useNavigate()
   
   // Check if the page should be visible
   const [isVisible, setIsVisible] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [electedOfficers, setElectedOfficers] = useState([])
 
   useEffect(() => {
     // Check visibility from admin config
@@ -48,10 +50,19 @@ const ElectedGrandOfficers = () => {
     checkVisibility()
   }, [adminConfig, appConfig])
 
-  // Filter only Elected Grand Officers from members
-  const electedOfficers = sheetData.members?.filter(member => 
-    member.category === 'Elected Grand Officers'
-  ) || []
+  // Load elected officers from dedicated sheet
+  useEffect(() => {
+    const loadOfficers = async () => {
+      try {
+        const officers = await loadElectedOfficersFromGoogleSheet();
+        setElectedOfficers(officers);
+      } catch (error) {
+        console.error('Failed to load elected officers:', error);
+        setElectedOfficers([]);
+      }
+    }
+    loadOfficers();
+  }, [])
 
   // If not visible and not admin, redirect to home
   if (isLoading) {
@@ -115,7 +126,7 @@ const ElectedOfficersGrid = ({ officers, isPreview }) => {
       <section className="people-directory" aria-labelledby="people-directory-title">
         <div className="people-directory-header">
           <h2 id="people-directory-title"><Users size={22} /> Elected Grand Officers</h2>
-          <p>No Elected Grand Officers have been added yet. Admins can add them in the <strong>Meet NJ Rainbow</strong> admin section with category "Elected Grand Officers".</p>
+          <p>No Elected Grand Officers have been added yet. Admins can add them in the <strong>Elected Grand Officers</strong> admin section.</p>
         </div>
       </section>
     )

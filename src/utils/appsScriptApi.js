@@ -137,6 +137,57 @@ export const saveMemberToGoogleSheet = async (member) => sendMemberToGoogleSheet
 
 export const updateMemberInGoogleSheet = async (member) => sendMemberToGoogleSheet(member, 'updateMember')
 
+const sendElectedOfficerToGoogleSheet = async (officer, action = 'createElectedOfficer') => {
+  const payload = {
+    action,
+    token: ADMIN_TOKEN,
+    memberId: officer.memberId || officer.id,
+    name: officer.name || '',
+    station: officer.station || officer.position || '',
+    assembly: officer.assembly || '',
+    photo: officer.photo || '',
+    bio: officer.bio || '',
+    videoUrl: officer.videoUrl || '',
+    isSpeaker: officer.isSpeaker === true,
+  }
+
+  const response = await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload),
+  })
+  const text = await response.text()
+  let data = null
+  try {
+    data = JSON.parse(text)
+  } catch {
+    data = { ok: response.ok, raw: text }
+  }
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.error || `Google Sheet save failed (${response.status})`)
+  }
+  return data
+}
+
+export const saveElectedOfficerToGoogleSheet = async (officer) => sendElectedOfficerToGoogleSheet(officer, 'createElectedOfficer')
+
+export const updateElectedOfficerInGoogleSheet = async (officer) => sendElectedOfficerToGoogleSheet(officer, 'updateElectedOfficer')
+
+export const loadElectedOfficersFromGoogleSheet = async () => {
+  const response = await fetch(`${APPS_SCRIPT_URL}?action=getElectedOfficers&cacheBust=${Date.now()}`)
+  const text = await response.text()
+  let data = null
+  try {
+    data = JSON.parse(text)
+  } catch {
+    throw new Error('Elected officers endpoint did not return JSON')
+  }
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.error || `Elected officers fetch failed (${response.status})`)
+  }
+  return data.officers || []
+}
+
 const sendSpeakerToGoogleSheet = async (speaker, action = 'createSpeaker') => {
   const payload = {
     action,

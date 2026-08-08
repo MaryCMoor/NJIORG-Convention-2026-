@@ -21,6 +21,9 @@ function doGet(e) {
   if (action === 'getGallerySubmissions') {
     return getGallerySubmissions();
   }
+  if (action === 'getElectedOfficers') {
+    return getElectedOfficers();
+  }
 
   return jsonResponse({
     ok: true,
@@ -51,6 +54,9 @@ function doPost(e) {
     if (action === 'updateEvent') return updateEvent(body);
     if (action === 'createMember' || action === 'addMember' || action === 'saveMember') return createMember(body);
     if (action === 'updateMember') return updateMember(body);
+    if (action === 'createElectedOfficer' || action === 'addElectedOfficer' || action === 'saveElectedOfficer') return createElectedOfficer(body);
+    if (action === 'updateElectedOfficer') return updateElectedOfficer(body);
+    if (action === 'getElectedOfficers') return getElectedOfficers();
     if (action === 'createSpeaker' || action === 'addSpeaker' || action === 'saveSpeaker') return createSpeaker(body);
     if (action === 'updateSpeaker') return updateSpeaker(body);
     if (action === 'createAssembly' || action === 'addAssembly' || action === 'saveAssembly') return createAssembly(body);
@@ -179,6 +185,89 @@ function updateEvent(body) {
 function getMembersSheet() {
   return getSheetByName('Members');
 }
+
+function getElectedOfficersSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName('2026-2027 Elected Grand Officers');
+  if (!sheet) {
+    sheet = ss.insertSheet('2026-2027 Elected Grand Officers');
+  }
+  ensureHeaders(sheet, ['memberId', 'name', 'station', 'assembly', 'photo', 'bio', 'videoUrl', 'isSpeaker']);
+  return sheet;
+}
+
+function buildElectedOfficerData(body, memberId) {
+  return {
+    memberId: memberId,
+    name: body.name || '',
+    station: body.station || body.position || '',
+    assembly: body.assembly || '',
+    photo: body.photo || '',
+    bio: body.bio || '',
+    videoUrl: body.videoUrl || '',
+    isSpeaker: body.isSpeaker === true ? 'TRUE' : 'FALSE'
+  };
+}
+
+function findElectedOfficerRow(sheet, headers, body) {
+  const memberId = body.memberId || body.id;
+  if (memberId) {
+    const rowById = findRowById(sheet, headers, 'memberId', memberId);
+    if (rowById !== -1) return rowById;
+  }
+
+  const nameIndex = headers.indexOf('name');
+  const stationIndex = headers.indexOf('station');
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2 || nameIndex === -1) return -1;
+
+  const values = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
+  for (let i = 0; i < values.length; i += 1) {
+    const row = values[i];
+    const sameName = String(row[nameIndex] || '') === String(body.originalName || body.name || '');
+    const sameStation = stationIndex === -1 || String(row[stationIndex] || '') === String(body.originalStation || body.station || '');
+    if (sameName && sameStation) return i + 2;
+  }
+  return -1;
+}
+
+function createElectedOfficer(body) {
+  const sheet = getElectedOfficersSheet();
+  const headers = ensureHeaders(sheet, ['memberId', 'name', 'station', 'assembly', 'photo', 'bio', 'videoUrl', 'isSpeaker']);
+  const memberId = body.memberId || 'elected_' + Date.now();
+  writeObjectRow(sheet, sheet.getLastRow() + 1, headers, buildElectedOfficerData(body, memberId));
+  return jsonResponse({ ok: true, success: true, action: 'createElectedOfficer', memberId: memberId });
+}
+
+function updateElectedOfficer(body) {
+  const sheet = getElectedOfficersSheet();
+  const headers = ensureHeaders(sheet, ['memberId', 'name', 'station', 'assembly', 'photo', 'bio', 'videoUrl', 'isSpeaker']);
+  const memberId = body.memberId || body.id || 'elected_' + Date.now();
+  const rowNumber = findElectedOfficerRow(sheet, headers, body);
+  if (rowNumber === -1) return jsonResponse({ ok: false, success: false, error: 'Elected officer not found' });
+  writeObjectRow(sheet, rowNumber, headers, buildElectedOfficerData(body, memberId));
+  return jsonResponse({ ok: true, success: true, action: 'updateElectedOfficer', memberId: memberId, updatedAt: new Date().toISOString() });
+}
+
+function getElectedOfficers() {
+  const sheet = getElectedOfficersSheet();
+  const headers = ensureHeaders(sheet, ['memberId', 'name', 'station', 'assembly', 'photo', 'bio', 'videoUrl', 'isSpeaker']);
+  const lastRow = sheet.getLastRow();
+  const officers = [];
+  if (lastRow >= 2) {
+    const values = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
+    values.forEach(function(row) {
+      const record = {};
+      headers.forEach(function(header, index) {
+        record[header] = row[index] || '';
+      });
+      if (Object.keys(record).some(function(key) { return record[key]; })) officers.push(record);
+    });
+  }
+  return jsonResponse({ ok: true, success: true, action: 'getElectedOfficers', officers: officers });
+}
+
+function getMembersSheet() {
 
 function buildMemberData(body, memberId) {
   return {

@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   Search, Filter, Plus, Download, ChevronDown, ChevronUp, X, Eye, Edit, RefreshCw, ChevronLeft, ChevronRight, UserRound, Crown
 } from 'lucide-react'
-import { loadPublishedMemberRows, normalizeSheetRowForAdminMember } from '../../utils/googleSheetData'
-import { saveMemberToGoogleSheet, updateMemberInGoogleSheet } from '../../utils/appsScriptApi'
+import { normalizeSheetRowForAdminMember } from '../../utils/googleSheetData'
+import { loadElectedOfficersFromGoogleSheet, saveElectedOfficerToGoogleSheet, updateElectedOfficerInGoogleSheet } from '../../utils/appsScriptApi'
 import './ManageSchedule.css'
 
 const ELECTED_CATEGORY = 'Elected Grand Officers';
@@ -42,11 +42,9 @@ const ManageElectedOfficers = () => {
     setLoading(true);
     setLoadError('');
     try {
-      const rows = await loadPublishedMemberRows();
-      const allMembers = rows.map(normalizeSheetRowForAdminMember);
-      // Filter to only Elected Grand Officers
-      const electedOfficers = allMembers.filter(m => m.category === ELECTED_CATEGORY);
-      setMembers(electedOfficers);
+      const rows = await loadElectedOfficersFromGoogleSheet();
+      const officers = rows.map(normalizeSheetRowForAdminMember);
+      setMembers(officers);
     } catch (error) {
       console.error(error);
       setLoadError(error.message || 'Could not load Elected Grand Officers from Google Sheet.');
@@ -134,8 +132,8 @@ const ManageElectedOfficers = () => {
 
     try {
       const result = editingMember
-        ? await updateMemberInGoogleSheet(formData)
-        : await saveMemberToGoogleSheet(formData);
+        ? await updateElectedOfficerInGoogleSheet(formData)
+        : await saveElectedOfficerToGoogleSheet(formData);
       const savedMember = normalizeSheetRowForAdminMember({
         ...formData,
         memberId: result.memberId || formData.memberId || editingMember?.memberId,
@@ -185,7 +183,7 @@ const ManageElectedOfficers = () => {
             Elected Grand Officers 2026-2027
           </h1>
           <p className="page-subtitle">
-            Reading directly from the Google Sheet Members tab · {filteredMembers.length} of {members.length} elected officers
+            Reading directly from the Google Sheet "2026-2027 Elected Grand Officers" tab · {filteredMembers.length} of {members.length} elected officers
           </p>
         </div>
         <div className="header-actions">
