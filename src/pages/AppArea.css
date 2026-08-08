@@ -216,8 +216,8 @@
 }
 
 .person-photo {
-  height: 200px;
-  min-height: 200px;
+  height: 300px;
+  min-height: 300px;
   display: grid;
   place-items: center;
   gap: 0.35rem;
@@ -2671,8 +2671,8 @@
 
 .elected-photo {
   position: relative;
-  height: 200px;
-  min-height: 200px;
+  height: 300px;
+  min-height: 300px;
   display: grid;
   place-items: center;
   gap: 0.35rem;
