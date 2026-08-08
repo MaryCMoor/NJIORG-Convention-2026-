@@ -1,10 +1,27 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react'
 import {
   Search, Filter, Plus, Download, ChevronDown, ChevronUp, X, Eye, Edit, RefreshCw, ChevronLeft, ChevronRight, UserRound
-} from 'lucide-react';
-import { loadPublishedMemberRows, normalizeSheetRowForAdminMember } from '../../utils/googleSheetData';
-import { saveMemberToGoogleSheet, updateMemberInGoogleSheet } from '../../utils/appsScriptApi';
-import './ManageSchedule.css';
+} from 'lucide-react'
+import { loadPublishedMemberRows, normalizeSheetRowForAdminMember } from '../../utils/googleSheetData'
+import { saveMemberToGoogleSheet, updateMemberInGoogleSheet } from '../../utils/appsScriptApi'
+import './ManageSchedule.css'
+
+// Helper to convert Google Drive sharing links to thumbnail URLs
+const convertDriveLinkToThumbnail = (url) => {
+  if (!url) return ''
+  try {
+    const parsed = new URL(url)
+    if (parsed.hostname.includes('drive.google.com')) {
+      const parts = parsed.pathname.split('/').filter(Boolean)
+      const fileIndex = parts.indexOf('d')
+      const id = fileIndex >= 0 ? parts[fileIndex + 1] : parsed.searchParams.get('id')
+      return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w200` : url
+    }
+    return url
+  } catch {
+    return url
+  }
+}
 
 const categoryOptions = ['Grand Officers', 'Elected Grand Officers', 'Mother Advisors', 'Adult Grand Executive Committee', 'Majority Committee'];
 
@@ -132,9 +149,15 @@ const ManageMembers = () => {
     setSheetSaveMessage(editingMember ? 'Updating member in Google Sheet...' : 'Saving member to Google Sheet...');
 
     try {
+      // Convert Google Drive photo link to thumbnail format
+      const dataToSave = {
+        ...formData,
+        photo: convertDriveLinkToThumbnail(formData.photo)
+      }
+
       const result = editingMember
-        ? await updateMemberInGoogleSheet(formData)
-        : await saveMemberToGoogleSheet(formData);
+        ? await updateMemberInGoogleSheet(dataToSave)
+        : await saveMemberToGoogleSheet(dataToSave);
       const savedMember = normalizeSheetRowForAdminMember({
         ...formData,
         memberId: result.memberId || formData.memberId || editingMember?.memberId,
@@ -278,7 +301,13 @@ const ManageMembers = () => {
                 <div className="form-field"><label htmlFor="station">Station/Position *</label><input type="text" id="station" value={formData.station} onChange={event => setFormData({...formData, station: event.target.value})} required /></div>
                 <div className="form-field"><label htmlFor="category">Category</label><select id="category" value={formData.category} onChange={event => setFormData({...formData, category: event.target.value})}>{categoryOptions.map(category => <option key={category} value={category}>{category}</option>)}</select></div>
                 <div className="form-field"><label htmlFor="assembly">Assembly</label><input type="text" id="assembly" value={formData.assembly} onChange={event => setFormData({...formData, assembly: event.target.value})} /></div>
-                <div className="form-field full-width"><label htmlFor="photo">Photo URL</label><input type="url" id="photo" value={formData.photo} onChange={event => setFormData({...formData, photo: event.target.value})} placeholder="https://..." /></div>
+                <div className="form-field full-width"><label htmlFor="photo">Photo URL</label><input type="url" id="photo" value={formData.photo} onChange={event => setFormData({...formData, photo: event.target.value})} placeholder="https://... (Google Drive links auto-converted to thumbnails)" /></div>
+                {formData.photo && (
+                  <div className="form-field full-width" style={{marginTop: '-0.5rem'}}>
+                    <label>Converted Thumbnail:</label>
+                    <code style={{fontSize: '0.8rem', color: 'var(--color-text-light)', wordBreak: 'break-all'}}>{convertDriveLinkToThumbnail(formData.photo)}</code>
+                  </div>
+                )}
                 <div className="form-field full-width"><label htmlFor="videoUrl">Video URL</label><input type="url" id="videoUrl" value={formData.videoUrl} onChange={event => setFormData({...formData, videoUrl: event.target.value})} placeholder="YouTube, Vimeo, or direct video URL" /></div>
                 <div className="form-field full-width"><label htmlFor="isSpeaker"><input type="checkbox" id="isSpeaker" checked={formData.isSpeaker === true} onChange={event => setFormData({...formData, isSpeaker: event.target.checked})} /> Also show this person on the Speaker List</label></div>
                 <div className="form-field full-width"><label htmlFor="bio">Bio</label><textarea id="bio" value={formData.bio} onChange={event => setFormData({...formData, bio: event.target.value})} rows={5} /></div>

@@ -7,6 +7,23 @@ import { loadElectedOfficersFromGoogleSheet, saveElectedOfficerToGoogleSheet, up
 import { useApp } from '../../context/AppContext'
 import './ManageSchedule.css'
 
+// Helper to convert Google Drive sharing links to thumbnail URLs
+const convertDriveLinkToThumbnail = (url) => {
+  if (!url) return ''
+  try {
+    const parsed = new URL(url)
+    if (parsed.hostname.includes('drive.google.com')) {
+      const parts = parsed.pathname.split('/').filter(Boolean)
+      const fileIndex = parts.indexOf('d')
+      const id = fileIndex >= 0 ? parts[fileIndex + 1] : parsed.searchParams.get('id')
+      return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w200` : url
+    }
+    return url
+  } catch {
+    return url
+  }
+}
+
 const ELECTED_CATEGORY = 'Elected Grand Officers';
 
 const blankForm = () => ({
@@ -146,9 +163,15 @@ const ManageElectedOfficers = () => {
     setSheetSaveMessage(editingMember ? 'Updating officer in Google Sheet...' : 'Saving officer to Google Sheet...');
 
     try {
+      // Convert Google Drive photo link to thumbnail format
+      const dataToSave = {
+        ...formData,
+        photo: convertDriveLinkToThumbnail(formData.photo)
+      }
+
       const result = editingMember
-        ? await updateElectedOfficerInGoogleSheet(formData)
-        : await saveElectedOfficerToGoogleSheet(formData);
+        ? await updateElectedOfficerInGoogleSheet(dataToSave)
+        : await saveElectedOfficerToGoogleSheet(dataToSave);
       const savedMember = normalizeSheetRowForAdminMember({
         ...formData,
         memberId: result.memberId || formData.memberId || editingMember?.memberId,
@@ -315,7 +338,13 @@ const ManageElectedOfficers = () => {
                 <div className="form-field"><label htmlFor="name">Name *</label><input type="text" id="name" value={formData.name} onChange={event => setFormData({...formData, name: event.target.value})} required /></div>
                 <div className="form-field"><label htmlFor="station">Station/Position *</label><input type="text" id="station" value={formData.station} onChange={event => setFormData({...formData, station: event.target.value})} required /></div>
                 <div className="form-field"><label htmlFor="assembly">Assembly</label><input type="text" id="assembly" value={formData.assembly} onChange={event => setFormData({...formData, assembly: event.target.value})} /></div>
-                <div className="form-field full-width"><label htmlFor="photo">Photo URL</label><input type="url" id="photo" value={formData.photo} onChange={event => setFormData({...formData, photo: event.target.value})} placeholder="https://... (Google Drive link supported)" /></div>
+                <div className="form-field full-width"><label htmlFor="photo">Photo URL</label><input type="url" id="photo" value={formData.photo} onChange={event => setFormData({...formData, photo: event.target.value})} placeholder="https://... (Google Drive links auto-converted to thumbnails)" /></div>
+                {formData.photo && (
+                  <div className="form-field full-width" style={{marginTop: '-0.5rem'}}>
+                    <label>Converted Thumbnail:</label>
+                    <code style={{fontSize: '0.8rem', color: 'var(--color-text-light)', wordBreak: 'break-all'}}>{convertDriveLinkToThumbnail(formData.photo)}</code>
+                  </div>
+                )}
                 <div className="form-field full-width"><label htmlFor="videoUrl">Video URL</label><input type="url" id="videoUrl" value={formData.videoUrl} onChange={event => setFormData({...formData, videoUrl: event.target.value})} placeholder="YouTube, Vimeo, or direct video URL" /></div>
                 <div className="form-field full-width"><label htmlFor="isSpeaker"><input type="checkbox" id="isSpeaker" checked={formData.isSpeaker === true} onChange={event => setFormData({...formData, isSpeaker: event.target.checked})} /> Also show this person on the Speaker List</label></div>
                 <div className="form-field full-width"><label htmlFor="bio">Bio</label><textarea id="bio" value={formData.bio} onChange={event => setFormData({...formData, bio: event.target.value})} rows={5} /></div>
