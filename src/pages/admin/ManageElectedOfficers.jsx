@@ -3,7 +3,7 @@ import {
   Search, Filter, Plus, Download, ChevronDown, ChevronUp, X, Eye, Edit, RefreshCw, ChevronLeft, ChevronRight, UserRound, Crown, ToggleRight, ToggleLeft, Save
 } from 'lucide-react'
 import { normalizeSheetRowForAdminMember } from '../../utils/googleSheetData'
-import { loadElectedOfficersFromGoogleSheet, saveElectedOfficerToGoogleSheet, updateElectedOfficerInGoogleSheet } from '../../utils/appsScriptApi'
+import { loadElectedOfficersFromGoogleSheet, saveElectedOfficerToGoogleSheet, updateElectedOfficerInGoogleSheet, saveAppConfigToGoogleSheet } from '../../utils/appsScriptApi'
 import { useApp } from '../../context/AppContext'
 import './ManageSchedule.css'
 
@@ -46,15 +46,7 @@ const ManageElectedOfficers = () => {
   const toggleVisibility = async () => {
     const newConfig = { ...appConfig, showElectedGrandOfficers: !isVisible }
     try {
-      await fetch('https://script.google.com/macros/s/AKfycbxscrE9vcq1bw7qClV1k6UfdTC6iEhjalt0koefTlxuwX9u59pp2LWnDrUTzIc2mgjt/exec', {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          action: 'saveAppConfig',
-          token: '2026RainboW_Convention-SerVice!',
-          config: newConfig
-        })
-      })
+      await saveAppConfigToGoogleSheet(newConfig)
       setAppConfig(newConfig)
     } catch (error) {
       console.error('Failed to save visibility:', error)
