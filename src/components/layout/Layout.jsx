@@ -71,7 +71,7 @@ const Layout = () => {
 
     return [...baseItems, ...(roleItems[selectedRole] || [])]
       .filter(item => item.roles.includes(selectedRole))
-      .filter(item => !item.requiresConfig || appConfig?.[item.requiresConfig] === true)
+      .filter(item => !item.requiresConfig || Boolean(appConfig?.[item.requiresConfig]) === true)
   }, [selectedRole, appConfig])
 
   const navItems = getNavItems()
