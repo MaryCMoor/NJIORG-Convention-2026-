@@ -35,8 +35,13 @@ const ROLE_OPTIONS = [
     description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
   },
   {
-    value: 'pledge_members',
-    label: 'Pledge Members',
+    value: 'pledge_mothers',
+    label: 'Pledge Mothers',
+    description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
+  },
+  {
+    value: 'pledge_girls',
+    label: 'Pledge Girls',
     description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
   },
   {
@@ -88,6 +93,7 @@ const RoleGate = () => {
 
   const handleSubmit = (event) => {
     event.preventDefault()
+
     if (!role) return
 
     const result = selectRole(role, { password: adminPassword })
