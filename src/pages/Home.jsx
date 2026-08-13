@@ -72,10 +72,38 @@ const baseTiles = [
   },
 ]
 
+/*
+ * These role IDs match the roles used by RoleGate.jsx.
+ *
+ * Keep these values in sync with the login role options.
+ */
 const roleTiles = {
-  attendee: baseTiles,
-  grand_officer: baseTiles,
-  advisor: baseTiles,
+  rainbow_girls: baseTiles,
+
+  grand_officers: baseTiles,
+
+  adult_grand_executive_committee: baseTiles,
+
+  grand_staff: baseTiles,
+
+  majority_executive_committee: baseTiles,
+
+  mother_advisors_adult_advisors: baseTiles,
+
+  pledge_mothers: baseTiles,
+
+  pledge_girls: baseTiles,
+
+  eastern_star: baseTiles,
+
+  masons: baseTiles,
+
+  demolay: baseTiles,
+
+  other_masonic_organizations: baseTiles,
+
+  out_of_state_guests: baseTiles,
+
   administrator: [
     ...baseTiles,
     {
@@ -88,6 +116,15 @@ const roleTiles = {
   ],
 }
 
+/*
+ * Determines whether an announcement should currently
+ * count toward the notification bubble.
+ *
+ * An announcement is active when:
+ * - Its status is "active"
+ * - It has no displayUntil date, OR
+ * - Its displayUntil date has not passed
+ */
 const isActiveAnnouncement = (announcement) => {
   if ((announcement.status || 'active') !== 'active') {
     return false
@@ -100,7 +137,7 @@ const isActiveAnnouncement = (announcement) => {
   const end = new Date(announcement.displayUntil)
 
   return (
-    Number.isNaN(end.getTime()) ||
+    !Number.isNaN(end.getTime()) &&
     end >= new Date()
   )
 }
@@ -113,9 +150,22 @@ const Home = () => {
     sheetData,
   } = useApp()
 
+  /*
+   * Use the selected role to determine which tiles
+   * should appear.
+   *
+   * If an unexpected/old role is encountered,
+   * fall back to the standard home tiles.
+   */
   const tiles =
-    roleTiles[selectedRole] || roleTiles.attendee
+    roleTiles[selectedRole] || baseTiles
 
+  /*
+   * Count only announcements that are currently active.
+   *
+   * This uses the Notifications data already loaded
+   * into AppContext from the Google Sheet.
+   */
   const activeAnnouncementCount = (
     sheetData?.notifications || []
   ).filter(isActiveAnnouncement).length
@@ -128,6 +178,7 @@ const Home = () => {
         aria-labelledby="home-title"
       >
         <div>
+
           <span className="home-kicker">
             {appConfig.appTitle}
           </span>
@@ -139,6 +190,7 @@ const Home = () => {
           <p>
             Tap a button below to quickly find what you need.
           </p>
+
         </div>
 
         <button
@@ -148,13 +200,16 @@ const Home = () => {
         >
           Change Role
         </button>
+
       </header>
 
       <div
         className="app-tile-grid"
         aria-label="Convention areas"
       >
+
         {tiles.map(tile => (
+
           <AppTile
             key={`${tile.title}-${tile.to}`}
             tile={tile}
@@ -164,7 +219,9 @@ const Home = () => {
                 : 0
             }
           />
+
         ))}
+
       </div>
 
     </div>
@@ -175,13 +232,19 @@ const AppTile = ({
   tile,
   announcementCount = 0,
 }) => {
+
   const Icon = tile.icon
 
+  /*
+   * Only show the bubble on the Announcements tile
+   * AND only when there is at least one active announcement.
+   */
   const hasAnnouncementCount =
     tile.to === '/announcements' &&
     announcementCount > 0
 
   return (
+
     <Link
       className={`app-tile tone-${tile.tone}`}
       to={tile.to}
@@ -196,9 +259,11 @@ const AppTile = ({
     >
 
       <span className="tile-icon">
+
         <Icon size={30} />
 
         {hasAnnouncementCount && (
+
           <span
             className="announcement-count-badge"
             aria-hidden="true"
@@ -207,7 +272,9 @@ const AppTile = ({
               ? '99+'
               : announcementCount}
           </span>
+
         )}
+
       </span>
 
       <span className="tile-title">
@@ -225,6 +292,7 @@ const AppTile = ({
       />
 
     </Link>
+
   )
 }
 
