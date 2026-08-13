@@ -49,9 +49,27 @@ const baseTiles = [
     icon: Images,
     tone: 'blue',
   },
-  { title: 'Social Wall', subtitle: 'Posts, hashtags, likes', to: '/social-wall', icon: Hash, tone: 'purple' },
-  { title: 'Announcements', subtitle: 'Important updates', to: '/announcements', icon: Megaphone, tone: 'red' },
-  { title: 'Event Info', subtitle: 'Venue, contacts, links', to: '/event-info', icon: Info, tone: 'gold' },
+  {
+    title: 'Social Wall',
+    subtitle: 'Posts, hashtags, likes',
+    to: '/social-wall',
+    icon: Hash,
+    tone: 'purple',
+  },
+  {
+    title: 'Announcements',
+    subtitle: 'Important updates',
+    to: '/announcements',
+    icon: Megaphone,
+    tone: 'red',
+  },
+  {
+    title: 'Event Info',
+    subtitle: 'Venue, contacts, links',
+    to: '/event-info',
+    icon: Info,
+    tone: 'gold',
+  },
 ]
 
 const roleTiles = {
@@ -60,44 +78,152 @@ const roleTiles = {
   advisor: baseTiles,
   administrator: [
     ...baseTiles,
-    { title: 'Admin Portal', subtitle: 'Manage the convention', to: '/admin/IORG-2026-ADMIN', icon: Shield, tone: 'red' },
+    {
+      title: 'Admin Portal',
+      subtitle: 'Manage the convention',
+      to: '/admin/IORG-2026-ADMIN',
+      icon: Shield,
+      tone: 'red',
+    },
   ],
 }
 
+const isActiveAnnouncement = (announcement) => {
+  if ((announcement.status || 'active') !== 'active') {
+    return false
+  }
+
+  if (!announcement.displayUntil) {
+    return true
+  }
+
+  const end = new Date(announcement.displayUntil)
+
+  return (
+    Number.isNaN(end.getTime()) ||
+    end >= new Date()
+  )
+}
+
 const Home = () => {
-  const { selectedRole, clearRole, appConfig } = useApp()
-  const tiles = roleTiles[selectedRole] || roleTiles.attendee
+  const {
+    selectedRole,
+    clearRole,
+    appConfig,
+    sheetData,
+  } = useApp()
+
+  const tiles =
+    roleTiles[selectedRole] || roleTiles.attendee
+
+  const activeAnnouncementCount = (
+    sheetData?.notifications || []
+  ).filter(isActiveAnnouncement).length
 
   return (
     <div className="mobile-home-page icon-only-home">
-      <header className="home-welcome" aria-labelledby="home-title">
+
+      <header
+        className="home-welcome"
+        aria-labelledby="home-title"
+      >
         <div>
-          <span className="home-kicker">{appConfig.appTitle}</span>
-          <h1 id="home-title">Welcome to Convention</h1>
-          <p>Tap a button below to quickly find what you need.</p>
+          <span className="home-kicker">
+            {appConfig.appTitle}
+          </span>
+
+          <h1 id="home-title">
+            Welcome to Convention
+          </h1>
+
+          <p>
+            Tap a button below to quickly find what you need.
+          </p>
         </div>
-        <button type="button" className="home-role-reset" onClick={clearRole}>Change Role</button>
+
+        <button
+          type="button"
+          className="home-role-reset"
+          onClick={clearRole}
+        >
+          Change Role
+        </button>
       </header>
-      <div className="app-tile-grid" aria-label="Convention areas">
+
+      <div
+        className="app-tile-grid"
+        aria-label="Convention areas"
+      >
         {tiles.map(tile => (
-          <AppTile key={`${tile.title}-${tile.to}`} tile={tile} />
+          <AppTile
+            key={`${tile.title}-${tile.to}`}
+            tile={tile}
+            announcementCount={
+              tile.to === '/announcements'
+                ? activeAnnouncementCount
+                : 0
+            }
+          />
         ))}
       </div>
+
     </div>
   )
 }
 
-const AppTile = ({ tile }) => {
+const AppTile = ({
+  tile,
+  announcementCount = 0,
+}) => {
   const Icon = tile.icon
 
+  const hasAnnouncementCount =
+    tile.to === '/announcements' &&
+    announcementCount > 0
+
   return (
-    <Link className={`app-tile tone-${tile.tone}`} to={tile.to} aria-label={`Open ${tile.title}`}>
+    <Link
+      className={`app-tile tone-${tile.tone}`}
+      to={tile.to}
+      aria-label={
+        tile.to === '/announcements' &&
+        announcementCount > 0
+          ? `Open ${tile.title}. ${announcementCount} active announcement${
+              announcementCount === 1 ? '' : 's'
+            }.`
+          : `Open ${tile.title}`
+      }
+    >
+
       <span className="tile-icon">
         <Icon size={30} />
+
+        {hasAnnouncementCount && (
+          <span
+            className="announcement-count-badge"
+            aria-hidden="true"
+          >
+            {announcementCount > 99
+              ? '99+'
+              : announcementCount}
+          </span>
+        )}
       </span>
-      <span className="tile-title">{tile.title}</span>
-      <span className="tile-subtitle">{tile.subtitle}</span>
-      <ChevronRight className="tile-arrow" size={18} aria-hidden="true" />
+
+      <span className="tile-title">
+        {tile.title}
+      </span>
+
+      <span className="tile-subtitle">
+        {tile.subtitle}
+      </span>
+
+      <ChevronRight
+        className="tile-arrow"
+        size={18}
+        aria-hidden="true"
+      />
+
     </Link>
   )
 }
