@@ -9,6 +9,7 @@ import {
   Landmark,
   Info,
   Hash,
+  Crown,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import './Home.css'
@@ -142,6 +143,32 @@ const isActiveAnnouncement = (announcement) => {
   )
 }
 
+/*
+ * Converts the AppConfig setting into a reliable boolean.
+ *
+ * Google Sheets may return TRUE/FALSE as strings rather
+ * than JavaScript booleans.
+ */
+const isElectedGrandOfficersEnabled = (value) => {
+  if (value === true) {
+    return true
+  }
+
+  if (value === false) {
+    return false
+  }
+
+  if (typeof value === 'string') {
+    return value.trim().toLowerCase() === 'true'
+  }
+
+  if (typeof value === 'number') {
+    return value === 1
+  }
+
+  return false
+}
+
 const Home = () => {
   const {
     selectedRole,
@@ -169,6 +196,37 @@ const Home = () => {
   const activeAnnouncementCount = (
     sheetData?.notifications || []
   ).filter(isActiveAnnouncement).length
+
+  /*
+   * Determine whether the Elected Grand Officers tile
+   * should be displayed.
+   *
+   * This is controlled by the AppConfig tab in Google Sheets.
+   */
+  const showElectedGrandOfficers =
+    isElectedGrandOfficersEnabled(
+      appConfig?.showElectedGrandOfficers
+    )
+
+  /*
+   * Add the Elected Grand Officers tile only when
+   * the AppConfig setting is enabled.
+   *
+   * It is inserted at the beginning of the list so
+   * it is easy to find on the main page.
+   */
+  const displayTiles = showElectedGrandOfficers
+    ? [
+        {
+          title: 'Elected Grand Officers',
+          subtitle: 'Meet your elected grand officers',
+          to: '/elected-grand-officers',
+          icon: Crown,
+          tone: 'gold',
+        },
+        ...tiles,
+      ]
+    : tiles
 
   return (
     <div className="mobile-home-page icon-only-home">
@@ -208,7 +266,7 @@ const Home = () => {
         aria-label="Convention areas"
       >
 
-        {tiles.map(tile => (
+        {displayTiles.map(tile => (
 
           <AppTile
             key={`${tile.title}-${tile.to}`}
