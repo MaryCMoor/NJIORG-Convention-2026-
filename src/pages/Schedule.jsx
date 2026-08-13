@@ -47,20 +47,20 @@ const formatDay = (iso) => {
 }
 
 const roleLabels = {
-  attendee: 'Rainbow Girl',
-  grand_officer: 'Grand Officer',
-  demolay: 'DeMolay',
-  mason: 'Mason',
-  eastern_star: 'Eastern Star',
-  out_of_state: 'Out of State',
-  advisor: 'Advisor',
-  mother_advisor: 'Mother Advisor',
+  rainbow_girls: 'Rainbow Girls',
+  grand_officers: 'Grand Officers',
   adult_grand_executive_committee: 'Adult Grand Executive Committee',
-  grand_majority_committee: 'Grand Majority Committee',
-  parent_guardian: 'Parent/ Guardian',
-  pledge: 'Pledge',
-  other: 'Other',
-  administrator: 'Administrator',
+  grand_staff: 'Grand Staff (Deputies, Chairpersons, etc.)',
+  majority_executive_committee: 'Majority Executive Committee',
+  mother_advisors_adult_advisors: 'Mother Advisors & Adult Advisors',
+  pledge_mothers: 'Pledge Mothers',
+  pledge_girls: 'Pledge Girls',
+  eastern_star: 'Eastern Star',
+  masons: 'Masons',
+  demolay: 'DeMolay',
+  other_masonic_organizations: 'Other Masonic Organizations',
+  out_of_state_guests: 'Out of State Guests',
+  administrator: 'Admin',
 }
 
 const splitRequiredRoles = (requiredRole) => String(requiredRole || '')
