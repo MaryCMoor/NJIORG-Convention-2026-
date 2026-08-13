@@ -121,6 +121,7 @@ const sendMemberToGoogleSheet = async (member, action = 'createMember') => {
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(payload),
   })
+
   const text = await response.text()
   let data = null
   try {
@@ -128,9 +129,11 @@ const sendMemberToGoogleSheet = async (member, action = 'createMember') => {
   } catch {
     data = { ok: response.ok, raw: text }
   }
+
   if (!response.ok || data.ok === false) {
     throw new Error(data.error || `Google Sheet save failed (${response.status})`)
   }
+
   return data
 }
 
@@ -157,6 +160,7 @@ const sendElectedOfficerToGoogleSheet = async (officer, action = 'createElectedO
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(payload),
   })
+
   const text = await response.text()
   let data = null
   try {
@@ -164,9 +168,11 @@ const sendElectedOfficerToGoogleSheet = async (officer, action = 'createElectedO
   } catch {
     data = { ok: response.ok, raw: text }
   }
+
   if (!response.ok || data.ok === false) {
     throw new Error(data.error || `Google Sheet save failed (${response.status})`)
   }
+
   return data
 }
 
@@ -178,14 +184,17 @@ export const loadElectedOfficersFromGoogleSheet = async () => {
   const response = await fetch(`${APPS_SCRIPT_URL}?action=getElectedOfficers&cacheBust=${Date.now()}`)
   const text = await response.text()
   let data = null
+
   try {
     data = JSON.parse(text)
   } catch {
     throw new Error('Elected officers endpoint did not return JSON')
   }
+
   if (!response.ok || data.ok === false) {
     throw new Error(data.error || `Elected officers fetch failed (${response.status})`)
   }
+
   return data.officers || []
 }
 
@@ -207,16 +216,20 @@ const sendSpeakerToGoogleSheet = async (speaker, action = 'createSpeaker') => {
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(payload),
   })
+
   const text = await response.text()
   let data = null
+
   try {
     data = JSON.parse(text)
   } catch {
     data = { ok: response.ok, raw: text }
   }
+
   if (!response.ok || data.ok === false) {
     throw new Error(data.error || `Google Sheet save failed (${response.status})`)
   }
+
   return data
 }
 
@@ -228,14 +241,17 @@ export const loadAssembliesFromGoogleSheet = async () => {
   const response = await fetch(`${APPS_SCRIPT_URL}?action=getAssemblies&cacheBust=${Date.now()}`)
   const text = await response.text()
   let data = null
+
   try {
     data = JSON.parse(text)
   } catch {
     throw new Error('Assemblies endpoint did not return JSON')
   }
+
   if (!response.ok || data.ok === false) {
     throw new Error(data.error || `Assemblies fetch failed (${response.status})`)
   }
+
   return data.assemblies || []
 }
 
@@ -243,14 +259,17 @@ export const loadAssembliesWithGallery = async () => {
   const response = await fetch(`${APPS_SCRIPT_URL}?action=getAssembliesWithGallery&cacheBust=${Date.now()}`)
   const text = await response.text()
   let data = null
+
   try {
     data = JSON.parse(text)
   } catch {
     throw new Error('Assemblies with gallery endpoint did not return JSON')
   }
+
   if (!response.ok || data.ok === false) {
     throw new Error(data.error || `Assemblies with gallery fetch failed (${response.status})`)
   }
+
   return data.assemblies || []
 }
 
@@ -273,16 +292,20 @@ const sendAssemblyToGoogleSheet = async (assembly, action = 'createAssembly') =>
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(payload),
   })
+
   const text = await response.text()
   let data = null
+
   try {
     data = JSON.parse(text)
   } catch {
     data = { ok: response.ok, raw: text }
   }
+
   if (!response.ok || data.ok === false) {
     throw new Error(data.error || `Google Sheet save failed (${response.status})`)
   }
+
   return data
 }
 
@@ -294,14 +317,17 @@ export const loadSocialPostsFromGoogleSheet = async () => {
   const response = await fetch(`${APPS_SCRIPT_URL}?action=getSocialPosts&cacheBust=${Date.now()}`)
   const text = await response.text()
   let data = null
+
   try {
     data = JSON.parse(text)
   } catch {
     throw new Error('Social posts endpoint did not return JSON')
   }
+
   if (!response.ok || data.ok === false) {
     throw new Error(data.error || `Social posts fetch failed (${response.status})`)
   }
+
   return data.posts || []
 }
 
@@ -329,16 +355,20 @@ const sendSocialPostToGoogleSheet = async (post, action = 'createSocialPost') =>
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(payload),
   })
+
   const text = await response.text()
   let data = null
+
   try {
     data = JSON.parse(text)
   } catch {
     data = { ok: response.ok, raw: text }
   }
+
   if (!response.ok || data.ok === false) {
     throw new Error(data.error || `Google Sheet save failed (${response.status})`)
   }
+
   return data
 }
 
@@ -350,14 +380,17 @@ export const loadGallerySubmissionsFromGoogleSheet = async () => {
   const response = await fetch(`${APPS_SCRIPT_URL}?action=getGallerySubmissions&cacheBust=${Date.now()}`)
   const text = await response.text()
   let data = null
+
   try {
     data = JSON.parse(text)
   } catch {
     throw new Error('Gallery submissions endpoint did not return JSON')
   }
+
   if (!response.ok || data.ok === false) {
     throw new Error(data.error || `Gallery submissions fetch failed (${response.status})`)
   }
+
   return data.submissions || []
 }
 
@@ -367,16 +400,20 @@ export const submitGalleryMediaToGoogleSheet = async (submission) => {
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify({ action: 'submitGalleryMedia', ...submission }),
   })
+
   const text = await response.text()
   let data = null
+
   try {
     data = JSON.parse(text)
   } catch {
     data = { ok: response.ok, raw: text }
   }
+
   if (!response.ok || data.ok === false) {
     throw new Error(data.error || `Photo submission failed (${response.status})`)
   }
+
   return data
 }
 
@@ -386,16 +423,20 @@ export const submitSocialPostToGoogleSheet = async (submission) => {
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify({ action: 'submitSocialPost', ...submission }),
   })
+
   const text = await response.text()
   let data = null
+
   try {
     data = JSON.parse(text)
   } catch {
     data = { ok: response.ok, raw: text }
   }
+
   if (!response.ok || data.ok === false) {
     throw new Error(data.error || `Social post submission failed (${response.status})`)
   }
+
   return data
 }
 
@@ -412,16 +453,20 @@ export const reviewGallerySubmissionInGoogleSheet = async (submission) => {
       reviewedBy: submission.reviewedBy || 'Administrator',
     }),
   })
+
   const text = await response.text()
   let data = null
+
   try {
     data = JSON.parse(text)
   } catch {
     data = { ok: response.ok, raw: text }
   }
+
   if (!response.ok || data.ok === false) {
     throw new Error(data.error || `Gallery review failed (${response.status})`)
   }
+
   return data
 }
 
@@ -429,14 +474,17 @@ export const loadSocialPostSubmissionsFromGoogleSheet = async () => {
   const response = await fetch(`${APPS_SCRIPT_URL}?action=getSocialPostSubmissions&cacheBust=${Date.now()}`)
   const text = await response.text()
   let data = null
+
   try {
     data = JSON.parse(text)
   } catch {
     throw new Error('Social post submissions endpoint did not return JSON')
   }
+
   if (!response.ok || data.ok === false) {
     throw new Error(data.error || `Social post submissions fetch failed (${response.status})`)
   }
+
   return data.submissions || []
 }
 
@@ -462,16 +510,20 @@ export const reviewSocialPostSubmissionInGoogleSheet = async (submission) => {
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(payload),
   })
+
   const text = await response.text()
   let data = null
+
   try {
     data = JSON.parse(text)
   } catch {
     data = { ok: response.ok, raw: text }
   }
+
   if (!response.ok || data.ok === false) {
     throw new Error(data.error || `Social post review failed (${response.status})`)
   }
+
   return data
 }
 
@@ -497,6 +549,7 @@ const sendNotificationToGoogleSheet = async (notification, action = 'createNotif
 
   const text = await response.text()
   let data = null
+
   try {
     data = JSON.parse(text)
   } catch {
@@ -518,28 +571,83 @@ export const loadAppConfigFromGoogleSheet = async () => {
   const response = await fetch(`${APPS_SCRIPT_URL}?action=getAppConfig&cacheBust=${Date.now()}`)
   const text = await response.text()
   let data = null
+
   try {
     data = JSON.parse(text)
   } catch {
     throw new Error('App config endpoint did not return JSON')
   }
+
   if (!response.ok || data.ok === false) {
     throw new Error(data.error || `App config fetch failed (${response.status})`)
   }
-  const config = { ...DEFAULT_APP_CONFIG, ...(data.config || {}) }
+
+  const config = {
+    ...DEFAULT_APP_CONFIG,
+    ...(data.config || {}),
+  }
+
   const normalizeDate = (value, fallback) => {
     if (!value) return fallback
+
     const text = String(value)
-    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+      return text
+    }
+
     const date = new Date(text)
-    return Number.isNaN(date.getTime()) ? fallback : date.toISOString().slice(0, 10)
+
+    return Number.isNaN(date.getTime())
+      ? fallback
+      : date.toISOString().slice(0, 10)
+  }
+
+  // Google Sheets can return TRUE/FALSE as strings.
+  // Convert the setting into a real JavaScript boolean.
+  const normalizeBoolean = (value, fallback) => {
+    if (typeof value === 'boolean') {
+      return value
+    }
+
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase()
+
+      if (normalized === 'true') return true
+      if (normalized === 'false') return false
+    }
+
+    if (typeof value === 'number') {
+      if (value === 1) return true
+      if (value === 0) return false
+    }
+
+    return fallback
   }
 
   return {
     ...config,
-    numberOfDays: Number(config.numberOfDays) || DEFAULT_APP_CONFIG.numberOfDays,
-    startDate: normalizeDate(config.startDate, DEFAULT_APP_CONFIG.startDate),
-    endDate: normalizeDate(config.endDate, DEFAULT_APP_CONFIG.endDate),
+
+    numberOfDays:
+      Number(config.numberOfDays) || DEFAULT_APP_CONFIG.numberOfDays,
+
+    startDate:
+      normalizeDate(
+        config.startDate,
+        DEFAULT_APP_CONFIG.startDate
+      ),
+
+    endDate:
+      normalizeDate(
+        config.endDate,
+        DEFAULT_APP_CONFIG.endDate
+      ),
+
+    showElectedGrandOfficers:
+      normalizeBoolean(
+        config.showElectedGrandOfficers,
+        DEFAULT_APP_CONFIG.showElectedGrandOfficers
+      ),
   }
 }
 
@@ -547,17 +655,25 @@ export const saveAppConfigToGoogleSheet = async (config) => {
   const response = await fetch(APPS_SCRIPT_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ action: 'saveAppConfig', token: ADMIN_TOKEN, config }),
+    body: JSON.stringify({
+      action: 'saveAppConfig',
+      token: ADMIN_TOKEN,
+      config,
+    }),
   })
+
   const text = await response.text()
   let data = null
+
   try {
     data = JSON.parse(text)
   } catch {
     data = { ok: response.ok, raw: text }
   }
+
   if (!response.ok || data.ok === false) {
     throw new Error(data.error || `App config save failed (${response.status})`)
   }
+
   return data
 }
