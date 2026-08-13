@@ -5,43 +5,13 @@ import './RoleGate.css'
 
 const ROLE_OPTIONS = [
   {
-    value: 'attendee',
-    label: 'Rainbow Girl',
+    value: 'rainbow_girls',
+    label: 'Rainbow Girls',
     description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
   },
   {
-    value: 'grand_officer',
-    label: 'Grand Officer',
-    description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
-  },
-  {
-    value: 'demolay',
-    label: 'DeMolay',
-    description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
-  },
-  {
-    value: 'mason',
-    label: 'Mason',
-    description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
-  },
-  {
-    value: 'eastern_star',
-    label: 'Eastern Star',
-    description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
-  },
-  {
-    value: 'out_of_state',
-    label: 'Out of State',
-    description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
-  },
-  {
-    value: 'advisor',
-    label: 'Advisor',
-    description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
-  },
-  {
-    value: 'mother_advisor',
-    label: 'Mother Advisor',
+    value: 'grand_officers',
+    label: 'Grand Officers',
     description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
   },
   {
@@ -50,28 +20,53 @@ const ROLE_OPTIONS = [
     description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
   },
   {
-    value: 'grand_majority_committee',
-    label: 'Grand Majority Committee',
+    value: 'grand_staff',
+    label: 'Grand Staff (Deputies, Chairpersons, etc.)',
     description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
   },
   {
-    value: 'parent_guardian',
-    label: 'Parent/ Guardian',
+    value: 'majority_executive_committee',
+    label: 'Majority Executive Committee',
     description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
   },
   {
-    value: 'pledge',
-    label: 'Pledge',
+    value: 'mother_advisors_adult_advisors',
+    label: 'Mother Advisors & Adult Advisors',
     description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
   },
   {
-    value: 'other',
-    label: 'Other',
+    value: 'pledge_members',
+    label: 'Pledge Members',
+    description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
+  },
+  {
+    value: 'eastern_star',
+    label: 'Eastern Star',
+    description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
+  },
+  {
+    value: 'masons',
+    label: 'Masons',
+    description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
+  },
+  {
+    value: 'demolay',
+    label: 'DeMolay',
+    description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
+  },
+  {
+    value: 'other_masonic_organizations',
+    label: 'Other Masonic Organizations',
+    description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
+  },
+  {
+    value: 'out_of_state_guests',
+    label: 'Out of State Guests',
     description: 'View the main convention app, schedule, NJ Rainbow, speakers, and photos.',
   },
   {
     value: 'administrator',
-    label: 'Administrator',
+    label: 'Admin',
     description: 'Access administrator dashboards, reports, and management areas.',
   },
 ]
@@ -94,7 +89,9 @@ const RoleGate = () => {
   const handleSubmit = (event) => {
     event.preventDefault()
     if (!role) return
+
     const result = selectRole(role, { password: adminPassword })
+
     if (!result?.ok) {
       setError(result?.error || 'Unable to open that role.')
     }
@@ -119,12 +116,14 @@ const RoleGate = () => {
           </p>
 
           <h1 id="role-gate-title">Welcome</h1>
+
           <p className="role-gate-copy">
             Before opening the app, choose which role best describes you.
           </p>
 
           <form className="role-gate-form" onSubmit={handleSubmit}>
             <label htmlFor="role-select">I am a...</label>
+
             <div className="role-select-wrap">
               <select
                 id="role-select"
@@ -133,34 +132,56 @@ const RoleGate = () => {
                 aria-describedby="role-description"
               >
                 <option value="">Select your role</option>
+
                 {ROLE_OPTIONS.map(option => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
                 ))}
               </select>
+
               <ChevronDown size={20} aria-hidden="true" />
             </div>
 
             <p id="role-description" className="role-description">
-              {selected?.description || 'Your role customizes the squares and shortcuts you see in the app.'}
+              {selected?.description ||
+                'Your role customizes the squares and shortcuts you see in the app.'}
             </p>
 
             {requiresPassword && (
               <div className="admin-password-field">
-                <label htmlFor="admin-password">Administrator password</label>
+                <label htmlFor="admin-password">
+                  Administrator password
+                </label>
+
                 <input
                   id="admin-password"
                   type="password"
                   value={adminPassword}
-                  onChange={(event) => { setAdminPassword(event.target.value); setError('') }}
+                  onChange={(event) => {
+                    setAdminPassword(event.target.value)
+                    setError('')
+                  }}
                   placeholder="Enter admin password"
                   autoComplete="current-password"
                 />
               </div>
             )}
 
-            {error && <p className="role-error" role="alert">{error}</p>}
+            {error && (
+              <p className="role-error" role="alert">
+                {error}
+              </p>
+            )}
 
-            <button className="role-gate-submit" type="submit" disabled={!role || (requiresPassword && !adminPassword)}>
+            <button
+              className="role-gate-submit"
+              type="submit"
+              disabled={
+                !role ||
+                (requiresPassword && !adminPassword)
+              }
+            >
               Open Convention App
             </button>
           </form>
