@@ -209,23 +209,29 @@ const Home = () => {
     )
 
   /*
-   * Add the Elected Grand Officers tile only when
-   * the AppConfig setting is enabled.
+   * Insert Elected Grand Officers immediately AFTER
+   * "Get to Know NJ Rainbow" and BEFORE "NJ Assemblies".
    *
-   * It is inserted at the beginning of the list so
-   * it is easy to find on the main page.
+   * When the setting is FALSE, the original tile order
+   * remains unchanged.
    */
   const displayTiles = showElectedGrandOfficers
-    ? [
-        {
-          title: 'Elected Grand Officers',
-          subtitle: 'Meet your elected grand officers',
-          to: '/elected-grand-officers',
-          icon: Crown,
-          tone: 'gold',
-        },
-        ...tiles,
-      ]
+    ? tiles.flatMap((tile) => {
+        if (tile.to === '/nj-rainbow') {
+          return [
+            tile,
+            {
+              title: 'Elected Grand Officers',
+              subtitle: 'Meet your elected grand officers',
+              to: '/elected-grand-officers',
+              icon: Crown,
+              tone: 'gold',
+            },
+          ]
+        }
+
+        return [tile]
+      })
     : tiles
 
   return (
