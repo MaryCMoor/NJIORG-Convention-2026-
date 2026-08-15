@@ -41,9 +41,13 @@ const dayFromDate = (isoString, fallbackDay) => {
     'Day 3': 'Sunday',
   }
 
-  if (byAdminDay[fallbackDay]) return byAdminDay[fallbackDay]
+  if (byAdminDay[fallbackDay]) {
+    return byAdminDay[fallbackDay]
+  }
 
-  if (!isoString) return fallbackDay || 'Friday'
+  if (!isoString) {
+    return fallbackDay || 'Friday'
+  }
 
   const date = new Date(isoString)
 
@@ -61,7 +65,9 @@ const timeFromIso = (isoString) => {
 
   const date = new Date(isoString)
 
-  if (Number.isNaN(date.getTime())) return ''
+  if (Number.isNaN(date.getTime())) {
+    return ''
+  }
 
   return date.toLocaleTimeString('en-US', {
     hour: 'numeric',
@@ -89,13 +95,19 @@ const sendEventToGoogleSheet = async (
     description: event.description || '',
     type: event.category || event.type || '',
     speaker: event.presenter || event.speaker || '',
-    parentEventId: event.parentEventId || event.parentId || '',
+    parentEventId:
+      event.parentEventId ||
+      event.parentId ||
+      '',
     requiredRole: Array.isArray(event.requiredRoles)
       ? event.requiredRoles.join(', ')
-      : event.requiredRole || event.required || '',
+      : event.requiredRole ||
+        event.required ||
+        '',
     dressCode: Array.isArray(event.dressCodes)
       ? event.dressCodes.join(', ')
-      : event.dressCode || '',
+      : event.dressCode ||
+        '',
     mensDressCode: event.mensDressCode || '',
     status: event.status || 'scheduled',
   }
@@ -132,10 +144,16 @@ const sendEventToGoogleSheet = async (
 }
 
 export const saveEventToGoogleSheet = async (event) =>
-  sendEventToGoogleSheet(event, 'createEvent')
+  sendEventToGoogleSheet(
+    event,
+    'createEvent'
+  )
 
 export const updateEventInGoogleSheet = async (event) =>
-  sendEventToGoogleSheet(event, 'updateEvent')
+  sendEventToGoogleSheet(
+    event,
+    'updateEvent'
+  )
 
 /* =========================================================
    MEMBERS
@@ -148,17 +166,30 @@ const sendMemberToGoogleSheet = async (
   const payload = {
     action,
     token: ADMIN_TOKEN,
-    memberId: member.memberId || member.id,
+    memberId:
+      member.memberId ||
+      member.id,
     name: member.name || '',
-    station: member.station || member.position || '',
-    assembly: member.assembly || '',
-    photo: member.photo || '',
-    bio: member.bio || '',
-    category: member.category || '',
-    videoUrl: member.videoUrl || '',
-    isSpeaker: member.isSpeaker === true,
-    originalName: member.originalName || '',
-    originalStation: member.originalStation || '',
+    station:
+      member.station ||
+      member.position ||
+      '',
+    assembly:
+      member.assembly || '',
+    photo:
+      member.photo || '',
+    bio:
+      member.bio || '',
+    category:
+      member.category || '',
+    videoUrl:
+      member.videoUrl || '',
+    isSpeaker:
+      member.isSpeaker === true,
+    originalName:
+      member.originalName || '',
+    originalStation:
+      member.originalStation || '',
   }
 
   const response = await fetch(APPS_SCRIPT_URL, {
@@ -192,42 +223,83 @@ const sendMemberToGoogleSheet = async (
   return data
 }
 
-export const saveMemberToGoogleSheet = async (member) =>
-  sendMemberToGoogleSheet(member, 'createMember')
+export const saveMemberToGoogleSheet = async (
+  member
+) =>
+  sendMemberToGoogleSheet(
+    member,
+    'createMember'
+  )
 
-export const updateMemberInGoogleSheet = async (member) =>
-  sendMemberToGoogleSheet(member, 'updateMember')
+export const updateMemberInGoogleSheet = async (
+  member
+) =>
+  sendMemberToGoogleSheet(
+    member,
+    'updateMember'
+  )
 
 /* =========================================================
    APPOINTED GRAND OFFICERS
+   =========================================================
+
+   IMPORTANT:
+
+   The Google Sheet tab is STILL named:
+
+   2026-2027 Elected Grand Officers
+
+   We are intentionally keeping the existing Apps Script
+   endpoint names so the existing Google Sheet continues
+   to work.
+
+   The WEBSITE calls these:
+   Appointed Grand Officers
+
+   Frontend:
+     loadAppointedOfficersFromGoogleSheet()
+
+   Google Apps Script:
+     getElectedOfficers
+
+   Google Sheet:
+     2026-2027 Elected Grand Officers
    ========================================================= */
 
 const sendAppointedOfficerToGoogleSheet = async (
   officer,
-  action = 'createAppointedOfficer'
+  action = 'createElectedOfficer'
 ) => {
   const payload = {
     action,
     token: ADMIN_TOKEN,
 
-    memberId: officer.memberId || officer.id,
+    memberId:
+      officer.memberId ||
+      officer.id,
 
-    name: officer.name || '',
+    name:
+      officer.name || '',
 
     station:
       officer.station ||
       officer.position ||
       '',
 
-    assembly: officer.assembly || '',
+    assembly:
+      officer.assembly || '',
 
-    photo: officer.photo || '',
+    photo:
+      officer.photo || '',
 
-    bio: officer.bio || '',
+    bio:
+      officer.bio || '',
 
-    videoUrl: officer.videoUrl || '',
+    videoUrl:
+      officer.videoUrl || '',
 
-    isSpeaker: officer.isSpeaker === true,
+    isSpeaker:
+      officer.isSpeaker === true,
   }
 
   const response = await fetch(APPS_SCRIPT_URL, {
@@ -261,48 +333,47 @@ const sendAppointedOfficerToGoogleSheet = async (
   return data
 }
 
-export const saveAppointedOfficerToGoogleSheet = async (
-  officer
-) =>
-  sendAppointedOfficerToGoogleSheet(
-    officer,
-    'createAppointedOfficer'
-  )
-
-export const updateAppointedOfficerInGoogleSheet = async (
-  officer
-) =>
-  sendAppointedOfficerToGoogleSheet(
-    officer,
-    'updateAppointedOfficer'
-  )
-
-export const loadAppointedOfficersFromGoogleSheet = async () => {
-  const response = await fetch(
-    `${APPS_SCRIPT_URL}?action=getAppointedOfficers&cacheBust=${Date.now()}`
-  )
-
-  const text = await response.text()
-
-  let data = null
-
-  try {
-    data = JSON.parse(text)
-  } catch {
-    throw new Error(
-      'Appointed officers endpoint did not return JSON'
+export const saveAppointedOfficerToGoogleSheet =
+  async (officer) =>
+    sendAppointedOfficerToGoogleSheet(
+      officer,
+      'createElectedOfficer'
     )
-  }
 
-  if (!response.ok || data.ok === false) {
-    throw new Error(
-      data.error ||
-        `Appointed officers fetch failed (${response.status})`
+export const updateAppointedOfficerInGoogleSheet =
+  async (officer) =>
+    sendAppointedOfficerToGoogleSheet(
+      officer,
+      'updateElectedOfficer'
     )
-  }
 
-  return data.officers || []
-}
+export const loadAppointedOfficersFromGoogleSheet =
+  async () => {
+    const response = await fetch(
+      `${APPS_SCRIPT_URL}?action=getElectedOfficers&cacheBust=${Date.now()}`
+    )
+
+    const text = await response.text()
+
+    let data = null
+
+    try {
+      data = JSON.parse(text)
+    } catch {
+      throw new Error(
+        'Appointed Grand Officers endpoint did not return JSON'
+      )
+    }
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(
+        data.error ||
+          `Appointed Grand Officers fetch failed (${response.status})`
+      )
+    }
+
+    return data.officers || []
+  }
 
 /* =========================================================
    SPEAKERS
@@ -315,13 +386,25 @@ const sendSpeakerToGoogleSheet = async (
   const payload = {
     action,
     token: ADMIN_TOKEN,
-    speakerId: speaker.speakerId || speaker.id,
-    memberId: speaker.memberId || '',
-    name: speaker.name || '',
-    title: speaker.title || '',
-    photo: speaker.photo || '',
-    bio: speaker.bio || speaker.detail || '',
-    event: speaker.event || speaker.eventIds || '',
+    speakerId:
+      speaker.speakerId ||
+      speaker.id,
+    memberId:
+      speaker.memberId || '',
+    name:
+      speaker.name || '',
+    title:
+      speaker.title || '',
+    photo:
+      speaker.photo || '',
+    bio:
+      speaker.bio ||
+      speaker.detail ||
+      '',
+    event:
+      speaker.event ||
+      speaker.eventIds ||
+      '',
   }
 
   const response = await fetch(APPS_SCRIPT_URL, {
@@ -355,69 +438,79 @@ const sendSpeakerToGoogleSheet = async (
   return data
 }
 
-export const saveSpeakerToGoogleSheet = async (speaker) =>
-  sendSpeakerToGoogleSheet(speaker, 'createSpeaker')
+export const saveSpeakerToGoogleSheet =
+  async (speaker) =>
+    sendSpeakerToGoogleSheet(
+      speaker,
+      'createSpeaker'
+    )
 
-export const updateSpeakerInGoogleSheet = async (speaker) =>
-  sendSpeakerToGoogleSheet(speaker, 'updateSpeaker')
+export const updateSpeakerInGoogleSheet =
+  async (speaker) =>
+    sendSpeakerToGoogleSheet(
+      speaker,
+      'updateSpeaker'
+    )
 
 /* =========================================================
    ASSEMBLIES
    ========================================================= */
 
-export const loadAssembliesFromGoogleSheet = async () => {
-  const response = await fetch(
-    `${APPS_SCRIPT_URL}?action=getAssemblies&cacheBust=${Date.now()}`
-  )
-
-  const text = await response.text()
-
-  let data = null
-
-  try {
-    data = JSON.parse(text)
-  } catch {
-    throw new Error(
-      'Assemblies endpoint did not return JSON'
+export const loadAssembliesFromGoogleSheet =
+  async () => {
+    const response = await fetch(
+      `${APPS_SCRIPT_URL}?action=getAssemblies&cacheBust=${Date.now()}`
     )
+
+    const text = await response.text()
+
+    let data = null
+
+    try {
+      data = JSON.parse(text)
+    } catch {
+      throw new Error(
+        'Assemblies endpoint did not return JSON'
+      )
+    }
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(
+        data.error ||
+          `Assemblies fetch failed (${response.status})`
+      )
+    }
+
+    return data.assemblies || []
   }
 
-  if (!response.ok || data.ok === false) {
-    throw new Error(
-      data.error ||
-        `Assemblies fetch failed (${response.status})`
+export const loadAssembliesWithGallery =
+  async () => {
+    const response = await fetch(
+      `${APPS_SCRIPT_URL}?action=getAssembliesWithGallery&cacheBust=${Date.now()}`
     )
+
+    const text = await response.text()
+
+    let data = null
+
+    try {
+      data = JSON.parse(text)
+    } catch {
+      throw new Error(
+        'Assemblies with gallery endpoint did not return JSON'
+      )
+    }
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(
+        data.error ||
+          `Assemblies with gallery fetch failed (${response.status})`
+      )
+    }
+
+    return data.assemblies || []
   }
-
-  return data.assemblies || []
-}
-
-export const loadAssembliesWithGallery = async () => {
-  const response = await fetch(
-    `${APPS_SCRIPT_URL}?action=getAssembliesWithGallery&cacheBust=${Date.now()}`
-  )
-
-  const text = await response.text()
-
-  let data = null
-
-  try {
-    data = JSON.parse(text)
-  } catch {
-    throw new Error(
-      'Assemblies with gallery endpoint did not return JSON'
-    )
-  }
-
-  if (!response.ok || data.ok === false) {
-    throw new Error(
-      data.error ||
-        `Assemblies with gallery fetch failed (${response.status})`
-    )
-  }
-
-  return data.assemblies || []
-}
 
 const sendAssemblyToGoogleSheet = async (
   assembly,
@@ -426,24 +519,32 @@ const sendAssemblyToGoogleSheet = async (
   const payload = {
     action,
     token: ADMIN_TOKEN,
-    assemblyId: assembly.assemblyId || assembly.id,
+    assemblyId:
+      assembly.assemblyId ||
+      assembly.id,
     assemblyName:
       assembly.assemblyName ||
       assembly.name ||
       '',
-    motherAdvisor: assembly.motherAdvisor || '',
-    termTheme: assembly.termTheme || '',
+    motherAdvisor:
+      assembly.motherAdvisor ||
+      '',
+    termTheme:
+      assembly.termTheme ||
+      '',
     galleryMediaUrls:
       assembly.galleryMediaUrls ||
       assembly.galleryImageUrls ||
       '',
     galleryDriveFolderId:
-      assembly.galleryDriveFolderId || '',
+      assembly.galleryDriveFolderId ||
+      '',
     galleryImageUrls:
       assembly.galleryImageUrls ||
       assembly.galleryMediaUrls ||
       '',
-    notes: assembly.notes || '',
+    notes:
+      assembly.notes || '',
   }
 
   const response = await fetch(APPS_SCRIPT_URL, {
@@ -477,42 +578,51 @@ const sendAssemblyToGoogleSheet = async (
   return data
 }
 
-export const saveAssemblyToGoogleSheet = async (assembly) =>
-  sendAssemblyToGoogleSheet(assembly, 'createAssembly')
+export const saveAssemblyToGoogleSheet =
+  async (assembly) =>
+    sendAssemblyToGoogleSheet(
+      assembly,
+      'createAssembly'
+    )
 
-export const updateAssemblyInGoogleSheet = async (assembly) =>
-  sendAssemblyToGoogleSheet(assembly, 'updateAssembly')
+export const updateAssemblyInGoogleSheet =
+  async (assembly) =>
+    sendAssemblyToGoogleSheet(
+      assembly,
+      'updateAssembly'
+    )
 
 /* =========================================================
    SOCIAL POSTS
    ========================================================= */
 
-export const loadSocialPostsFromGoogleSheet = async () => {
-  const response = await fetch(
-    `${APPS_SCRIPT_URL}?action=getSocialPosts&cacheBust=${Date.now()}`
-  )
-
-  const text = await response.text()
-
-  let data = null
-
-  try {
-    data = JSON.parse(text)
-  } catch {
-    throw new Error(
-      'Social posts endpoint did not return JSON'
+export const loadSocialPostsFromGoogleSheet =
+  async () => {
+    const response = await fetch(
+      `${APPS_SCRIPT_URL}?action=getSocialPosts&cacheBust=${Date.now()}`
     )
-  }
 
-  if (!response.ok || data.ok === false) {
-    throw new Error(
-      data.error ||
-        `Social posts fetch failed (${response.status})`
-    )
-  }
+    const text = await response.text()
 
-  return data.posts || []
-}
+    let data = null
+
+    try {
+      data = JSON.parse(text)
+    } catch {
+      throw new Error(
+        'Social posts endpoint did not return JSON'
+      )
+    }
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(
+        data.error ||
+          `Social posts fetch failed (${response.status})`
+      )
+    }
+
+    return data.posts || []
+  }
 
 const sendSocialPostToGoogleSheet = async (
   post,
@@ -521,19 +631,38 @@ const sendSocialPostToGoogleSheet = async (
   const payload = {
     action,
     token: ADMIN_TOKEN,
-    postId: post.postId || post.id,
-    platform: post.platform || '',
-    author: post.author || '',
-    handle: post.handle || '',
-    postUrl: post.postUrl || '',
-    caption: post.caption || post.text || '',
-    mediaUrl: post.mediaUrl || '',
-    videoUrl: post.videoUrl || '',
-    hashtag: post.hashtag || '',
-    postedAt: post.postedAt || post.date || '',
-    likes: post.likes || 0,
-    comments: post.comments || 0,
-    status: post.status || 'active',
+    postId:
+      post.postId ||
+      post.id,
+    platform:
+      post.platform || '',
+    author:
+      post.author || '',
+    handle:
+      post.handle || '',
+    postUrl:
+      post.postUrl || '',
+    caption:
+      post.caption ||
+      post.text ||
+      '',
+    mediaUrl:
+      post.mediaUrl || '',
+    videoUrl:
+      post.videoUrl || '',
+    hashtag:
+      post.hashtag || '',
+    postedAt:
+      post.postedAt ||
+      post.date ||
+      '',
+    likes:
+      post.likes || 0,
+    comments:
+      post.comments || 0,
+    status:
+      post.status ||
+      'active',
   }
 
   const response = await fetch(APPS_SCRIPT_URL, {
@@ -567,14 +696,22 @@ const sendSocialPostToGoogleSheet = async (
   return data
 }
 
-export const saveSocialPostToGoogleSheet = async (post) =>
-  sendSocialPostToGoogleSheet(post, 'createSocialPost')
+export const saveSocialPostToGoogleSheet =
+  async (post) =>
+    sendSocialPostToGoogleSheet(
+      post,
+      'createSocialPost'
+    )
 
-export const updateSocialPostInGoogleSheet = async (post) =>
-  sendSocialPostToGoogleSheet(post, 'updateSocialPost')
+export const updateSocialPostInGoogleSheet =
+  async (post) =>
+    sendSocialPostToGoogleSheet(
+      post,
+      'updateSocialPost'
+    )
 
 /* =========================================================
-   GALLERY
+   GALLERY SUBMISSIONS
    ========================================================= */
 
 export const loadGallerySubmissionsFromGoogleSheet =
@@ -605,104 +742,26 @@ export const loadGallerySubmissionsFromGoogleSheet =
     return data.submissions || []
   }
 
-export const submitGalleryMediaToGoogleSheet = async (
-  submission
-) => {
-  const response = await fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'text/plain;charset=utf-8',
-    },
-    body: JSON.stringify({
-      action: 'submitGalleryMedia',
-      ...submission,
-    }),
-  })
-
-  const text = await response.text()
-
-  let data = null
-
-  try {
-    data = JSON.parse(text)
-  } catch {
-    data = {
-      ok: response.ok,
-      raw: text,
-    }
-  }
-
-  if (!response.ok || data.ok === false) {
-    throw new Error(
-      data.error ||
-        `Photo submission failed (${response.status})`
-    )
-  }
-
-  return data
-}
-
-/* =========================================================
-   SOCIAL POST SUBMISSIONS
-   ========================================================= */
-
-export const submitSocialPostToGoogleSheet = async (
-  submission
-) => {
-  const response = await fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'text/plain;charset=utf-8',
-    },
-    body: JSON.stringify({
-      action: 'submitSocialPost',
-      ...submission,
-    }),
-  })
-
-  const text = await response.text()
-
-  let data = null
-
-  try {
-    data = JSON.parse(text)
-  } catch {
-    data = {
-      ok: response.ok,
-      raw: text,
-    }
-  }
-
-  if (!response.ok || data.ok === false) {
-    throw new Error(
-      data.error ||
-        `Social post submission failed (${response.status})`
-    )
-  }
-
-  return data
-}
-
-export const reviewGallerySubmissionInGoogleSheet =
+export const submitGalleryMediaToGoogleSheet =
   async (submission) => {
-    const response = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain;charset=utf-8',
-      },
-      body: JSON.stringify({
-        action: 'reviewGallerySubmission',
-        token: ADMIN_TOKEN,
-        submissionId:
-          submission.submissionId || submission.id,
-        status: submission.status,
-        reviewNotes: submission.reviewNotes || '',
-        reviewedBy:
-          submission.reviewedBy || 'Administrator',
-      }),
-    })
+    const response = await fetch(
+      APPS_SCRIPT_URL,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type':
+            'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify({
+          action:
+            'submitGalleryMedia',
+          ...submission,
+        }),
+      }
+    )
 
-    const text = await response.text()
+    const text =
+      await response.text()
 
     let data = null
 
@@ -715,7 +774,115 @@ export const reviewGallerySubmissionInGoogleSheet =
       }
     }
 
-    if (!response.ok || data.ok === false) {
+    if (
+      !response.ok ||
+      data.ok === false
+    ) {
+      throw new Error(
+        data.error ||
+          `Photo submission failed (${response.status})`
+      )
+    }
+
+    return data
+  }
+
+/* =========================================================
+   SOCIAL POST SUBMISSIONS
+   ========================================================= */
+
+export const submitSocialPostToGoogleSheet =
+  async (submission) => {
+    const response = await fetch(
+      APPS_SCRIPT_URL,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type':
+            'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify({
+          action:
+            'submitSocialPost',
+          ...submission,
+        }),
+      }
+    )
+
+    const text =
+      await response.text()
+
+    let data = null
+
+    try {
+      data = JSON.parse(text)
+    } catch {
+      data = {
+        ok: response.ok,
+        raw: text,
+      }
+    }
+
+    if (
+      !response.ok ||
+      data.ok === false
+    ) {
+      throw new Error(
+        data.error ||
+          `Social post submission failed (${response.status})`
+      )
+    }
+
+    return data
+  }
+
+export const reviewGallerySubmissionInGoogleSheet =
+  async (submission) => {
+    const response = await fetch(
+      APPS_SCRIPT_URL,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type':
+            'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify({
+          action:
+            'reviewGallerySubmission',
+          token: ADMIN_TOKEN,
+          submissionId:
+            submission.submissionId ||
+            submission.id,
+          status:
+            submission.status,
+          reviewNotes:
+            submission.reviewNotes ||
+            '',
+          reviewedBy:
+            submission.reviewedBy ||
+            'Administrator',
+        }),
+      }
+    )
+
+    const text =
+      await response.text()
+
+    let data = null
+
+    try {
+      data = JSON.parse(text)
+    } catch {
+      data = {
+        ok: response.ok,
+        raw: text,
+      }
+    }
+
+    if (
+      !response.ok ||
+      data.ok === false
+    ) {
       throw new Error(
         data.error ||
           `Gallery review failed (${response.status})`
@@ -731,7 +898,8 @@ export const loadSocialPostSubmissionsFromGoogleSheet =
       `${APPS_SCRIPT_URL}?action=getSocialPostSubmissions&cacheBust=${Date.now()}`
     )
 
-    const text = await response.text()
+    const text =
+      await response.text()
 
     let data = null
 
@@ -743,7 +911,10 @@ export const loadSocialPostSubmissionsFromGoogleSheet =
       )
     }
 
-    if (!response.ok || data.ok === false) {
+    if (
+      !response.ok ||
+      data.ok === false
+    ) {
       throw new Error(
         data.error ||
           `Social post submissions fetch failed (${response.status})`
@@ -756,34 +927,53 @@ export const loadSocialPostSubmissionsFromGoogleSheet =
 export const reviewSocialPostSubmissionInGoogleSheet =
   async (submission) => {
     const payload = {
-      action: 'reviewSocialPostSubmission',
-      token: ADMIN_TOKEN,
+      action:
+        'reviewSocialPostSubmission',
+      token:
+        ADMIN_TOKEN,
       submissionId:
-        submission.submissionId || submission.id,
-      status: submission.status,
-      reviewNotes: submission.reviewNotes || '',
+        submission.submissionId ||
+        submission.id,
+      status:
+        submission.status,
+      reviewNotes:
+        submission.reviewNotes ||
+        '',
       reviewedBy:
-        submission.reviewedBy || 'Administrator',
+        submission.reviewedBy ||
+        'Administrator',
     }
 
     if (
-      submission.status === 'approved' &&
+      submission.status ===
+        'approved' &&
       submission.mediaData
     ) {
-      payload.mediaFile = submission.mediaFile
-      payload.mediaType = submission.mediaType
-      payload.mediaData = submission.mediaData
+      payload.mediaFile =
+        submission.mediaFile
+      payload.mediaType =
+        submission.mediaType
+      payload.mediaData =
+        submission.mediaData
     }
 
-    const response = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain;charset=utf-8',
-      },
-      body: JSON.stringify(payload),
-    })
+    const response = await fetch(
+      APPS_SCRIPT_URL,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type':
+            'text/plain;charset=utf-8',
+        },
+        body:
+          JSON.stringify(
+            payload
+          ),
+      }
+    )
 
-    const text = await response.text()
+    const text =
+      await response.text()
 
     let data = null
 
@@ -796,7 +986,10 @@ export const reviewSocialPostSubmissionInGoogleSheet =
       }
     }
 
-    if (!response.ok || data.ok === false) {
+    if (
+      !response.ok ||
+      data.ok === false
+    ) {
       throw new Error(
         data.error ||
           `Social post review failed (${response.status})`
@@ -810,64 +1003,84 @@ export const reviewSocialPostSubmissionInGoogleSheet =
    NOTIFICATIONS
    ========================================================= */
 
-const sendNotificationToGoogleSheet = async (
-  notification,
-  action = 'createNotification'
-) => {
-  const payload = {
-    action,
-    token: ADMIN_TOKEN,
-    id: notification.id,
-    title: notification.title || '',
-    message:
-      notification.message ||
-      notification.body ||
-      notification.description ||
-      '',
-    date:
-      notification.date ||
-      notification.timestamp ||
-      new Date().toISOString(),
-    type:
-      notification.type ||
-      notification.priority ||
-      'info',
-    status: notification.status || 'active',
-    displayUntil:
-      notification.displayUntil || '',
-    ticker: notification.ticker !== false,
-  }
-
-  const response = await fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'text/plain;charset=utf-8',
-    },
-    body: JSON.stringify(payload),
-  })
-
-  const text = await response.text()
-
-  let data = null
-
-  try {
-    data = JSON.parse(text)
-  } catch {
-    data = {
-      ok: response.ok,
-      raw: text,
+const sendNotificationToGoogleSheet =
+  async (
+    notification,
+    action = 'createNotification'
+  ) => {
+    const payload = {
+      action,
+      token: ADMIN_TOKEN,
+      id:
+        notification.id,
+      title:
+        notification.title ||
+        '',
+      message:
+        notification.message ||
+        notification.body ||
+        notification.description ||
+        '',
+      date:
+        notification.date ||
+        notification.timestamp ||
+        new Date().toISOString(),
+      type:
+        notification.type ||
+        notification.priority ||
+        'info',
+      status:
+        notification.status ||
+        'active',
+      displayUntil:
+        notification.displayUntil ||
+        '',
+      ticker:
+        notification.ticker !== false,
     }
-  }
 
-  if (!response.ok || data.ok === false) {
-    throw new Error(
-      data.error ||
-        `Google Sheet save failed (${response.status})`
-    )
-  }
+    const response =
+      await fetch(
+        APPS_SCRIPT_URL,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type':
+              'text/plain;charset=utf-8',
+          },
+          body:
+            JSON.stringify(
+              payload
+            ),
+        }
+      )
 
-  return data
-}
+    const text =
+      await response.text()
+
+    let data = null
+
+    try {
+      data = JSON.parse(text)
+    } catch {
+      data = {
+        ok: response.ok,
+        raw: text,
+      }
+    }
+
+    if (
+      !response.ok ||
+      data.ok === false
+    ) {
+      throw new Error(
+        data.error ||
+          `Google Sheet save failed (${response.status})`
+      )
+    }
+
+    return data
+  }
 
 export const saveNotificationToGoogleSheet =
   async (notification) =>
@@ -887,131 +1100,195 @@ export const updateNotificationInGoogleSheet =
    APP CONFIG
    ========================================================= */
 
-export const loadAppConfigFromGoogleSheet = async () => {
-  const response = await fetch(
-    `${APPS_SCRIPT_URL}?action=getAppConfig&cacheBust=${Date.now()}`
-  )
-
-  const text = await response.text()
-
-  let data = null
-
-  try {
-    data = JSON.parse(text)
-  } catch {
-    throw new Error(
-      'App config endpoint did not return JSON'
+export const loadAppConfigFromGoogleSheet =
+  async () => {
+    const response = await fetch(
+      `${APPS_SCRIPT_URL}?action=getAppConfig&cacheBust=${Date.now()}`
     )
+
+    const text =
+      await response.text()
+
+    let data = null
+
+    try {
+      data = JSON.parse(text)
+    } catch {
+      throw new Error(
+        'App config endpoint did not return JSON'
+      )
+    }
+
+    if (
+      !response.ok ||
+      data.ok === false
+    ) {
+      throw new Error(
+        data.error ||
+          `App config fetch failed (${response.status})`
+      )
+    }
+
+    const config = {
+      ...DEFAULT_APP_CONFIG,
+      ...(data.config || {}),
+    }
+
+    const normalizeDate = (
+      value,
+      fallback
+    ) => {
+      if (!value) {
+        return fallback
+      }
+
+      const text =
+        String(value)
+
+      if (
+        /^\d{4}-\d{2}-\d{2}$/.test(
+          text
+        )
+      ) {
+        return text
+      }
+
+      const date =
+        new Date(text)
+
+      return Number.isNaN(
+        date.getTime()
+      )
+        ? fallback
+        : date
+            .toISOString()
+            .slice(0, 10)
+    }
+
+    const normalizeBoolean = (
+      value,
+      fallback
+    ) => {
+      if (
+        typeof value ===
+        'boolean'
+      ) {
+        return value
+      }
+
+      if (
+        typeof value ===
+        'string'
+      ) {
+        const normalized =
+          value
+            .trim()
+            .toLowerCase()
+
+        if (
+          normalized ===
+          'true'
+        ) {
+          return true
+        }
+
+        if (
+          normalized ===
+          'false'
+        ) {
+          return false
+        }
+      }
+
+      if (
+        typeof value ===
+        'number'
+      ) {
+        if (value === 1) {
+          return true
+        }
+
+        if (value === 0) {
+          return false
+        }
+      }
+
+      return fallback
+    }
+
+    return {
+      ...config,
+
+      numberOfDays:
+        Number(
+          config.numberOfDays
+        ) ||
+        DEFAULT_APP_CONFIG.numberOfDays,
+
+      startDate:
+        normalizeDate(
+          config.startDate,
+          DEFAULT_APP_CONFIG.startDate
+        ),
+
+      endDate:
+        normalizeDate(
+          config.endDate,
+          DEFAULT_APP_CONFIG.endDate
+        ),
+
+      showAppointedGrandOfficers:
+        normalizeBoolean(
+          config.showAppointedGrandOfficers,
+          DEFAULT_APP_CONFIG.showAppointedGrandOfficers
+        ),
+    }
   }
 
-  if (!response.ok || data.ok === false) {
-    throw new Error(
-      data.error ||
-        `App config fetch failed (${response.status})`
+export const saveAppConfigToGoogleSheet =
+  async (config) => {
+    const response = await fetch(
+      APPS_SCRIPT_URL,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type':
+            'text/plain;charset=utf-8',
+        },
+        body:
+          JSON.stringify({
+            action:
+              'saveAppConfig',
+            token:
+              ADMIN_TOKEN,
+            config,
+          }),
+      }
     )
-  }
 
-  const config = {
-    ...DEFAULT_APP_CONFIG,
-    ...(data.config || {}),
-  }
+    const text =
+      await response.text()
 
-  const normalizeDate = (value, fallback) => {
-    if (!value) return fallback
+    let data = null
 
-    const text = String(value)
-
-    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
-      return text
+    try {
+      data = JSON.parse(text)
+    } catch {
+      data = {
+        ok: response.ok,
+        raw: text,
+      }
     }
 
-    const date = new Date(text)
-
-    return Number.isNaN(date.getTime())
-      ? fallback
-      : date.toISOString().slice(0, 10)
-  }
-
-  const normalizeBoolean = (value, fallback) => {
-    if (typeof value === 'boolean') {
-      return value
+    if (
+      !response.ok ||
+      data.ok === false
+    ) {
+      throw new Error(
+        data.error ||
+          `App config save failed (${response.status})`
+      )
     }
 
-    if (typeof value === 'string') {
-      const normalized = value
-        .trim()
-        .toLowerCase()
-
-      if (normalized === 'true') return true
-      if (normalized === 'false') return false
-    }
-
-    if (typeof value === 'number') {
-      if (value === 1) return true
-      if (value === 0) return false
-    }
-
-    return fallback
+    return data
   }
-
-  return {
-    ...config,
-
-    numberOfDays:
-      Number(config.numberOfDays) ||
-      DEFAULT_APP_CONFIG.numberOfDays,
-
-    startDate: normalizeDate(
-      config.startDate,
-      DEFAULT_APP_CONFIG.startDate
-    ),
-
-    endDate: normalizeDate(
-      config.endDate,
-      DEFAULT_APP_CONFIG.endDate
-    ),
-
-    showAppointedGrandOfficers: normalizeBoolean(
-      config.showAppointedGrandOfficers,
-      DEFAULT_APP_CONFIG.showAppointedGrandOfficers
-    ),
-  }
-}
-
-export const saveAppConfigToGoogleSheet = async (
-  config
-) => {
-  const response = await fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'text/plain;charset=utf-8',
-    },
-    body: JSON.stringify({
-      action: 'saveAppConfig',
-      token: ADMIN_TOKEN,
-      config,
-    }),
-  })
-
-  const text = await response.text()
-
-  let data = null
-
-  try {
-    data = JSON.parse(text)
-  } catch {
-    data = {
-      ok: response.ok,
-      raw: text,
-    }
-  }
-
-  if (!response.ok || data.ok === false) {
-    throw new Error(
-      data.error ||
-        `App config save failed (${response.status})`
-    )
-  }
-
-  return data
-}
