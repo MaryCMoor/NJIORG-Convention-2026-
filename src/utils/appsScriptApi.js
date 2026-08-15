@@ -240,30 +240,30 @@ export const updateMemberInGoogleSheet = async (
   )
 
 /* =========================================================
-   APPOINTED GRAND OFFICERS
+   GRAND OFFICERS
    =========================================================
 
    IMPORTANT:
 
-   The Google Sheet tab is STILL named:
+   The Google Sheet tab remains:
 
    2026-2027 Elected Grand Officers
 
-   We are intentionally keeping the existing Apps Script
-   endpoint names so the existing Google Sheet continues
-   to work.
+   The Apps Script actions remain:
 
-   The WEBSITE calls these:
+   createElectedOfficer
+   updateElectedOfficer
+   getElectedOfficers
+
+   The PUBLIC WEBSITE calls these officers:
+
    Appointed Grand Officers
 
-   Frontend:
-     loadAppointedOfficersFromGoogleSheet()
+   The ADMIN PAGE continues using the original
+   Elected function names.
 
-   Google Apps Script:
-     getElectedOfficers
-
-   Google Sheet:
-     2026-2027 Elected Grand Officers
+   This lets us keep the existing backend/data structure
+   while changing the public-facing terminology.
    ========================================================= */
 
 const sendAppointedOfficerToGoogleSheet = async (
@@ -333,6 +333,10 @@ const sendAppointedOfficerToGoogleSheet = async (
   return data
 }
 
+/* =========================================================
+   APPOINTED GRAND OFFICER FUNCTIONS
+   ========================================================= */
+
 export const saveAppointedOfficerToGoogleSheet =
   async (officer) =>
     sendAppointedOfficerToGoogleSheet(
@@ -374,6 +378,29 @@ export const loadAppointedOfficersFromGoogleSheet =
 
     return data.officers || []
   }
+
+/* =========================================================
+   BACKWARD-COMPATIBILITY ALIASES
+   =========================================================
+
+   ManageElectedOfficers.jsx still imports the original
+   Elected function names.
+
+   DO NOT remove these.
+
+   They point to the same functions above, so the admin
+   interface continues to work without changing its
+   existing structure.
+   ========================================================= */
+
+export const loadElectedOfficersFromGoogleSheet =
+  loadAppointedOfficersFromGoogleSheet
+
+export const saveElectedOfficerToGoogleSheet =
+  saveAppointedOfficerToGoogleSheet
+
+export const updateElectedOfficerInGoogleSheet =
+  updateAppointedOfficerInGoogleSheet
 
 /* =========================================================
    SPEAKERS
