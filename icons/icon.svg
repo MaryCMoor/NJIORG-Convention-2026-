@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B0000"/>
+      <stop offset="100%" style="stop-color:#5a0000"/>
+    </linearGradient>
+    <linearGradient id="crownGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#D4AF37"/>
+      <stop offset="100%" style="stop-color:#b8962e"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="url(#bgGrad)"/>
+  <!-- Decorative elements -->
+  <circle cx="120" cy="120" r="60" fill="url(#crownGrad)" opacity="0.15"/>
+  <circle cx="392" cy="392" r="80" fill="url(#crownGrad)" opacity="0.1"/>
+  <!-- Crown -->
+  <g transform="translate(256, 280)" filter="url(#glow)">
+    <!-- Crown base -->
+    <path d="M-80 40 L-80 -60 Q-80 -90 -50 -90 L50 -90 Q80 -90 80 -60 L80 40 Z" fill="url(#crownGrad)" stroke="#fff" stroke-width="2" stroke-opacity="0.3"/>
+    <!-- Crown points -->
+    <path d="M-70 -60 Q-70 -110 -20 -110 Q30 -110 30 -60" fill="url(#crownGrad)" stroke="#fff" stroke-width="1.5" stroke-opacity="0.3"/>
+    <path d="M-20 -90 Q-20 -140 30 -140 Q80 -140 30 -60" fill="url(#crownGrad)" stroke="#fff" stroke-width="1.5" stroke-opacity="0.3" opacity="0.9"/>
+    <path d="M30 -60 Q30 -110 80 -110 Q130 -110 80 -60" fill="url(#crownGrad)" stroke="#fff" stroke-width="1.5" stroke-opacity="0.3"/>
+    <!-- Crown jewels -->
+    <circle cx="0" cy="-105" r="12" fill="#fff" opacity="0.9"/>
+    <circle cx="0" cy="-105" r="8" fill="#D4AF37"/>
+    <circle cx="-45" cy="-85" r="8" fill="#fff" opacity="0.8"/>
+    <circle cx="-45" cy="-85" r="5" fill="#8B0000"/>
+    <circle cx="45" cy="-85" r="8" fill="#fff" opacity="0.8"/>
+    <circle cx="45" cy="-85" r="5" fill="#8B0000"/>
+    <!-- Crown band -->
+    <rect x="-80" y="20" width="160" height="8" fill="#fff" opacity="0.2" rx="2"/>
+    <circle cx="0" cy="24" r="6" fill="#D4AF37"/>
+  </g>
+  <!-- Lion silhouette accent -->
+  <g transform="translate(256, 420)" opacity="0.15">
+    <path d="M-30 0 Q-30 -20 -10 -20 Q10 -20 10 0 Q10 -15 25 -25 Q35 -25 30 0" fill="#D4AF37"/>
+    <circle cx="-15" cy="-10" r="4" fill="#D4AF37"/>
+    <circle cx="5" cy="-10" r="4" fill="#D4AF37"/>
+  </g>
+</svg>

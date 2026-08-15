@@ -1,0 +1,73 @@
+{
+  "name": "2026 Rainbow Grand Assembly Convention",
+  "short_name": "Rainbow Convention",
+  "description": "The Greatest Showman - Rainbow Girls Grand Assembly Convention 2026",
+  "start_url": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "background_color": "#fef9ef",
+  "theme_color": "#8B0000",
+  "orientation": "portrait-primary",
+  "scope": "./",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": [
+    "lifestyle",
+    "education",
+    "social"
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Master Schedule",
+      "short_name": "Schedule",
+      "description": "View the complete convention schedule",
+      "url": "./#/schedule",
+      "icons": [
+        {
+          "src": "icons/icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Photo Gallery",
+      "short_name": "Gallery",
+      "description": "Browse convention photos",
+      "url": "./#/gallery",
+      "icons": [
+        {
+          "src": "icons/icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Speakers",
+      "short_name": "Speakers",
+      "description": "Meet our distinguished guests",
+      "url": "./#/speakers",
+      "icons": [
+        {
+          "src": "icons/icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ]
+}
