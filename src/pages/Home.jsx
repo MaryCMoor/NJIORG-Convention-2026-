@@ -149,7 +149,7 @@ const isActiveAnnouncement = (announcement) => {
  * Google Sheets may return TRUE/FALSE as strings rather
  * than JavaScript booleans.
  */
-const isElectedGrandOfficersEnabled = (value) => {
+const isAppointedGrandOfficersEnabled = (value) => {
   if (value === true) {
     return true
   }
@@ -198,32 +198,32 @@ const Home = () => {
   ).filter(isActiveAnnouncement).length
 
   /*
-   * Determine whether the Elected Grand Officers tile
+   * Determine whether the Appointed Grand Officers tile
    * should be displayed.
    *
    * This is controlled by the AppConfig tab in Google Sheets.
    */
-  const showElectedGrandOfficers =
-    isElectedGrandOfficersEnabled(
-      appConfig?.showElectedGrandOfficers
+  const showAppointedGrandOfficers =
+    isAppointedGrandOfficersEnabled(
+      appConfig?.showAppointedGrandOfficers
     )
 
   /*
-   * Insert Elected Grand Officers immediately AFTER
+   * Insert Appointed Grand Officers immediately AFTER
    * "Get to Know NJ Rainbow" and BEFORE "NJ Assemblies".
    *
    * When the setting is FALSE, the original tile order
    * remains unchanged.
    */
-  const displayTiles = showElectedGrandOfficers
+  const displayTiles = showAppointedGrandOfficers
     ? tiles.flatMap((tile) => {
         if (tile.to === '/nj-rainbow') {
           return [
             tile,
             {
-              title: 'Elected Grand Officers',
-              subtitle: 'Meet your elected grand officers',
-              to: '/elected-grand-officers',
+              title: 'Appointed Grand Officers',
+              subtitle: 'Meet your appointed grand officers',
+              to: '/appointed-grand-officers',
               icon: Crown,
               tone: 'gold',
             },
