@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Users, Crown, Eye } from 'lucide-react'
 import { useApp } from '../context/AppContext'
-import { loadElectedOfficersFromGoogleSheet } from '../utils/appsScriptApi'
+import { loadAppointedOfficersFromGoogleSheet } from '../utils/appsScriptApi'
 import './AppArea.css'
 
 const getDirectImageUrl = (url) => {
@@ -35,14 +35,20 @@ const AppointedGrandOfficers = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [appointedOfficers, setAppointedOfficers] = useState([])
 
-  // Load appointed officers from the existing dedicated sheet
+  // Load appointed officers from the dedicated Appointed Grand Officers sheet
   useEffect(() => {
     const loadOfficers = async () => {
       try {
-        const officers = await loadElectedOfficersFromGoogleSheet()
+        const officers =
+          await loadAppointedOfficersFromGoogleSheet()
+
         setAppointedOfficers(officers)
       } catch (error) {
-        console.error('Failed to load appointed officers:', error)
+        console.error(
+          'Failed to load appointed grand officers:',
+          error
+        )
+
         setAppointedOfficers([])
       } finally {
         setIsLoading(false)
@@ -109,8 +115,8 @@ const AppointedOfficersGrid = ({ officers, isPreview }) => {
           </h2>
 
           <p>
-            No Appointed Grand Officers have been added yet. Admins can add
-            them in the{' '}
+            No Appointed Grand Officers have been added yet. Admins
+            can add them in the{' '}
             <strong>Appointed Grand Officers</strong> admin section.
           </p>
         </div>
@@ -138,7 +144,7 @@ const AppointedOfficersGrid = ({ officers, isPreview }) => {
       <div className="people-grid appointed-officers-grid">
         {officers.map((officer, index) => (
           <AppointedOfficerCard
-            key={officer.id}
+            key={officer.id || `${officer.name}-${index}`}
             officer={officer}
             index={index}
             isPreview={isPreview}
@@ -167,7 +173,7 @@ const AppointedOfficerCard = ({
       {officer.photo ? (
         <img
           src={getDirectImageUrl(officer.photo)}
-          alt=""
+          alt={officer.name || 'Appointed Grand Officer'}
           loading="lazy"
         />
       ) : (
