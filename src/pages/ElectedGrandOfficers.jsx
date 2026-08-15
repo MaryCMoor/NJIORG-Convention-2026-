@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Users, Crown, Eye } from 'lucide-react'
-import { useApp } from '../context/AppContext'
-import { loadAppointedOfficersFromGoogleSheet } from '../utils/appsScriptApi'
+import { loadElectedOfficersFromGoogleSheet } from '../utils/appsScriptApi'
 import './AppArea.css'
 
 const getDirectImageUrl = (url) => {
@@ -13,6 +12,7 @@ const getDirectImageUrl = (url) => {
     if (parsed.hostname.includes('drive.google.com')) {
       const parts = parsed.pathname.split('/').filter(Boolean)
       const fileIndex = parts.indexOf('d')
+
       const id =
         fileIndex >= 0
           ? parts[fileIndex + 1]
@@ -30,22 +30,28 @@ const getDirectImageUrl = (url) => {
 }
 
 const AppointedGrandOfficers = () => {
-  const { appConfig } = useApp()
-
   const [isLoading, setIsLoading] = useState(true)
   const [appointedOfficers, setAppointedOfficers] = useState([])
 
-  // Load appointed officers from the dedicated Appointed Grand Officers sheet
+  /*
+   * IMPORTANT:
+   * Keep using the existing elected-officer API connection.
+   *
+   * The backend / Google Sheet structure is staying exactly as-is.
+   * Only the frontend presentation is being treated as
+   * "Appointed Grand Officers."
+   */
   useEffect(() => {
     const loadOfficers = async () => {
       try {
-        const officers =
-          await loadAppointedOfficersFromGoogleSheet()
+        const officers = await loadElectedOfficersFromGoogleSheet()
 
-        setAppointedOfficers(officers)
+        setAppointedOfficers(
+          Array.isArray(officers) ? officers : []
+        )
       } catch (error) {
         console.error(
-          'Failed to load appointed grand officers:',
+          'Failed to load appointed officers:',
           error
         )
 
@@ -58,7 +64,6 @@ const AppointedGrandOfficers = () => {
     loadOfficers()
   }, [])
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="app-area-page appointed-grand-officers-page">
@@ -102,7 +107,10 @@ const AppointedGrandOfficers = () => {
   )
 }
 
-const AppointedOfficersGrid = ({ officers, isPreview }) => {
+const AppointedOfficersGrid = ({
+  officers,
+  isPreview,
+}) => {
   if (!officers || officers.length === 0) {
     return (
       <section
@@ -144,7 +152,11 @@ const AppointedOfficersGrid = ({ officers, isPreview }) => {
       <div className="people-grid appointed-officers-grid">
         {officers.map((officer, index) => (
           <AppointedOfficerCard
-            key={officer.id || `${officer.name}-${index}`}
+            key={
+              officer.memberId ||
+              officer.id ||
+              `${officer.name || 'officer'}-${index}`
+            }
             officer={officer}
             index={index}
             isPreview={isPreview}
@@ -173,7 +185,7 @@ const AppointedOfficerCard = ({
       {officer.photo ? (
         <img
           src={getDirectImageUrl(officer.photo)}
-          alt={officer.name || 'Appointed Grand Officer'}
+          alt=""
           loading="lazy"
         />
       ) : (
