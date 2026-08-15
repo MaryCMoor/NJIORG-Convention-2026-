@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Users, Crown, Eye } from 'lucide-react'
-import { loadElectedOfficersFromGoogleSheet } from '../utils/appsScriptApi'
+import { loadAppointedOfficersFromGoogleSheet } from '../utils/appsScriptApi'
 import './AppArea.css'
 
 const getDirectImageUrl = (url) => {
@@ -33,25 +33,20 @@ const AppointedGrandOfficers = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [appointedOfficers, setAppointedOfficers] = useState([])
 
-  /*
-   * IMPORTANT:
-   * Keep using the existing elected-officer API connection.
-   *
-   * The backend / Google Sheet structure is staying exactly as-is.
-   * Only the frontend presentation is being treated as
-   * "Appointed Grand Officers."
-   */
   useEffect(() => {
     const loadOfficers = async () => {
       try {
-        const officers = await loadElectedOfficersFromGoogleSheet()
+        const officers =
+          await loadAppointedOfficersFromGoogleSheet()
 
         setAppointedOfficers(
-          Array.isArray(officers) ? officers : []
+          Array.isArray(officers)
+            ? officers
+            : []
         )
       } catch (error) {
         console.error(
-          'Failed to load appointed officers:',
+          'Failed to load Appointed Grand Officers:',
           error
         )
 
@@ -72,11 +67,17 @@ const AppointedGrandOfficers = () => {
             <Crown size={34} />
           </span>
 
-          <p className="area-kicker">2026-2027</p>
+          <p className="area-kicker">
+            2026-2027
+          </p>
 
-          <h1>Appointed Grand Officers</h1>
+          <h1>
+            Appointed Grand Officers
+          </h1>
 
-          <p>Loading...</p>
+          <p>
+            Loading...
+          </p>
         </section>
       </div>
     )
@@ -89,19 +90,23 @@ const AppointedGrandOfficers = () => {
           <Crown size={34} />
         </span>
 
-        <p className="area-kicker">2026-2027</p>
+        <p className="area-kicker">
+          2026-2027
+        </p>
 
-        <h1>Appointed Grand Officers</h1>
+        <h1>
+          Appointed Grand Officers
+        </h1>
 
         <p>
-          Meet the appointed Grand Officers who will serve NJ Rainbow
-          for the 2026-2027 term.
+          Meet the appointed Grand Officers
+          who will serve NJ Rainbow for the
+          2026-2027 term.
         </p>
       </section>
 
       <AppointedOfficersGrid
         officers={appointedOfficers}
-        isPreview={false}
       />
     </div>
   )
@@ -109,7 +114,6 @@ const AppointedGrandOfficers = () => {
 
 const AppointedOfficersGrid = ({
   officers,
-  isPreview,
 }) => {
   if (!officers || officers.length === 0) {
     return (
@@ -119,13 +123,13 @@ const AppointedOfficersGrid = ({
       >
         <div className="people-directory-header">
           <h2 id="people-directory-title">
-            <Users size={22} /> Appointed Grand Officers
+            <Users size={22} />
+            Appointed Grand Officers
           </h2>
 
           <p>
-            No Appointed Grand Officers have been added yet. Admins
-            can add them in the{' '}
-            <strong>Appointed Grand Officers</strong> admin section.
+            No Appointed Grand Officers have
+            been added yet.
           </p>
         </div>
       </section>
@@ -139,29 +143,33 @@ const AppointedOfficersGrid = ({
     >
       <div className="people-directory-header">
         <h2 id="people-directory-title">
-          <Users size={22} /> Appointed Grand Officers
+          <Users size={22} />
+          Appointed Grand Officers
         </h2>
 
         <p>
           {officers.length} officer
-          {officers.length !== 1 ? 's' : ''} appointed for the
-          2026-2027 term
+          {officers.length !== 1
+            ? 's'
+            : ''}{' '}
+          appointed for the 2026-2027 term
         </p>
       </div>
 
       <div className="people-grid appointed-officers-grid">
-        {officers.map((officer, index) => (
-          <AppointedOfficerCard
-            key={
-              officer.memberId ||
-              officer.id ||
-              `${officer.name || 'officer'}-${index}`
-            }
-            officer={officer}
-            index={index}
-            isPreview={isPreview}
-          />
-        ))}
+        {officers.map(
+          (officer, index) => (
+            <AppointedOfficerCard
+              key={
+                officer.memberId ||
+                officer.id ||
+                `${officer.name || 'officer'}-${index}`
+              }
+              officer={officer}
+              index={index}
+            />
+          )
+        )}
       </div>
     </section>
   )
@@ -170,12 +178,12 @@ const AppointedOfficersGrid = ({
 const AppointedOfficerCard = ({
   officer,
   index,
-  isPreview,
 }) => (
   <article
     className="person-card appointed-officer-card"
     style={{
-      animationDelay: `${index * 100}ms`,
+      animationDelay:
+        `${index * 100}ms`,
     }}
   >
     <div
@@ -184,7 +192,9 @@ const AppointedOfficerCard = ({
     >
       {officer.photo ? (
         <img
-          src={getDirectImageUrl(officer.photo)}
+          src={getDirectImageUrl(
+            officer.photo
+          )}
           alt=""
           loading="lazy"
         />
@@ -197,26 +207,29 @@ const AppointedOfficerCard = ({
             fill="none"
             stroke="currentColor"
             strokeWidth="1.5"
-            style={{ marginBottom: '8px' }}
+            style={{
+              marginBottom: '8px',
+            }}
           >
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
+            <circle
+              cx="12"
+              cy="7"
+              r="4"
+            />
           </svg>
 
-          <span>Photo</span>
+          <span>
+            Photo
+          </span>
         </>
-      )}
-
-      {isPreview && (
-        <div className="admin-preview-badge">
-          <Eye size={14} />
-          <span>Preview</span>
-        </div>
       )}
     </div>
 
     <div className="person-card-copy appointed-copy">
-      <h3>{officer.name}</h3>
+      <h3>
+        {officer.name}
+      </h3>
 
       <p className="officer-position">
         {officer.station ||
