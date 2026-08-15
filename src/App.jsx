@@ -51,15 +51,17 @@ import './styles/global.css'
 
 const AdminRoute = () => {
   const { selectedRole, adminUnlocked } = useApp()
+
   if (selectedRole !== 'administrator' || !adminUnlocked) {
     return <Navigate to="/" replace />
   }
+
   return <AdminLayout />
 }
 
 const AppRoutes = () => {
-  const adminPath = ADMIN_CONFIG.secretRoute; // e.g., '/admin/IORG-2026-ADMIN'
-  const adminParentPath = adminPath.replace(/^\/+/, ''); // Remove leading slash for HashRouter
+  const adminPath = ADMIN_CONFIG.secretRoute
+  const adminParentPath = adminPath.replace(/^\/+/, '')
   const { selectedRole, adminUnlocked } = useApp()
 
   if (!selectedRole) {
@@ -67,12 +69,29 @@ const AppRoutes = () => {
   }
 
   return (
-    <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <HashRouter
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
       <ErrorBoundary>
         <Routes>
-          {/* Public routes */}
+
+          {/* =========================
+              PUBLIC ROUTES
+          ========================== */}
           <Route path="/" element={<Layout />}>
-            <Route index element={selectedRole === 'administrator' && adminUnlocked ? <Navigate to={ADMIN_CONFIG.secretRoute} replace /> : <Home />} />
+
+            <Route
+              index
+              element={
+                selectedRole === 'administrator' && adminUnlocked
+                  ? <Navigate to={ADMIN_CONFIG.secretRoute} replace />
+                  : <Home />
+              }
+            />
+
             <Route path="schedule" element={<Schedule />} />
             <Route path="schedule/:eventId" element={<Schedule />} />
             <Route path="registration" element={<Registration />} />
@@ -91,37 +110,140 @@ const AppRoutes = () => {
             <Route path="assemblies" element={<NJAssemblies />} />
             <Route path="social-wall" element={<SocialWall />} />
             <Route path="gallery" element={<Gallery />} />
-                      <Route path="elected-grand-officers" element={<ElectedGrandOfficers />} />
-                      <Route path="submit-photos" element={<SubmitPhotos />} />
-                      <Route path="submit-social" element={<SubmitSocialPost />} />
-                      <Route path="awards" element={<Awards />} />
-                      <Route path="documents" element={<Documents />} />
-                      <Route path="surveys" element={<Surveys />} />
-                      <Route path="reports" element={<Reports />} />
+
+            {/* 
+              APPOINTED GRAND OFFICERS
+
+              This intentionally uses the existing
+              ElectedGrandOfficers component/data connection.
+
+              The frontend page itself is labeled
+              "Appointed Grand Officers".
+            */}
+            <Route
+              path="appointed-grand-officers"
+              element={<ElectedGrandOfficers />}
+            />
+
+            {/* 
+              Keep the existing elected route as well.
+              This does NOT change the existing backend/API.
+            */}
+            <Route
+              path="elected-grand-officers"
+              element={<ElectedGrandOfficers />}
+            />
+
+            <Route path="submit-photos" element={<SubmitPhotos />} />
+            <Route path="submit-social" element={<SubmitSocialPost />} />
+            <Route path="awards" element={<Awards />} />
+            <Route path="documents" element={<Documents />} />
+            <Route path="surveys" element={<Surveys />} />
+            <Route path="reports" element={<Reports />} />
+
           </Route>
 
-          {/* Hidden Admin Portal - only accessible via secret URL */}
-          <Route path={adminParentPath} element={<AdminRoute />}>
+          {/* =========================
+              HIDDEN ADMIN PORTAL
+          ========================== */}
+          <Route
+            path={adminParentPath}
+            element={<AdminRoute />}
+          >
             <Route index element={<AdminDashboard />} />
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="attendees" element={<ManageAttendees />} />
-            <Route path="schedule" element={<ManageSchedule />} />
-            <Route path="schedule/new" element={<ManageSchedule />} />
-            <Route path="announcements" element={<ManageAnnouncements />} />
-            <Route path="members" element={<ManageMembers />} />
-            <Route path="elected-officers" element={<ManageElectedOfficers />} />
-            <Route path="speakers" element={<ManageSpeakers />} />
-            <Route path="assemblies" element={<ManageAssemblies />} />
-            <Route path="social" element={<ManageSocialFeed />} />
-            <Route path="meals" element={<ManageMeals />} />
-            <Route path="awards" element={<ManageAwards />} />
-            <Route path="documents" element={<ManageDocuments />} />
-            <Route path="gallery" element={<ManageGallery />} />
-            <Route path="gallery-submissions" element={<ManageGallerySubmissions />} />
-            <Route path="social-posts" element={<ManageSocialPosts />} />
-            <Route path="surveys" element={<ManageSurveys />} />
-            <Route path="settings" element={<AdminSettings />} />
+
+            <Route
+              path="dashboard"
+              element={<AdminDashboard />}
+            />
+
+            <Route
+              path="attendees"
+              element={<ManageAttendees />}
+            />
+
+            <Route
+              path="schedule"
+              element={<ManageSchedule />}
+            />
+
+            <Route
+              path="schedule/new"
+              element={<ManageSchedule />}
+            />
+
+            <Route
+              path="announcements"
+              element={<ManageAnnouncements />}
+            />
+
+            <Route
+              path="members"
+              element={<ManageMembers />}
+            />
+
+            <Route
+              path="elected-officers"
+              element={<ManageElectedOfficers />}
+            />
+
+            <Route
+              path="speakers"
+              element={<ManageSpeakers />}
+            />
+
+            <Route
+              path="assemblies"
+              element={<ManageAssemblies />}
+            />
+
+            <Route
+              path="social"
+              element={<ManageSocialFeed />}
+            />
+
+            <Route
+              path="meals"
+              element={<ManageMeals />}
+            />
+
+            <Route
+              path="awards"
+              element={<ManageAwards />}
+            />
+
+            <Route
+              path="documents"
+              element={<ManageDocuments />}
+            />
+
+            <Route
+              path="gallery"
+              element={<ManageGallery />}
+            />
+
+            <Route
+              path="gallery-submissions"
+              element={<ManageGallerySubmissions />}
+            />
+
+            <Route
+              path="social-posts"
+              element={<ManageSocialPosts />}
+            />
+
+            <Route
+              path="surveys"
+              element={<ManageSurveys />}
+            />
+
+            <Route
+              path="settings"
+              element={<AdminSettings />}
+            />
+
           </Route>
+
         </Routes>
       </ErrorBoundary>
     </HashRouter>
